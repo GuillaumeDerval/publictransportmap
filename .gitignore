@@ -1,0 +1,9 @@
+fabien_thesis
+.idea
+__pycache__
+.DS_Store
+old
+*.json
+vector_viewer/osm
+gtfs
+*.npy

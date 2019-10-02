@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8'/>
+    <title>Display a map</title>
+    <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no'/>
+    <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v1.1.0/mapbox-gl.js'></script>
+    <script src="https://d3js.org/d3.v4.js"></script>
+    <script src="https://unpkg.com/@typicode/pegasus/dist/pegasus.min.js"></script>
+    <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v1.1.0/mapbox-gl.css' rel='stylesheet'/>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootswatch/4.3.1/cosmo/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+            integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+            crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
+            integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
+            crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+            integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
+            crossorigin="anonymous"></script>
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        #maincontent {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            display: flex;
+            flex-flow: column;
+        }
+
+        #totext {
+            padding: 5px;
+            font-size: 15px;
+            text-align: center;
+            height: 30px;
+            flex: 0 0 auto;
+        }
+
+        #map {
+            flex: 1 1 auto;
+            width: 100%;
+        }
+
+        #legend {
+            position: absolute;
+            bottom: 30px;
+            left: 0;
+            z-index: 1000;
+            padding: 10px;
+            height: 50px;
+            max-width: 80%;
+        }
+
+        #header .card {
+            z-index: 5;
+            position: absolute;
+        }
+
+        @media screen and (max-width: 767px) {
+            #header {
+                position: relative;
+                flex: 0 1 auto;
+            }
+
+            #header .card {
+                position: relative;
+            }
+        }
+
+        .tick:nth-of-type(6n+1) text {
+            font-weight: bold;
+        }
+
+        .tick line {
+            display: none;
+        }
+
+        .domain {
+            display: none;
+        }
+
+        #currentStation {
+            font-weight: bold;
+        }
+
+        .icon-train {
+            background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg%20version%3D%221.1%22%20id%3D%22Capa_1%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20xmlns%3Axlink%3D%22http%3A%2F%2Fwww.w3.org%2F1999%2Fxlink%22%20x%3D%220px%22%20y%3D%220px%22%0A%09%20viewBox%3D%220%200%20491%20491%22%20style%3D%22enable-background%3Anew%200%200%20491%20491%3B%22%20xml%3Aspace%3D%22preserve%22%3E%0A%3Cg%3E%0A%09%3Cg%3E%0A%09%09%3Cpath%20style%3D%22fill%3A%23010002%3B%22%20d%3D%22M348.5%2C377l-1-2c0-0.667%2C0.167-1%2C0.5-1s0.5-0.333%2C0.5-1c10.667-4%2C20.333-9.333%2C29-16%0A%09%09%09s14.667-16.333%2C18-29l0.5-3.5c0.333-2.333%2C0.833-4.5%2C1.5-6.5V57c0-6.667-1.833-13.333-5.5-20c-3.67-6.667-8.336-12.667-14-18%0A%09%09%09c-5.667-5.333-12-9.833-19-13.5S345.5%2C0%2C339.5%2C0h-187c-6%2C0-12.5%2C1.667-19.5%2C5s-13.333%2C7.667-19%2C13s-10.334%2C11.333-14%2C18%0A%09%09%09c-3.667%2C6.667-5.5%2C13-5.5%2C19v265c0%2C4.667%2C1%2C9.333%2C3%2C14s4.667%2C9.167%2C8%2C13.5s7%2C8.333%2C11%2C12s8%2C6.5%2C12%2C8.5%0A%09%09%09c2%2C0.667%2C5.167%2C1.834%2C9.5%2C3.5c4.333%2C1.667%2C6.5%2C2.834%2C6.5%2C3.5l-77%2C116h45l56-81h154l56%2C81h45L348.5%2C377z%20M201.5%2C23%0A%09%09%09c0-2%2C0.833-4%2C2.5-6s3.5-3%2C5.5-3h72c0.667%2C0%2C2%2C0.667%2C4%2C2s3%2C2.667%2C3%2C4v28c0%2C2-0.833%2C3.667-2.5%2C5s-3.167%2C2-4.5%2C2h-72%0A%09%09%09c-1.333-0.667-2.333-1.333-3-2c-1.333-0.667-2.333-1.667-3-3c-1.333-1.337-2-2.67-2-4V23z%20M129.5%2C99c0-3.333%2C0.667-7%2C2-11%0A%09%09%09c2-3.339%2C4.333-6.673%2C7-10c2-2.667%2C4.833-5%2C8.5-7s7.5-3%2C11.5-3h174c2.667%2C0%2C6%2C1%2C10%2C3c2.667%2C1.333%2C5.667%2C3.333%2C9%2C6%0A%09%09%09c2.667%2C2%2C4.667%2C4.667%2C6%2C8c2%2C2.667%2C3%2C6%2C3%2C10v59c0%2C3.333-1%2C6.5-3%2C9.5s-4.333%2C5.833-7%2C8.5c-3.333%2C2.667-6.667%2C4.667-10%2C6%0A%09%09%09c-2.667%2C1.333-6%2C2-10%2C2h-171c-0.667%2C0-1.667-0.167-3-0.5s-2.333-0.833-3-1.5c-6.667-0.667-12.333-3.833-17-9.5s-7-11.833-7-18.5%0A%09%09%09V99z%20M181%2C330c-5.667%2C6-12.833%2C9-21.5%2C9s-15.667-3-21-9s-8-13.333-8-22c0-8%2C2.833-14.833%2C8.5-20.5s12.5-8.5%2C20.5-8.5%0A%09%09%09c8.667%2C0%2C15.834%2C2.667%2C21.5%2C8c5.667%2C5.333%2C8.5%2C12.333%2C8.5%2C21S186.667%2C324%2C181%2C330z%20M309%2C330c-5.667-6-8.5-13.333-8.5-22%0A%09%09%09s3-15.667%2C9-21s13-8%2C21-8c8.667%2C0%2C15.667%2C2.833%2C21%2C8.5s8%2C12.5%2C8%2C20.5c0%2C8.667-2.667%2C16-8%2C22s-12.333%2C9-21%2C9%0A%09%09%09C321.832%2C339%2C314.665%2C336%2C309%2C330z%22%2F%3E%0A%09%3C%2Fg%3E%0A%3C%2Fg%3E%0A%3C%2Fsvg%3E%0A");
+        }
+
+        .move:before {
+            content: "▼";
+            position: relative;
+            display: inline-block;
+            -webkit-animation: mover 1s infinite alternate;
+            animation: mover 1s infinite alternate;
+        }
+
+        @-webkit-keyframes mover {
+            0% {
+                transform: translateY(-5px);
+            }
+            100% {
+                transform: translateY(5px);
+            }
+        }
+
+        @keyframes mover {
+            0% {
+                transform: translateY(-5px);
+            }
+            100% {
+                transform: translateY(5px);
+            }
+        }
+
+        #text {
+            text-align: justify;
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+<div id="maincontent">
+    <div id="header">
+        <div class="card text-white bg-primary col-sm-12 col-md-5 col-lg-4 col-xl-3">
+            <div class="card-body">
+                <h4 class="card-title">Time to reach any location in Belgium from <span id="currentStation">(still loading!)</span>
+                </h4>
+                Click anywhere on the map to change the starting location, or click on the train button on the top right
+                corner.
+            </div>
+        </div>
+    </div>
+    <div id='map'></div>
+    <svg id="legend"></svg>
+    <div id="totext" class="text-white bg-primary" onclick="#text">
+        <a href="#text" class="text-white"><span class="move"></span> More information ? Click here or scroll below. <span class="move"></span></a>
+    </div>
+</div>
+<div class="container-fluid">
+    <div id="text">
+        <h2>Frequently asked questions</h2>
+
+        <div class="accordion" id="accordionExample">
+            <div class="card">
+                <div class="card-header" id="headingOne">
+                    <h2 class="mb-0">
+                        <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseOne"
+                                aria-expanded="true" aria-controls="collapseOne">
+                            What is displayed on this map?
+                        </button>
+                    </h2>
+                </div>
+
+                <div id="collapseOne" class="collapse show" aria-labelledby="headingOne" data-parent="#accordionExample">
+                    <div class="card-body">
+                        <p>
+                            The map above displays by default the minimal time to reach in public transport any point in Belgium
+                            from a specific train station (by default Bruxelles-midi/Brussels-zuid) that you can change. You can
+                            also change the displayed map to display instead the mean speed to reach any point.
+                        </p>
+
+                        <p>
+                            The map has been computed for the schedule of the <b>Thursday 18th of July 2019</b>, from data
+                            gathered at the beginning of July 2019.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header" id="headingTwo">
+                    <h2 class="mb-0">
+                        <button class="btn btn-link collapsed" type="button" data-toggle="collapse"
+                                data-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                            Minimal time? When starting at which time?
+                        </button>
+                    </h2>
+                </div>
+                <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordionExample">
+                    <div class="card-body">
+                        That's the idea: there is no single starting time. The starting time is the best one to reach the destination.
+                        For example, if it takes:
+                        <ul>
+                            <li>1:00 to reach Charleroi by starting at 08:00 ;</li>
+                            <li>0:55 to reach Charleroi by starting at 08:20 ;</li>
+                            <li>0:20 to reach Namur by starting at 08:00 ;</li>
+                            <li>0:30 to reach Namur by starting at 08:20 ;</li>
+                        </ul>
+                        Then, the map will display 0:55 for Charleroi and 0:20 for Namur.
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header" id="headingThree">
+                    <h2 class="mb-0">
+                        <button class="btn btn-link collapsed" type="button" data-toggle="collapse"
+                                data-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                            Are there some simplifications?
+                        </button>
+                    </h2>
+                </div>
+                <div id="collapseThree" class="collapse" aria-labelledby="headingThree" data-parent="#accordionExample">
+                    <div class="card-body">
+                        Obviously!
+                        <ul>
+                            <li>The map considers that you walk at 3km/h, as the crow flies.</li>
+                            <li>You can walk at most 1.5km between two stops</li>
+                            <li>
+                                There is no delay for taking a transfer.
+                                If you train arrives at 12:05 and the bus leaves at 12:05 at the same stops,
+                                you will be able to take the bus.
+                            </li>
+                        </ul>
+                        More information about these simplifications in the "How did you compute that?" section.
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header" id="headingWhyBeligum">
+                    <h2 class="mb-0">
+                        <button class="btn btn-link collapsed" type="button" data-toggle="collapse"
+                                data-target="#collapseWhyBelgium" aria-expanded="false" aria-controls="collapseWhyBelgium">
+                            Why Belgium?
+                        </button>
+                    </h2>
+                </div>
+                <div id="collapseWhyBelgium" class="collapse" aria-labelledby="headingWhyBelgium" data-parent="#accordionExample">
+                    <div class="card-body">
+                        Because I'm Belgian! As a bonus, the computations are easier since the country is smaller.
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header" id="headingOtherCountries">
+                    <h2 class="mb-0">
+                        <button class="btn btn-link collapsed" type="button" data-toggle="collapse"
+                                data-target="#collapseOtherCountries" aria-expanded="false" aria-controls="collapseOtherCountries">
+                            Is it possible to compute this for other countries?
+                        </button>
+                    </h2>
+                </div>
+                <div id="collapseOtherCountries" class="collapse" aria-labelledby="headingOtherCountries" data-parent="#accordionExample">
+                    <div class="card-body">
+                        <p>
+                            Yes, but it will take time. You need first to get the timetables for all the public transport
+                            providers in your countries. In Belgium, public transportation companies are... public, and so there aren't
+                            so many of them. This may be a bit more complex in your country.
+                        </p>
+
+                        <p>
+                            Then, you'll have to compute the shortest paths from your starting points to everywhere. For Belgium, on my
+                            optimized-but-in-Python script, it takes ~6 minutes. On bigger countries, or, more precisely, on countries with
+                            more bus stops, it will take (much) more time. Computing the map itself will also take more time.
+                        </p>
+
+                        <p>If you are interested, <a href="#contact">contact me</a>, I'll gladly help!</p>
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header" id="headingCompute">
+                    <h2 class="mb-0">
+                        <button class="btn btn-link collapsed" type="button" data-toggle="collapse"
+                                data-target="#collapseCompute" aria-expanded="false" aria-controls="collapseCompute">
+                            How did you compute that?
+                        </button>
+                    </h2>
+                </div>
+                <div id="collapseCompute" class="collapse" aria-labelledby="headingCompute" data-parent="#accordionExample">
+                    <div class="card-body">
+                        <p><b>TL;DR:</b> I downloaded the timetables for all the public transport providers in Belgium
+                            (SNCB/NMBS, TEC, STIB/MIVB, De Lijn), and <i>simply</i>
+                            computed the shortest path from all the stations to everywhere.
+                        </p>
+
+                        <p>
+                            <b>If you are a computer scientist or an enthusiast, here is a bit more detailed summary of what I
+                                did:</b>
+                            I first downloaded the <a href="https://developers.google.com/transit/gtfs/">GTFS</a> feeds from all
+                            the providers in Belgium (SNCB/NMBS, TEC, STIB/MIVB, De Lijn).
+                            There are <b>70730 bus/train stops</b> in Belgium, and <b>1756585 connections per day</b>
+                            (movements of a bus/train/... between two stops). This is true for a specific day, the 18/07/19, which is
+                            the
+                            base of this analysis.
+                        </p>
+
+                        <p>
+                            This forms a nice graph, with 70k nodes and 1.7M edges. Computing the time to reach every node from a
+                            specific
+                            one, is not, however, as simple as running a shortest path algorithm
+                            (such as <a href="https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm">Dijkstra's</a>); as the edges
+                            available to move from one node to another depends on the time: a train only leaves a station at a
+                            specific time, not at every instant.
+                        </p>
+
+                        <p>
+                            We then need a node for each stop, and for each time a bus/train/... departs or arrives at this specific
+                            stop. This is called the <b>time-expanded graph</b> in the literature. The good news is that now, we can
+                            run traditional shortest-path algorithms. The bad one is that, well, the new graph has <b>1.789.163</b>
+                            nodes.
+                        </p>
+
+                        <p>
+                            This obviously is not a trivial size for a graph. However, it falls completely in the "doable" category,
+                            even on my laptop. In order to win some time, I use the fact that the time is strictly going in a single
+                            direction (the TEC does not have DeLorean buses sadly): having the topological sort is free of charge, and
+                            the shortest paths can then be computed in O(V+E).
+                        </p>
+
+                        <p>
+                            Sadly, there is still a catch: if you run the algorithm as-is, you will probably not be able to reach
+                            anywhere, as we did not take into account the fact that you can actually walk between two bus/train/...
+                            stops.
+                            This is actually pretty important, as not allowing walking prevents you from going to a train stop to a bus
+                            stop,
+                            or even to go to the other side of the road to catch a different bus.
+                        </p>
+
+                        <p>
+                            This heavily complexifies the problem! It basically means that now each node of the
+                            (initial, non-time-expanded) graph has a link to all the other nodes (the path on foot), i.e. there are
+                            5 billion edges in the graph. Moreover, I do not know how I could compute easily all those paths.
+                            Should we use Openstreetmap and compute the effective paths?
+                        </p>
+                        <p>
+
+                            This is, by far, too complex. I thus decided to simplify things a bit. First, we will limit the maximum
+                            walk time between two stops at 30 minutes. That means that if two bus stops are 31 minutes apart on foot,
+                            you cannot go there without using an intermediate bus stop, or by taking some form of transport. This limit
+                            the degree of the nodes in the graph to something more reasonable.
+                        </p>
+                        <p>
+                            The other simplification is that I compute all walk path "as the crow flies", not taking into account the
+                            roads, street, or other things. This allows using a simple Euclidean distance computation. I consider that
+                            everyone walks at 3km/h "as the crow flies". Why 3km/h?
+
+                            <a href="https://en.wikipedia.org/wiki/Walking">I trust Wikipedia that says we walk more or less at 5
+                                km/h</a>.
+                            However, that does not take into account the time that you spend to get around building and waiting for
+                            traffic lights to become green. Downscaling this speed is then needed, and I chose 3km/h for this reason.
+                            It is, of course, somewhat arbitrary.
+                        </p>
+
+                        <p>
+                            By adding these walk times to the graph (precomputed once for all bus/train/... stops), the graph is now
+                            bigger, but it is still ok for my (not-so-small) laptop. The next step is super simple: for each time step,
+                            we indicate that the node "start station, time step" is at distance 0. We then run the shortest path
+                            algorithm.
+                            The optimal time to reach another bus/train/... stop is then the minimum, over all time steps, of the
+                            distance
+                            to the nodes representing the stop in the time-expanded graph.
+                        </p>
+
+                        <p>
+                            I decided to run this for all the train stations
+                            in Belgium (600 in total). In order to win time, I used a server that I use for my research at UCLouvain
+                            (thanks, Pierre & Siegfried!).
+                        </p>
+
+                        <p>
+                            Still following me? Good. Now we have, for each train station in Belgium, the minimum time to reach every
+                            bus/train/... stop. Now we need to draw a map from this. This was actually more complex for me
+                            (I'm more into OR/combinatorial optimization than GIS) and I'm not sure I chose the easiest way. What I
+                            decided to do is to produce a polygon for each threshold of 10 minutes. The boundary of the polygon with
+                            threshold X is the set of points that can be reached exactly in X minutes.
+                        </p>
+
+                        <p>
+                            Computing this is straightforward. Let us say we have a threshold X.
+                            Take all the stops that can be reached before X. For each stop respecting this condition, draw a circle
+                            around it.
+                            The radius of the circle, is, for a stop that can be reached at minute Y, the distance that can be
+                            traveled in X-Y minutes. The polygon (yes, I discretize a bit things here) for the threshold X is
+                            simply the union of all the circles. We can then simply display them on a map!
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header" id="headingCode">
+                    <h2 class="mb-0">
+                        <button class="btn btn-link collapsed" type="button" data-toggle="collapse"
+                                data-target="#collapseCode" aria-expanded="false" aria-controls="collapseCode">
+                            Is the source code for this available?
+                        </button>
+                    </h2>
+                </div>
+                <div id="collapseCode" class="collapse" aria-labelledby="headingCode" data-parent="#accordionExample">
+                    <div class="card-body">
+                        <p>Of course, altought it is not very polished.
+                            It is available on a <a href="https://github.com/GuillaumeDerval/publictransportmap">Github repository</a>.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header" id="headingWho">
+                    <h2 class="mb-0">
+                        <button class="btn btn-link collapsed" type="button" data-toggle="collapse"
+                                data-target="#collapseWho" aria-expanded="false" aria-controls="collapseWho">
+                            About me
+                        </button>
+                    </h2>
+                </div>
+                <div id="collapseWho" class="collapse" aria-labelledby="headingWho" data-parent="#accordionExample">
+                    <div class="card-body">
+                        <p>
+                            My name is Guillaume Derval, I'm an computer science engineer currently pursuing a PhD
+                            at <a href="https://www.uclouvain.be">UCLouvain</a>, in Belgium.
+                            My favorite research subjects lies in the field of Operations Research,
+                            Combinatorial Optimization and Constraint Programming, and my PhD is inside all these fields, but
+                            is not linked at all to this work ;-)
+                        </p>
+
+                        <p>
+                            Optimizing public transports is a fascinating topic that I mainly explore during my free time,
+                            but I'll probably make <i>real</i> research on this topic once my PhD is done.
+                        </p>
+
+                        <p>
+                            <a href="https://twitter.com/dervalguillaume">Follow me on twitter!</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!--<br/>
+Hover the map or the legend to see which area you can reach in a given time.<br/>
+Change starting point above or click anywhere to select the nearest SNCB/NMBS station
+<br/>Last map update: July 2019-->
+
+<script>
+    const stationGeoJSON = pegasus('https://d2yehgq2xn236f.cloudfront.net/stations_loc.json');
+
+    function haversineDistance(coords1, coords2) {
+        function toRad(x) {
+            return x * Math.PI / 180;
+        }
+
+        let lon1 = coords1[0];
+        let lat1 = coords1[1];
+
+        let lon2 = coords2[0];
+        let lat2 = coords2[1];
+
+        let x1 = lat2 - lat1;
+        let dLat = toRad(x1);
+        let x2 = lon2 - lon1;
+        let dLon = toRad(x2);
+        let a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        return 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    }
+
+    function interpolateFromBaseColor(color) {
+        return d3.interpolateLab(d3.hsl(color).brighter(1), d3.hsl(color).darker(1));
+    }
+
+    interpolateH05 = interpolateFromBaseColor("#0070FF");
+    interpolateH1 = interpolateFromBaseColor("#00CF00");
+    interpolateH2 = interpolateFromBaseColor("#990");
+    interpolateH3 = interpolateFromBaseColor("#FF0000");
+    interpolateH4 = interpolateFromBaseColor("#9900FF");
+    interpolateH5 = interpolateFromBaseColor("#636363");
+
+    function customInterpolate(t) {
+        if (t < 30) { //half an hour
+            t = t / (30 - 10);
+            return interpolateH05(t);
+        }
+        else if (t < 60) { //1 hour
+            t = (t - 30) / (60 - 10);
+            return interpolateH1(t);
+        }
+        else if (t < 120) { //2 hours
+            t = (t - 60) / (60 - 10);
+            return interpolateH2(t);
+        }
+        else if (t < 180) { //3 hours
+            t = (t - 120) / (60 - 10);
+            return interpolateH3(t);
+        }
+        else if (t < 240) { //4 hours
+            t = (t - 180) / (60 - 10);
+            return interpolateH4(t);
+        }
+        else { //5 hours
+            t = (t - 240) / (60 - 10);
+            return interpolateH5(t);
+        }
+    }
+
+    function tohour(min) {
+        let hours = (min - (min % 60)) / 60;
+        min = min % 60;
+
+        if (hours === 0)
+            return min + "min.";
+        else if (min !== 0)
+            return hours + "h" + min;
+        else
+            return hours + "h00";
+    }
+
+    function computeDesc(t) {
+        return "Between " + tohour(t - 10) + " and " + tohour(t);
+    }
+
+    function setDistanceMap(map, stationId) {
+        if (map.getLayer("custom") !== undefined) {
+            map.removeLayer("custom");
+            map.removeSource("custom");
+        }
+
+        map.addLayer({
+            "id": "custom",
+            "type": "fill",
+            "source": {
+                "type": "vector",
+                "tiles": ["https://d2yehgq2xn236f.cloudfront.net/distanceTiles/" + stationId + "/{z}/{x}/{y}.pbf"],
+                "minzoom": 7,
+                "maxzoom": 10
+            },
+            "source-layer": "distance",
+            "paint": {
+                "fill-color": colors,
+                "fill-opacity": 0.6,
+                "fill-outline-color": "rgba(0, 0, 0, 0)"
+            }
+        }, 'place_other');
+    }
+
+    // Control implemented as ES5 prototypical class
+    function HelloWorldControl() {
+    }
+
+    HelloWorldControl.prototype.onAdd = function (map) {
+        this._map = map;
+        this._btn = document.createElement("button");
+        this._btn.className = "mapboxgl-ctrl-icon icon-train";
+        this._btn.type = "button";
+        this._btn["aria-label"] = "Change source";
+        this._btn["title"] = "Change source";
+        this._btn.onclick = function () {
+            $('#modalChange').modal({});
+        };
+
+        this._container = document.createElement("div");
+        this._container.className = "mapboxgl-ctrl-group mapboxgl-ctrl";
+        this._container.appendChild(this._btn);
+
+        return this._container;
+    };
+
+    HelloWorldControl.prototype.onRemove = function () {
+        this._container.parentNode.removeChild(this._container);
+        this._map = undefined;
+    };
+
+    var map = new mapboxgl.Map({
+        container: 'map', // container id
+        style: "http://localhost:63342/publictransportsmap/vector_viewer/style.json",
+        //style: 'https://d2yehgq2xn236f.cloudfront.net/bg-style.json', // stylesheet location
+        bounds: [[2.4, 51.6], [6.6, 49.4]],
+        maxZoom: 14,
+        minZoom: 7,
+        attributionControl: false
+    });
+    map.setMaxBounds([[0.5, 49], [8, 52]]);
+    map.addControl(new mapboxgl.AttributionControl({
+        compact: true
+    }));
+    map.addControl(new mapboxgl.FullscreenControl({container: document.querySelector('body')}), 'top-right');
+    map.addControl(new HelloWorldControl({container: document.querySelector('body')}), 'top-right');
+
+    colors = ["step", ["get", "l"]];
+    for (let i = 10; i < 500; i += 10) {
+        if (i !== 10)
+            colors.push(i);
+        colors.push(customInterpolate(i - 10));
+    }
+
+    map.on('load', function () {
+        console.log("MAP LOADED");
+
+        // Nasty D3 stuff
+        let co = d3.scaleLinear().domain([0, 300]).range([0, 600]);
+        let xAxis = d3.axisBottom(co).ticks(30).tickSize(20).tickFormat(function (f) {
+            if (f % 60 === 0)
+                return f / 60 + "h";
+            return f % 60;
+        });
+        let svg = d3.select("#legend").attr("viewBox", "0 0 625 30");
+        let key = svg.append("g").attr("class", "key").attr("width", 620).attr("transform", "translate(10,0)");
+
+        key.selectAll(".band")
+            .data(d3.pairs(co.ticks(30)))
+            .enter().append("rect")
+            .attr("class", "band")
+            .attr("height", 20)
+            .attr("opacity", 0.7)
+            .attr("x", function (d) {
+                return co(d[0]);
+            })
+            .attr("width", function () {
+                return 20;
+            })
+            .style("fill", function (d) {
+                return customInterpolate(d[0]);
+            })
+            .on('mouseover', function (d) {
+                map.setFilter('custom', ['all', ['<=', 'l', d[1]]]);
+            })
+            .on('mouseout', function () {
+                map.setFilter('custom', ['all']);
+            });
+        key.call(xAxis);
+
+        let requestedLoc = "sncbS8814001";
+
+        stationGeoJSON.then((data) => {
+            data["features"].sort(function (a, b) {
+                if (a.properties.name < b.properties.name) return -1;
+                return 1;
+            });
+
+            function locationHashChanged() {
+                let isStation = false;
+                let stationIdx = location.hash.slice(1);
+                data["features"].forEach(function (d) {
+                    if (d.properties.idx === stationIdx)
+                        isStation = true;
+                });
+                if (!isStation) {
+                    stationIdx = "sncbS8814001";
+                    //location.hash = stationIdx;
+                }
+                d3.select('select#changePos').property('value', stationIdx);
+                d3.select('#currentStation').text(d3.select('select#changePos option:checked').text());
+                setDistanceMap(map, stationIdx);
+            }
+
+            window.onhashchange = locationHashChanged;
+
+            let select = d3.select('select#changePos');
+            select.selectAll('option').remove().data(data["features"]).enter().append('option')
+                .text(function (d) {
+                    return d.properties.name;
+                })
+                .attr('value', function (d) {
+                    return d.properties.idx;
+                })
+                .attr('selected', function (d) {
+                    return d.properties.idx === requestedLoc ? "selected" : null
+                });
+            select.on('change', function () {
+                //setDistanceMap(map, selectValue);
+                location.hash = d3.select('select#changePos').property('value');
+            });
+
+            map.on('click', function (e) {
+                let popLocation = e.lngLat;
+                let nearestDist = 10000;
+                let nearestId = "";
+                let nearestName = "";
+                let nearestLNG = 0;
+                let nearestLAT = 0;
+                data["features"].forEach(function (d) {
+                    let lng = d.geometry.coordinates[0];
+                    let lat = d.geometry.coordinates[1];
+
+                    let dist = haversineDistance([popLocation.lng, popLocation.lat], [lng, lat]);
+                    if (dist < nearestDist) {
+                        nearestDist = dist;
+                        nearestId = d.properties.idx;
+                        nearestName = d.properties.name;
+                        nearestLNG = lng;
+                        nearestLAT = lat;
+                    }
+                });
+                console.log(nearestId);
+                console.log(nearestName);
+
+                new mapboxgl.Popup()
+                    .setLngLat([nearestLNG, nearestLAT])
+                    .setHTML("Nearest station is " + nearestName + "<br/> <a href='#" + nearestId + "'>Start from here</a>")
+                    .addTo(map);
+            });
+
+            locationHashChanged(); //load the right files
+        });
+    });
+
+
+    var popup = new mapboxgl.Popup({
+        closeButton: false,
+        closeOnClick: false
+    });
+
+    map.on('mouseover', 'custom', function (e) {
+        var description = computeDesc(e.features[0].properties["l"]);
+
+        // Populate the popup and set its coordinates
+        // based on the feature found.
+        popup.trackPointer()
+            .setHTML(description)
+            .addTo(map);
+    });
+
+    map.on('mousemove', 'custom', function (e) {
+        var description = computeDesc(e.features[0].properties["l"]);
+        popup.setHTML(description);
+    });
+
+    map.on('mouseleave', 'custom', function () {
+        map.getCanvas().style.cursor = '';
+        popup.remove();
+    });
+</script>
+
+<div class="modal fade" id="modalChange" tabindex="-1" role="dialog" aria-labelledby="modalChangeTitle"
+     aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalChangeTitle">Change starting point</h5>
+            </div>
+            <div class="modal-body">
+
+                <p>Select a SNCB/NMBS station as starting point:</p>
+                <select id='changePos'>
+                    <option>LOADING</option>
+                </select><br/>
+                <p>You can alternatively click anywhere on the map to see which station is the nearest, and use it as
+                    starting point.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
