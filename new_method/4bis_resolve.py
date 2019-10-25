@@ -2,6 +2,15 @@ import json
 import numpy as np
 import datetime
 from multiprocessing import Pool
+
+
+"""
+in  :   /produce/out.json
+        /produce/distance_walking.json
+out :        
+"""
+
+
 data = json.loads(open('../produce/out.json').read())
 walking_time = json.loads(open('../produce/distance_walking.json').read())
 print("JSON parsed")
@@ -105,6 +114,7 @@ pool = Pool(94)
 for x in pool.imap_unordered(process_thread, [x for x in name_to_idx if x.startswith("sncb")]):
     print(x)
 
+print("end 4bis_resolve.py")
 #print(process_thread("sncbS8814001"))
 #print(process_thread("tecX902afb"))
 #print(process_thread("tecX660afa"))

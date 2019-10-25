@@ -2,13 +2,22 @@ import json
 import time
 from collections import deque
 
-MAX_TIME = 28*60*60//10
+
+"""
+    rajoute des connection pour pouvoir faire un trajet qui s'etant sur 2 jour ???
+
+    in  : ../produce/train_bus_simplified.json
+    out : ../produce/out.json
+"""
+
+MAX_TIME = 28*60*60//10 #todo 24 or 28
 
 print("--- Loading data")
 data = json.load(open("../produce/train_bus_simplified.json"))
 
 idx_to_name = list(data.keys())
 name_to_idx = {x: i for i, x in enumerate(idx_to_name)}
+print(name_to_idx)
 
 #walking_time = json.load(open("../produce/distance_walking.json"))
 #walking_time = {name_to_idx[x]: [(a, name_to_idx[b]) for a,b in y] for x, y in walking_time.items()}

@@ -7,6 +7,13 @@ import sklearn.neighbors
 from utils import haversine, distance_to_walking_time, MAX_WALKING_TIME, MAX_RADIUS, decaround
 
 
+""" 
+    For each paire of station located at less than MAX_RADIUS, add an edge between the 2 stations.
+    the time of this edge correspond to a straight ahead walk between the stations
+    
+    in  : ../produce/train_bus_simplified.json
+    out : ../produce/distance_walking.json
+"""
 def compute_stations_walking_time(data):
     idxes = list(data.keys())
 

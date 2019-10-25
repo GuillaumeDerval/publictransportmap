@@ -8,12 +8,22 @@ import sklearn.neighbors
 
 from utils import haversine, distance_to_walking_time, MAX_WALKING_TIME, MAX_RADIUS, mean_latlon, decaround
 
+"""
+Simplifie the time step : departure_time and arrival_time are now given by step of 10 seconds 
+
+in  : ../produce/train_bus.json 
+
+out : ../produce/train_bus_simplified.json
+
+"""
 # inside a group of nodes to be merged, two nodes must be at max 200 meters from each others.
 # why 200? because it's more than 100 and less than 300 ;-)
 MAX_SIMPLIFCATION_RADIUS = 0.2
 
+
 def elect_leader(data, cluster):
     return min(cluster, key=lambda x: (0 if x.startswith("sncb") else 1, len(data[x]["nei"])))
+
 
 def simplify_noinbound(data):
     #TODO does not work!
@@ -89,16 +99,18 @@ def simplify_clustering(data):
     print("NB NEW NODES {}".format(len(leaders)))
     return leaders
 
+
 def simplify_time(data):
     # everything is in seconds. Let us use 10's of seconds
     for x in data:
         data[x]["nei"] = [(a,decaround(b)//10,decaround(c)//10) for a, b, c in data[x]["nei"]]
     return data
 
+
 print("LOADING")
 data = json.load(open("../produce/train_bus.json"))
 print("SIMPLIFY")
-#data = simplify_noinbound(simplify_clustering(data))
+#data = simplify_noinbound(simplify_clustering(data)) #todo
 data = simplify_time(data)
 print("SAVING")
 json.dump(data, open("../produce/train_bus_simplified.json", "w"))
