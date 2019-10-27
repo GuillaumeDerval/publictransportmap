@@ -21,7 +21,32 @@ out :   ../data/travel_user.json
 #######################################################################################################################                                               
 """
 
-def extract_data(in_path, out_path):
+
+def extract_locality_municipality(pos_loc_path, loc_muni_path, out_path):
+    def sort_loc(loc):
+        return loc["zip"]
+
+    pos_loc = json.load(open(pos_loc_path))
+    pos_loc.sort(key=sort_loc)
+    idx = 0
+    out = []
+
+    with open(os.path.join(loc_muni_path), newline= '') as csvfile:
+        reader = csv.DictReader(csvfile, delimiter=';')
+        for row in reader:
+            while row["\ufeffCode postal"] > pos_loc[idx]["zip"]:
+                #print("miss", row["\ufeffCode postal"], pos_loc[idx]["zip"])
+                idx += 1
+
+            while idx < len(pos_loc) and row["\ufeffCode postal"] == pos_loc[idx]["zip"]:
+                out.append({"municipality": row["Commune principale"], "post" :pos_loc[idx]["zip"], "locality": pos_loc[idx]["city"],
+                            "lat": pos_loc[idx]["lat"],"lon" : pos_loc[idx]["lng"]})
+                idx += 1
+
+    json.dump(out, open(out_path, "w"))
+
+
+def extract_travel(in_path, out_path):
     travel = []
     with open(in_path, newline='') as csvfile:
         reader = csv.DictReader(csvfile, delimiter='|')
@@ -31,7 +56,6 @@ def extract_data(in_path, out_path):
             work = row["TX_MUNTY_WORK_DESCR_FR"]
             n = row["OBS_VALUE"]
             if len(travel) > 0  and work == travel[len(travel)-1]["work"] and resid == travel[len(travel)-1]["residence"]:
-
                 travel[len(travel)-1] = {"residence": resid, "work": work, "n": int(n) + int(travel[len(travel)-1]["n"])}
             else :
                 travel.append({"residence": resid, "work": work, "n": n})
@@ -43,7 +67,7 @@ def extract_data(in_path, out_path):
 
 
 def extract_small():
-    data = json.load(open("data/travel_user.json"))
+    data = json.load(open("out_dir/travel_user.json"))
     cities = data["cities"]
     travel = data["travel"]
     small_cities = cities[68:86]  # Bruxelles
@@ -52,8 +76,11 @@ def extract_small():
         if t["residence"] in small_cities and t["work"] in small_cities:
             small_travel.append(t)
     small = {"cities": small_cities, "travel": small_travel}
-    json.dump(small, open("data/travel_small.json", "w"))
+    json.dump(small, open("out_dir/travel_small.json", "w"))
 
-extract_data("data/TU_CENSUS_2011_COMMUTERS_MUNTY.txt","data/travel_user.json")
+
+extract_locality_municipality(pos_loc_path="data/zipcode-belgium.json", loc_muni_path="data/zipcodes_num_fr_new.csv",
+                              out_path="out_dir/locality_municipality.json")
+extract_travel(in_path="data/TU_CENSUS_2011_COMMUTERS_MUNTY.txt", out_path= "out_dir/travel_user.json")
 extract_small()
 print("finish")
