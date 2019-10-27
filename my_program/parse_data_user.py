@@ -3,26 +3,30 @@ import json
 import os
 
 """####################################################################################################################
-Convert the data from the census into a json with the form :
-{
-        cities: ["municipality",...],
-        travel: [
-            {"residence" : "municipality_residence"
-            "work" : "municipality_work"
-            "count" : 0
-            },...
-            
-        ]
-     }
+todo
 
 in  : ../data/TU_CENSUS_2011_COMMUTERS_MUNTY.txt
+todo
 
 out :   ../data/travel_user.json
+todo
 #######################################################################################################################                                               
 """
 
 
 def extract_locality_municipality(pos_loc_path, loc_muni_path, out_path):
+    """
+    Associate mun icipality locality and position
+     [
+        {
+            municipality: "name",
+            post : 0000,
+            locality : "name",
+            position: (lat, lon)
+        }
+     ]
+
+    """
     def sort_loc(loc):
         return loc["zip"]
 
@@ -40,13 +44,63 @@ def extract_locality_municipality(pos_loc_path, loc_muni_path, out_path):
 
             while idx < len(pos_loc) and row["\ufeffCode postal"] == pos_loc[idx]["zip"]:
                 out.append({"municipality": row["Commune principale"], "post" :pos_loc[idx]["zip"], "locality": pos_loc[idx]["city"],
-                            "lat": pos_loc[idx]["lat"],"lon" : pos_loc[idx]["lng"]})
+                            "position": (pos_loc[idx]["lat"], pos_loc[idx]["lng"])})
                 idx += 1
 
     json.dump(out, open(out_path, "w"))
 
 
+def municipality_position(locality_municipality_path, out_path):
+    """
+    Give the position of each locality in a municipality and their mean:
+    [
+        {
+            municipality: "name",
+            mean : (lat,lon)
+            positions: [(lat, lon), ...]
+        }
+    ]
+    """
+    def sort_muni(loc):
+        return loc["municipality"]
+
+    pos = json.load(open(locality_municipality_path))
+    pos.sort(key = sort_muni)
+    i = 0
+    mun_pos = []
+    while i < len(pos):
+        m = pos[i]["municipality"]
+        pos_list = []
+        lat_mean = 0
+        lon_mean = 0
+        while i < len(pos) and m == pos[i]["municipality"]:
+            pos_list.append((pos[i]["position"]))
+            lat_mean += pos[i]["position"][0]
+            lon_mean += pos[i]["position"][1]
+            i += 1
+        mun_pos.append({"municipality": m, "mean": (lat_mean/len(pos_list),lon_mean/len(pos_list)), "position" : pos_list})
+        i+= 1
+    json.dump(mun_pos, open(out_path, "w"))
+
+
 def extract_travel(in_path, out_path):
+    """
+    Convert the data from the census into a json with the form :
+    {
+            cities: ["municipality",...],
+            travel: [
+                {"residence" : "municipality_residence"
+                "work" : "municipality_work"
+                "count" : 0
+                },...
+
+            ]
+         }
+
+    in  : ../data/TU_CENSUS_2011_COMMUTERS_MUNTY.txt
+
+    out :   ../data/travel_user.json
+    """
     travel = []
     with open(in_path, newline='') as csvfile:
         reader = csv.DictReader(csvfile, delimiter='|')
@@ -66,6 +120,7 @@ def extract_travel(in_path, out_path):
     json.dump(out, open(out_path, "w"))
 
 
+#travel for bruxelles
 def extract_small():
     data = json.load(open("out_dir/travel_user.json"))
     cities = data["cities"]
@@ -79,8 +134,10 @@ def extract_small():
     json.dump(small, open("out_dir/travel_small.json", "w"))
 
 
+
 extract_locality_municipality(pos_loc_path="data/zipcode-belgium.json", loc_muni_path="data/zipcodes_num_fr_new.csv",
                               out_path="out_dir/locality_municipality.json")
-extract_travel(in_path="data/TU_CENSUS_2011_COMMUTERS_MUNTY.txt", out_path= "out_dir/travel_user.json")
-extract_small()
+municipality_position("out_dir/locality_municipality.json", "out_dir/municipality_position.json")
+#extract_travel(in_path="data/TU_CENSUS_2011_COMMUTERS_MUNTY.txt", out_path= "out_dir/travel_user.json")
+#extract_small()
 print("finish")
