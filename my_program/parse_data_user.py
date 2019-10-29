@@ -16,7 +16,7 @@ todo
 
 def extract_locality_municipality(pos_loc_path, loc_muni_path, out_path):
     """
-    Associate mun icipality locality and position
+    Associate municipality locality and position
      [
         {
             municipality: "name",
@@ -39,14 +39,13 @@ def extract_locality_municipality(pos_loc_path, loc_muni_path, out_path):
         reader = csv.DictReader(csvfile, delimiter=';')
         for row in reader:
             while row["\ufeffCode postal"] > pos_loc[idx]["zip"]:
-                #print("miss", row["\ufeffCode postal"], pos_loc[idx]["zip"])
+                print("miss", row["\ufeffCode postal"], pos_loc[idx]["zip"])
                 idx += 1
 
             while idx < len(pos_loc) and row["\ufeffCode postal"] == pos_loc[idx]["zip"]:
                 out.append({"municipality": row["Commune principale"], "post" :pos_loc[idx]["zip"], "locality": pos_loc[idx]["city"],
                             "position": (pos_loc[idx]["lat"], pos_loc[idx]["lng"])})
                 idx += 1
-
     json.dump(out, open(out_path, "w"))
 
 
@@ -65,21 +64,24 @@ def municipality_position(locality_municipality_path, out_path):
         return loc["municipality"]
 
     pos = json.load(open(locality_municipality_path))
+    print(pos)
     pos.sort(key = sort_muni)
     i = 0
     mun_pos = []
     while i < len(pos):
         m = pos[i]["municipality"]
-        pos_list = []
-        lat_mean = 0
-        lon_mean = 0
-        while i < len(pos) and m == pos[i]["municipality"]:
+        pos_list = [(pos[i]["position"])]
+        lat_mean = pos[i]["position"][0]
+        lon_mean = pos[i]["position"][1]
+        while i +1 < len(pos) and m == pos[i + 1]["municipality"]:
+            i += 1
             pos_list.append((pos[i]["position"]))
             lat_mean += pos[i]["position"][0]
             lon_mean += pos[i]["position"][1]
-            i += 1
+
         mun_pos.append({"municipality": m, "mean": (lat_mean/len(pos_list),lon_mean/len(pos_list)), "position" : pos_list})
         i+= 1
+    print(len(mun_pos))
     json.dump(mun_pos, open(out_path, "w"))
 
 
@@ -91,7 +93,7 @@ def extract_travel(in_path, out_path):
             travel: [
                 {"residence" : "municipality_residence"
                 "work" : "municipality_work"
-                "count" : 0
+                "n" : 0
                 },...
 
             ]
@@ -101,13 +103,21 @@ def extract_travel(in_path, out_path):
 
     out :   ../data/travel_user.json
     """
+    def clean_parenthesis(str):
+        ind  = str.find("(")
+        if ind >= 0:
+            str = str[:ind].strip()
+        return str
+
+
+
     travel = []
     with open(in_path, newline='') as csvfile:
         reader = csv.DictReader(csvfile, delimiter='|')
         idx = 0
         for row in reader:
-            resid = row["TX_MUNTY_RESIDENCE_DESCR_FR"]
-            work = row["TX_MUNTY_WORK_DESCR_FR"]
+            resid = clean_parenthesis(row["TX_MUNTY_RESIDENCE_DESCR_FR"])
+            work = clean_parenthesis(row["TX_MUNTY_WORK_DESCR_FR"])
             n = row["OBS_VALUE"]
             if len(travel) > 0  and work == travel[len(travel)-1]["work"] and resid == travel[len(travel)-1]["residence"]:
                 travel[len(travel)-1] = {"residence": resid, "work": work, "n": int(n) + int(travel[len(travel)-1]["n"])}
@@ -117,7 +127,11 @@ def extract_travel(in_path, out_path):
     cities = [t["residence"] for t in travel]
     cities = list(dict.fromkeys(cities))
     out = {"cities": cities, "travel":  travel}
+    print(len(out["cities"]))
     json.dump(out, open(out_path, "w"))
+
+
+
 
 
 #travel for bruxelles
@@ -138,6 +152,6 @@ def extract_small():
 extract_locality_municipality(pos_loc_path="data/zipcode-belgium.json", loc_muni_path="data/zipcodes_num_fr_new.csv",
                               out_path="out_dir/locality_municipality.json")
 municipality_position("out_dir/locality_municipality.json", "out_dir/municipality_position.json")
-#extract_travel(in_path="data/TU_CENSUS_2011_COMMUTERS_MUNTY.txt", out_path= "out_dir/travel_user.json")
-#extract_small()
+extract_travel(in_path="data/TU_CENSUS_2011_COMMUTERS_MUNTY.txt", out_path= "out_dir/travel_user.json")
+extract_small()
 print("finish")
