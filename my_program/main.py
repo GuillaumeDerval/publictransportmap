@@ -24,9 +24,9 @@ def get_closest_stop_muni():
         for stop in data_stop:
             dist = distance(float(muni["mean"][1]),float(muni["mean"][0]), float(data_stop[stop]["lon"]),float(data_stop[stop]["lat"]))
             if not(name in clst):
-                clst[name] = {"stop_id": stop,"position": (data_stop[stop]["lon"], data_stop[stop]["lat"]), "dist": dist}
+                clst[name] = {"stop": stop,"position": (data_stop[stop]["lon"], data_stop[stop]["lat"]), "dist": dist}
             elif dist < clst[name]["dist"]:
-                clst[name] = {"stop_id": stop, "position": (data_stop[stop]["lon"], data_stop[stop]["lat"]), "dist": dist}
+                clst[name] = {"stop": stop, "position": (data_stop[stop]["lon"], data_stop[stop]["lat"]), "dist": dist}
 
     return clst
 
@@ -34,18 +34,36 @@ clst = get_closest_stop_muni()
 
 
 
+#todo remove ____________________________________________________
+data = json.loads(open('../produce/out.json').read())
+idx_to_name = data["idx_to_name"]
+name_to_idx = {x: i for i, x in enumerate(idx_to_name)}
+
+#todo remove ____________________________________________________
+
 #
 travel = json.load(open("out_dir/travel_small.json"))["travel"]
-
+travel.sort(key=(lambda x: x["residence"]))
 count_user = 0
 tot_time = 0
 
-for trav in travel[:]:
-    if not (trav["residence"].upper() in clst) : print (trav["residence"])
-    if not (trav["work"].upper() in clst): print(trav["work"])
-    stop_rsd = clst[trav["residence"].upper()]
-    stop_work = clst[trav["work"].upper()]
-    weight = trav["n"]
+for trav in travel:
+    stop_rsd = ""
+    travel_time = None
+    if clst[trav["residence"].upper()] != stop_rsd:
+        stop_rsd = clst[trav["residence"].upper()]["stop"]
+        path = "../produce/out/{0}.npy".format(stop_rsd)
+        travel_time = np.load(path)
 
-    #real_time = np.load("../produce/out/sncb8015345.npy")
+    stop_work = clst[trav["work"].upper()]["stop"]
+    n = trav["n"]
+
+    #computation
+    count_user += n
+    tot_time += n* travel_time[name_to_idx[stop_work]]#travel_time[name_to_idx[stop_work]]
+
+mean = tot_time/count_user
+print("mean time in decasecond : ",mean)
+print("mean time in {0} h {1} ".format(mean//360,(mean//6)%60))
+
 print("end")
