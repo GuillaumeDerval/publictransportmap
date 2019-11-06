@@ -50,17 +50,25 @@ tot_time = 0
 for trav in travel:
     stop_rsd = ""
     travel_time = None
-    if clst[trav["residence"].upper()] != stop_rsd:
-        stop_rsd = clst[trav["residence"].upper()]["stop"]
+    if trav["residence"][0].upper() in clst:
+        new_stop_rsd = clst[trav["residence"][0].upper()]["stop"]
+    else:
+        new_stop_rsd = clst[trav["residence"][1].upper()]["stop"]
+    if new_stop_rsd != stop_rsd:
+        stop_rsd = new_stop_rsd
         path = "../produce/out/{0}.npy".format(stop_rsd)
         travel_time = np.load(path)
 
-    stop_work = clst[trav["work"].upper()]["stop"]
-    n = trav["n"]
+    if trav["work"][0].upper() in clst:
+        stop_work = clst[trav["work"][0].upper()]["stop"]
+    else:
+        stop_work = clst[trav["work"][1].upper()]["stop"]
+
+    n = int(trav["n"])
 
     #computation
     count_user += n
-    tot_time += n* travel_time[name_to_idx[stop_work]]#travel_time[name_to_idx[stop_work]]
+    tot_time += n * travel_time[name_to_idx[stop_work]]#travel_time[name_to_idx[stop_work]]
 
 mean = tot_time/count_user
 print("mean time in decasecond : ",mean)
