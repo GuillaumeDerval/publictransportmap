@@ -54,7 +54,7 @@ def process_nodes(data):
     return d
 
 def process_node(name, content):
-    connections = sorted(content, key=lambda x: x[1])
+    connections = sorted(content, key=lambda x: x[1]) # sort by start time
     possible_times = sorted(used_nodes[name])
     c_id = 0
 

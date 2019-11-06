@@ -1,10 +1,21 @@
 import csv
 import json
-from shapely.geometry import shape, GeometryCollection
-from shapely.ops import cascaded_union, Point
 
+from my_program.my_utils import *
+from my_program.map import *
 
-#todo conversion : la carte est en belgin lambert tandis que les gare sont en WGS84(lon, lat)
+# Cet class est charger de determiner au mieux les trajet a prendre en compte ainsi que leur poids(nombre d'utilisateur)
+"""####################################################################################################################
+todo
+
+in  : ../data/TU_CENSUS_2011_COMMUTERS_MUNTY.txt
+todo
+
+out :   ../data/travel_user.json
+todo
+#######################################################################################################################                                               
+"""
+
 
 def extract_travel(in_path, out_path):
     """
@@ -44,7 +55,6 @@ def extract_travel(in_path, out_path):
     json.dump(out, open(out_path, "w"))
 
 
-
 #travel for bruxelles
 def extract_small():
     data = json.load(open("out_dir/travel_user.json"))
@@ -58,49 +68,6 @@ def extract_small():
     small = {"cities": small_cities, "travel": small_travel}
     json.dump(small, open("out_dir/travel_small.json", "w"))
 
-# manipulation de la carte de belgique
-
-def get_center_munty():
-    with open("data/sh_statbel_statistical_sectors.geojson") as f:
-      features = json.load(f)["features"]
-      munty = {} #key = refnis
-      for elem in features[:50]:
-            refnis = elem["properties"]["CD_MUNTY_REFNIS"]
-            if refnis in munty:
-                munty[refnis].union(shape(elem["geometry"]).buffer(0))
-            else:
-                munty[refnis] = shape(elem["geometry"]).buffer(0)
-      for refnis in munty:
-          munty[refnis] = munty[refnis].centroid
-          print(munty[refnis].centroid)
-    return munty
-
-# NOTE: buffer(0) is a trick for fixing scenarios where polygons have overlapping coordinates
-#G = GeometryCollection([shape(feature["geometry"]).buffer(0) for feature in features])
-
-
-def WGS84_to_Lambert(point):
-    """ IN: point : (longitude, latitude)
-        OUT: (x,y) in Belgian lambert
-    """
-    #todo
-    pass
-
-def Lambert_to_WGS84(point):
-    """ IN: point : ((x,y) in Belgian lambert
-        OUT: (longitude, latitude)
-     """
-    #todo
-    pass
-
-def distanceLambert(p1, p2):
-    #todo
-    pass
-
-def distanceWGS84(p1, p2):
-    #todo
-    pass
-# situer les personnes et leur trajet en belgique
 
 # find closest stop from a munty center
 def get_closest_stop_muni():
@@ -116,10 +83,10 @@ def get_closest_stop_muni():
         stop_pos.append((id, pos))
 
     clst = {}
-    for muni,refnis in data_travel["cities"]:
+    for muni, refnis in data_travel["cities"]:
         for stop, pos in stop_pos:
-            dist = distanceLambert(data_pos[refnis],pos)
-            if not((muni,refnis) in clst) or dist < clst[(muni,refnis)]["dist"]: # if not yet in dico or better value
-                clst[(muni,refnis)] = {"stop": stop,"position": pos, "dist": dist} # add/update dico
+            dist = distance_Eucli(data_pos[refnis], pos)
+            if not((muni, refnis) in clst) or dist < clst[(muni, refnis)]["dist"]: # if not yet in dico or better value
+                clst[(muni, refnis)] = {"stop": stop, "position": pos, "dist": dist} # add/update dico
 
     return clst
