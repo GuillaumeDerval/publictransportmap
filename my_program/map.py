@@ -7,7 +7,7 @@ def get_center_munty():
     with open("data/sh_statbel_statistical_sectors.geojson") as f:
       features = json.load(f)["features"]
       munty = {} #key = refnis
-      for elem in features[:50]:
+      for elem in features:
             refnis = elem["properties"]["CD_MUNTY_REFNIS"]
             if refnis in munty:
                 munty[refnis].union(shape(elem["geometry"]).buffer(0))
@@ -15,10 +15,11 @@ def get_center_munty():
                 munty[refnis] = shape(elem["geometry"]).buffer(0)
       for refnis in munty:
           munty[refnis] = munty[refnis].centroid
-          print(munty[refnis].centroid)
+          print("refnis",refnis, munty[refnis].centroid)
     return munty
 
 # NOTE: buffer(0) is a trick for fixing scenarios where polygons have overlapping coordinates
 #G = GeometryCollection([shape(feature["geometry"]).buffer(0) for feature in features])
 
-
+p = Point(0,1)
+p
