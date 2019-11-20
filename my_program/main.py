@@ -49,3 +49,14 @@ print("mean time in decasecond : ", mean)
 print("mean time in {0} h {1} ".format(mean // 360, (mean // 6) % 60))
 print(unreachable, "trajet n'ont pas pu etre effectué soit ", unreachable/count_user, "% ")
 print("end")
+
+#______________MAIN_____________________
+# compute walking distrib
+# for org, dest in travel :
+#   Tc_travel = ...
+#   for stop_org in getReacahable_stop(org)
+#        for stop_dest in getReacahable_stop(dest)
+#            list_distrib.append(sum_distrib(stop_org,stop_dest)
+#   travel_time distrib = min(list_distrib)
+#   mean += travel_time distrib.mean()*peopole
+# mean /totpeople
