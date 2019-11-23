@@ -12,7 +12,7 @@ class my_map:
         self.__munty_map = {}
         self.__set_shape_sector(path)
         self.__set_shape_munty(path)
-        map.map = self
+        my_map.belgium_map = self
 
     def __set_shape_sector(self,path):
         with open(path) as f:
@@ -34,8 +34,7 @@ class my_map:
                         self.__munty_map[refnis]["shape"].union(shape(elem["geometry"]).buffer(0))
                         self.__munty_map[refnis]["sector_ids"].append(sector_id)
                     else:
-                        self.__munty_map[refnis]["shape"] = shape(elem["geometry"]).buffer(0)
-                        self.__munty_map[refnis]["sector_ids"] = [sector_id]
+                        self.__munty_map[refnis] = {"shape" : shape(elem["geometry"]).buffer(0) , "sector_ids" : [sector_id]}
 
     def get_shape_sector(self, sector_id):
         return self.__sector_map[sector_id]

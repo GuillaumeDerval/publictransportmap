@@ -15,7 +15,8 @@ from my_program.my_utils import get_stop_pos__belgian_lambert
 population_by_sector_2019_path = "data/OPEN_DATA_SECTOREN_2019.csv"
 #population_by_sector_2011_path = "data/OPEN_DATA_SECTOREN_2011.csv"
 #population_by_square = ""
-SPEED = WALKING_SPEED /3.6 #in m/s
+SPEED = WALKING_SPEED /0.06 #in m/s
+SPEED = 20 /0.06 #in m/s
 
 
 def sectors_population( path):
@@ -45,11 +46,11 @@ def walking_time_distrib_sector(stop, munty, max_walking_time):
     #compute population of the munty
     tot_pop_munty = 0
     for sect in sector_list:
-        pop = sector_pop[sect]
+        pop = int(sector_pop[sect])
         if map.get_shape_sector(sect).area > 0: # don't count people that we can't not place
             tot_pop_munty += pop
 
-    distrib = [-1]* (max_walking_time+1)
+    distrib = [-1]* (max_walking_time)
     for time in range(max_walking_time):
         radius = (time + 0.5)*SPEED         # to get a roughly mean time of radius minutes
         stop_x, stop_y = stop[1]
@@ -60,11 +61,11 @@ def walking_time_distrib_sector(stop, munty, max_walking_time):
             sector_area = sector_shape.area
             if sector_area > 0:
                 intersect_area = sector_shape.intersection( circle).area  # intersection
-                pop = sector_pop[sect]*intersect_area/sector_area
+                pop = int(sector_pop[sect])*intersect_area/sector_area
                 tot += pop
             else : print("probleme sector area : ",sector_pop[sect], "persons concerned" )
         distrib[time] = tot/tot_pop_munty
-    distrib[max_walking_time+1] = tot_pop_munty # unreached
+    #distrib[max_walking_time] = tot_pop_munty # unreached
     return distrib
 
 
@@ -83,7 +84,7 @@ def get_reachable_stop(stop_list, munty, max_walking_time):
     reachable_stop = []
     if my_map.belgium_map is None : map = my_map()
     else: map = my_map.belgium_map
-    munty_shape =  map.get_shape_munty(munty).exterior
+    munty_shape = map.get_shape_munty(munty).exterior
 
     for stop in stop_list:
         pos_point = Point(stop[1][0], stop[1][1])
@@ -100,7 +101,7 @@ def get_all_walking_time_distrib(stop_list, munty_list, max_walking_time):
     :param stop_list: [(stop_id, (coord_x, coord_y)),...]
     :param munty_list: list of refnis
     :param max_walking_time: int
-    :return: dictionnary : {stop_id + 10000* munty : (prop_0_min, prop_1_min ,..., prop_max_time_min, prop_not_counted)}
+    :return: dictionnary : {(stop_id, munty) : (prop_0_min, prop_1_min ,..., prop_max_time_min, prop_not_counted)}
     """
     all_distrib = {}
 
@@ -109,13 +110,12 @@ def get_all_walking_time_distrib(stop_list, munty_list, max_walking_time):
         for stop in reduced_stop_list:
             distrib = walking_time_distrib_sector(stop, munty,  max_walking_time)
             stop_id = stop[0]
-            all_distrib[stop_id + 10000* munty] = distrib
+            all_distrib[(stop_id, munty)] = distrib
     return all_distrib
 
 if __name__ == '__main__':
-    stops = get_stop_pos__belgian_lambert()
-    json.dump(stops, open("out_dir/stop_lambert_pos.json", "w"))
-    #munty =  json.load(open("out_dir/travel_small.json"))["cities"]
-    #refnis = [r[1] for r in munty]
-    #dico = get_all_walking_time_distrib(stops, refnis, max_walking_time= 5 * 60)
+    stops = json.load(open("out_dir/stop_lambert_pos.json", "r"))
+    munty =  json.load(open("out_dir/travel_small.json"))["cities"]
+    refnis = [r[1] for r in munty]
+    dico = get_all_walking_time_distrib(stops, refnis, max_walking_time= 20)
     #json.dump(dico, open("out_dir/walk_distribution.json", "w"))
