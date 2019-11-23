@@ -1,6 +1,6 @@
 from math import sqrt
 from pyproj import Proj, transform
-
+import json
 
 # Set of use-full function for conversion and distance
 
@@ -31,3 +31,12 @@ def distanceWGS84(p1, p2):
     #todo
     assert 0==1, "unimplemented"
 
+
+def get_stop_pos__belgian_lambert():
+    data_stop = json.load(open("../produce/train_only.json"))
+    stop_pos = []
+    for stop in data_stop:
+        id = stop
+        pos = WGS84_to_Lambert((float(data_stop[stop]["lon"]), float(data_stop[stop]["lat"])))
+        stop_pos.append((id, pos))
+    return stop_pos

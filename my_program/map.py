@@ -3,13 +3,16 @@ import json
 from shapely.geometry import shape, GeometryCollection
 from shapely.ops import cascaded_union, Point
 
-class map:
+
+class my_map:
+    belgium_map = None
 
     def __init__(self, path = "data/sh_statbel_statistical_sectors.geojson"):
         self.__sector_map = {}
         self.__munty_map = {}
         self.__set_shape_sector(path)
         self.__set_shape_munty(path)
+        map.map = self
 
     def __set_shape_sector(self,path):
         with open(path) as f:
@@ -52,5 +55,3 @@ class map:
         return munty_center
 # NOTE: buffer(0) is a trick for fixing scenarios where polygons have overlapping coordinates
 #G = GeometryCollection([shape(feature["geometry"]).buffer(0) for feature in features])
-
-m = map()

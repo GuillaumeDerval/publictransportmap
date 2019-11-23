@@ -72,18 +72,18 @@ def extract_small():
     json.dump(small, open("out_dir/travel_small.json", "w"))
 
 
+
 # find closest stop from a munty center
 def get_closest_stop_muni():
+    if my_map.belgium_map is None : map = my_map()
+    else: map = my_map.belgium_map
+    data_pos = map.get_center_munty()
     data_travel = json.load(open("out_dir/travel_user.json"))
-    data_stop = json.load(open("../produce/train_only.json"))
-    data_pos = get_center_munty()
+
+
 
     #convert stop position into belgian Lambert
-    stop_pos = []
-    for stop in data_stop:
-        id = stop
-        pos = WGS84_to_Lambert((float(data_stop[stop]["lon"]), float(data_stop[stop]["lat"])))
-        stop_pos.append((id, pos))
+    stop_pos = get_stop_pos__belgian_lambert()
 
     clst = {}
     for muni, refnis in data_travel["cities"]:

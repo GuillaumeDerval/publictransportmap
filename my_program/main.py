@@ -50,6 +50,8 @@ print("mean time in {0} h {1} ".format(mean // 360, (mean // 6) % 60))
 print(unreachable, "trajet n'ont pas pu etre effectué soit ", unreachable/count_user, "% ")
 print("end")
 
+
+
 #______________MAIN_____________________
 # compute walking distrib
 # for org, dest in travel :
