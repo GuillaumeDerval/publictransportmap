@@ -9,12 +9,11 @@ import csv
 from my_program.map import *
 from utils import WALKING_SPEED
 from shapely.geometry import Point
-from my_program.my_utils import get_stop_pos__belgian_lambert
-
+from my_program.stat_distrib import Distribution
 
 population_by_sector_2019_path = "data/OPEN_DATA_SECTOREN_2019.csv"
-#population_by_sector_2011_path = "data/OPEN_DATA_SECTOREN_2011.csv"
-#population_by_square = ""
+# population_by_sector_2011_path = "data/OPEN_DATA_SECTOREN_2011.csv"
+# population_by_square = ""
 SPEED = WALKING_SPEED /0.06 #in m/s
 
 
@@ -39,18 +38,18 @@ def walking_time_distrib_sector(stop, munty, max_walking_time):
     """
     if my_map.belgium_map is None : map = my_map()
     else: map = my_map.belgium_map
-    #munty_shape = map.get_shape_munty(munty)
+    # munty_shape = map.get_shape_munty(munty)
     sector_list = map.get_sector_ids(munty)
     sector_pop = sectors_population(population_by_sector_2019_path)
 
-    #compute population of the munty
+    # compute population of the munty
     tot_pop_munty = 0
     for sect in sector_list:
         pop = int(sector_pop[sect])
         if map.get_shape_sector(sect).area > 0: # don't count people that we can't not place
             tot_pop_munty += pop
 
-    distrib = [-1]* (max_walking_time)
+    distrib = [-1]* max_walking_time
     for time in range(max_walking_time):
         radius = (time + 0.5)*SPEED         # to get a roughly mean time of radius minutes
         stop_x, stop_y = stop[1]
@@ -65,8 +64,8 @@ def walking_time_distrib_sector(stop, munty, max_walking_time):
                 tot += pop
             else : print("probleme sector area : ",sector_pop[sect], "persons concerned" )
         distrib[time] = tot/tot_pop_munty
-    #distrib[max_walking_time] = tot_pop_munty # unreached
-    return distrib
+    # distrib[max_walking_time] = tot_pop_munty # unreached
+    return Distribution(distrib)
 
 
 
@@ -112,5 +111,3 @@ def get_all_walking_time_distrib(stop_list, munty_list, max_walking_time):
             stop_id = stop[0]
             all_distrib[(stop_id, munty)] = distrib
     return all_distrib
-
-if __name__ == '__main__':

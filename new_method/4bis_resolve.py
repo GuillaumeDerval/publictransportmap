@@ -22,7 +22,7 @@ MAX_TIME = data["max_time"]
 used_nodes = data["used_nodes"]
 data = None
 
-walking_time = {name_to_idx[x]: [(a, name_to_idx[b]) for a,b in y] for x, y in walking_time.items()}
+walking_time = {name_to_idx[x]: [(a, name_to_idx[b]) for a, b in y] for x, y in walking_time.items()}
 
 # Generate graph points
 #used_nodes_next_time = [[-1] * MAX_TIME for x in used_nodes]
@@ -49,12 +49,12 @@ for x in range(len(used_nodes)):
 
 print("Processing done")
 
-def compute_for_node(idx):
+def compute_for_node(idx):  #idx =  stop_id (only sncb)
     todo = [[] for _ in range(0, MAX_TIME)]
 
-    distance = {x: np.int(-1) for x in graph}
-    for time in used_nodes[idx]:
-        distance[idx*MAX_TIME+time] = np.int(0)
+    distance = {x: np.int(-1) for x in graph} #un noeud  x pour chaque stop_time.
+    for time in used_nodes[idx]:   #time(in 10sec)
+        distance[idx*MAX_TIME+time] = np.int(0) # distance to reach the source node(idx*MAX_TIME+time) = 0
         todo[time].append(idx*MAX_TIME+time)
 
     min_dist_to_node = np.full((len(idx_to_name),), -1, dtype=np.int)
@@ -110,6 +110,8 @@ def process_thread(x):
     np.save("../produce/out/" + x + ".npy", y.astype(np.int16))
     return x, datetime.datetime.now() - start
 
+
+# process_thread("sncb8015345")
 pool = Pool(94)
 for x in pool.imap_unordered(process_thread, [x for x in name_to_idx if x.startswith("sncb")]):
     print(x)

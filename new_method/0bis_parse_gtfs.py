@@ -53,7 +53,7 @@ def get_service_ids(folder, date):
         with open(os.path.join(folder, "calendar.txt"), newline='') as csvfile:
             reader = csv.DictReader(csvfile)
             for row in reader:
-                if int(row["start_date"]) <= int_format <= int(row["end_date"]):
+                if True or  int(row["start_date"]) <= int_format <= int(row["end_date"]): #todo remove true
                     if row[weekdays[date.weekday()]] == "1":
                         out.add(row["service_id"])
 
@@ -155,7 +155,6 @@ def generate_output_for_gtfs(folder, prefix, date):
 
 
     minimal = 1000
-
     for idx in stops:
         stops[idx]["nei"] = []
     for trip_id in trip_contents:
@@ -187,14 +186,14 @@ stops_train = generate_output_for_gtfs("../gtfs/sncb", "sncb", date)
 
 
 stops = {}
-""" print("MIVB")
-stops.update(generate_output_for_gtfs("../gtfs/stib", "stib", date))
-print("TEC")
-stops.update(generate_output_for_gtfs("../gtfs/tec", "tec", date))
-print("DE LIJN")
-stops.update(generate_output_for_gtfs("../gtfs/delijn", "delijn", date))
+#print("MIVB")
+#stops.update(generate_output_for_gtfs("../gtfs/stib", "stib", date))
+#print("TEC")
+#stops.update(generate_output_for_gtfs("../gtfs/tec", "tec", date))
+#print("DE LIJN")
+#stops.update(generate_output_for_gtfs("../gtfs/delijn", "delijn", date))
 print("SAVING")
-"""
+
 json.dump(stops_train, open("../produce/train_only.json", "w"))
 json.dump(stops, open("../produce/bus_only.json", "w"))
 stops.update(stops_train)
