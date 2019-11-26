@@ -84,9 +84,9 @@ def mean_min_travel_time():  # only resid -> work
             for stop_work in get_reachable_stop(stops, work_refnis, max_walking_time=max_walking_time):
                 resid_distrib = dico[(stop_rsd, resid_refnis)]
                 work_distrib = dico[(stop_work, work_refnis)]
-                list_distrib.append(sum_distrib(resid_distrib,work_distrib)) # todo add tc_travel_time
+                list_distrib.append(sum_distrib(resid_distrib,work_distrib))
                 starts.append(TC_travel_array[name_to_idx[stop_work]])
-        travel_time_distrib = min_distrib(list_distrib)
+        travel_time_distrib = min_distrib(list_distrib, starts)
         occurence =  int(trav["n"]) # number of time where this travel is done
         time_sum += travel_time_distrib.mean()* occurence
     return time_sum /tot_travel
