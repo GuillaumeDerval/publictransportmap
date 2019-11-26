@@ -4,10 +4,74 @@ import math
 
 class Distribution:
 
-    def __init__(self):
-        pass
-    #todo
+    def __init__(self, list_freq , start = 0): #attention le distribution finisse toujour par 1
+        self.value = list_freq
+        self.start = start
+        self.compress_distrib()
+        self.check_cumulative_distrib()
 
+    def __getitem__(self, key):
+        if key < self.start:
+            return 0.0
+        elif key >= self.start + len(self.value):
+            return 1.0
+        else:
+            return self.value[key - self.start]
+
+    def __setitem__(self, key, value):
+        if key < self.start:
+            self.start = key
+            pad = [0.0]*(self.start-key) # todo change ???
+            pad[0] = value
+            self.value = pad + self.value
+        elif key >= len(self):
+            l = key - (len(self) -1)
+            pad = [0.0] * l  # todo change ??
+            pad[l-1] = value
+            self.value = self.value + pad
+        else:
+            self.value[key - self.start] = value
+
+    def __str__(self):
+        return str([0.0]*self.start + self.value)
+
+    def __len__(self):
+        return self.start + len(self.value)
+
+    def __eq__(self, other):
+
+        return isinstance(other, Distribution) and str(self) == str(other)
+
+
+    def compress_distrib(self):
+        """
+            gives a shorter form of the distribution
+            ex [0,0,0,0.5, 1,1,1] -> [0.5,1],3
+
+        """
+        i = 0
+        zero = 0
+        while i <= len(self) and self[i] == 0:
+            i+= 1
+            zero += 1
+
+
+
+        while  self[i] != 1:
+            i+= 1 # we keep the first 1
+        end = i + 1
+        self.start += zero
+        self.value = self.value[zero:end]
+
+    def check_cumulative_distrib(self):
+        """ return true if F is a increasing function with maximum = 1"""
+        if len(self) == 0: return False
+        for i in range(0, len(self) - 1):
+            if not (0 <= self[i] <= 1 and self[i] <= self[i + 1]):
+                return False
+        if self[len(self) - 1] != 1:
+            return False
+        return True
 
 def sum_distrib(F1, F2):
     """
@@ -16,25 +80,26 @@ def sum_distrib(F1, F2):
     :param F2: second cumulative distribution distrbution form
     :return: cumaltive distribution representing the (f1 + f2)
     """
-    assert check_cumulative_distrib(F1) and check_cumulative_distrib(F2)
+    assert F1.check_cumulative_distrib() and F2.check_cumulative_distrib()
     l1 = len(F1)
     l2 = len(F2)
     l_sum = l1 + l2 - 1
-    f_sum = [0] * (l_sum)
+    f_sum = [0] * l_sum
 
-    f1 = [F1[0]] + [F1[i] - F1[i-1] for i in range(1,l1)]
+    f1 = [F1[0]] + [F1[i] - F1[i-1] for i in range(1, l1)]
     f2 = [F2[0]] + [F2[i] - F2[i - 1] for i in range(1, l2)]
 
-    for id1 in range(l1):
-        for id2 in range(l2):
+    for id1 in range(F1.start,l1): # avoid useless computations
+        for id2 in range(F2.start,l2):
             f_sum[id1 + id2] += f1[id1] * f2[id2]
 
     #To cumulative distribution
     F_sum = [f_sum[0]] + [0] * (l_sum - 1)
     for i in range(1, l_sum):
         F_sum[i] = f_sum[i] + F_sum[i-1]
-    assert check_cumulative_distrib(F_sum)  # check for safety
-    return F_sum
+
+    d = Distribution(F_sum)
+    return d
 
 def min_distrib(list_Fi):
     """
@@ -44,12 +109,13 @@ def min_distrib(list_Fi):
     :return:
     """
     for Fi in list_Fi:
-        assert check_cumulative_distrib(Fi)
+        assert Fi.check_cumulative_distrib()
 
 
     list_Fi = list_Fi[:] # line to handle distribution wit
-    F_min = []
-    i = 0
+    start = min([Fi.start for Fi in list_Fi])
+    F_min = [0]*start
+    i = start
     while len(list_Fi) > 0:
         # F_min <= x iff f0 <= x or f1 <= x or ...  or f(l-1) <= x
 
@@ -61,43 +127,15 @@ def min_distrib(list_Fi):
         # P(F_min <= x ) = 1 - [ (1-P(f0 <= x)) * (1-P(f1 <= x)) * ... *(1-P(f(l-1) <= x))]
         prod = 0
         for Fi in list_Fi:
-            if len(Fi) <= i:        #remove fi from the distribution to check
-                list_Fi.remove(Fi)
-            elif Fi[i] == 1: # minimum found
-                F_min.append(1)
-                return F_min
+            if Fi[i] == 1: # minimum found
+                F_min.append(1.0)
+                return Distribution(F_min)
             else:
-                prod += math.log(1- Fi[i],2) # todo remove precision problem  ??? logarithm????
-        F_min.append(1 - math.pow(2,prod))
+                prod += math.log(1 - Fi[i], 2)      # todo remove precision problem  ??? logarithm????
+        F_min.append(1 - math.pow(2, prod))
         i = i+1
-    #assert check_cumulative_distrib(F_min) # check for safety
-    return F_min
+    return Distribution(F_min)
 
-def check_cumulative_distrib(F):
-    """ return true if F is a increasing function with maximum = 1"""
-    if len(F) == 0: return False
-    for i in range(0, len(F)-1):
-        if not (0 <= F[i] <= 1 and F[i] <=  F[i+1]):
-            return False
-    if F[len(F)-1] != 1:
-        return False
-    return True
 
-def compress_distrib(F, start = 0):
-    """
-        gives a shorter form of the distribution
-        ex [0,0,0,0.5, 1,1,1] -> [0.5,1],3
 
-    """
-    i = 0
-    while i <= len(F) and F[i] == 0:
-        i+= 1
-        start += 1
 
-    while i <= len(F):
-        i+= 1 # we keep the first 1
-        if F[i] == 1:
-            break
-    end = i+1
-
-    return F[start: end], start
