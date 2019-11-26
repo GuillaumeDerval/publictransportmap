@@ -1,4 +1,13 @@
 import numpy
+import math
+
+
+class Distribution:
+
+    def __init__(self):
+        pass
+    #todo
+
 
 def sum_distrib(F1, F2):
     """
@@ -30,16 +39,18 @@ def sum_distrib(F1, F2):
 def min_distrib(list_Fi):
     """
 
-    :param list_Fi: the distribution must have the same len and step
+    :param list_Fi: the distribution must have the same step size
+    :param first_time : list, first_time[i] : valeur du premier composant de la distrbution fi
     :return:
     """
-    for fi in list_Fi:
-        assert check_cumulative_distrib(fi)
+    for Fi in list_Fi:
+        assert check_cumulative_distrib(Fi)
 
-    #unfinished_list_Fi = list_Fi[:] # line to handle distribution wit
-    l = len(list_Fi[0])
-    F_min = [0] * l
-    for i in range(l):
+
+    list_Fi = list_Fi[:] # line to handle distribution wit
+    F_min = []
+    i = 0
+    while len(list_Fi) > 0:
         # F_min <= x iff f0 <= x or f1 <= x or ...  or f(l-1) <= x
 
         # F_min > x iff  not(f0 <= x or f1 <= x or ...  or f(l-1) <= x)
@@ -48,11 +59,18 @@ def min_distrib(list_Fi):
         #
         # P(F_min <= x) = 1 - P(F_min > x)
         # P(F_min <= x ) = 1 - [ (1-P(f0 <= x)) * (1-P(f1 <= x)) * ... *(1-P(f(l-1) <= x))]
-        prod = 1
-        for fi in list_Fi:
-            prod *= (1- fi[i])
-        F_min[i] = 1 - prod
-    assert check_cumulative_distrib(F_min) # check for safety
+        prod = 0
+        for Fi in list_Fi:
+            if len(Fi) <= i:        #remove fi from the distribution to check
+                list_Fi.remove(Fi)
+            elif Fi[i] == 1: # minimum found
+                F_min.append(1)
+                return F_min
+            else:
+                prod += math.log(1- Fi[i],2) # todo remove precision problem  ??? logarithm????
+        F_min.append(1 - math.pow(2,prod))
+        i = i+1
+    #assert check_cumulative_distrib(F_min) # check for safety
     return F_min
 
 def check_cumulative_distrib(F):
@@ -64,3 +82,22 @@ def check_cumulative_distrib(F):
     if F[len(F)-1] != 1:
         return False
     return True
+
+def compress_distrib(F, start = 0):
+    """
+        gives a shorter form of the distribution
+        ex [0,0,0,0.5, 1,1,1] -> [0.5,1],3
+
+    """
+    i = 0
+    while i <= len(F) and F[i] == 0:
+        i+= 1
+        start += 1
+
+    while i <= len(F):
+        i+= 1 # we keep the first 1
+        if F[i] == 1:
+            break
+    end = i+1
+
+    return F[start: end], start

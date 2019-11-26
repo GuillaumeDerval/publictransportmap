@@ -16,7 +16,7 @@ population_by_sector_2019_path = "data/OPEN_DATA_SECTOREN_2019.csv"
 #population_by_sector_2011_path = "data/OPEN_DATA_SECTOREN_2011.csv"
 #population_by_square = ""
 SPEED = WALKING_SPEED /0.06 #in m/s
-SPEED = 20 /0.06 #in m/s
+
 
 
 def sectors_population( path):
@@ -114,8 +114,3 @@ def get_all_walking_time_distrib(stop_list, munty_list, max_walking_time):
     return all_distrib
 
 if __name__ == '__main__':
-    stops = json.load(open("out_dir/stop_lambert_pos.json", "r"))
-    munty =  json.load(open("out_dir/travel_small.json"))["cities"]
-    refnis = [r[1] for r in munty]
-    dico = get_all_walking_time_distrib(stops, refnis, max_walking_time= 20)
-    #json.dump(dico, open("out_dir/walk_distribution.json", "w"))
