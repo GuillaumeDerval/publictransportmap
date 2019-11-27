@@ -1,8 +1,7 @@
 import csv
 import json
-
-from my_program.my_utils import *
 from my_program.map import *
+from my_program.my_utils import *
 
 # Cet class est charger de determiner au mieux les trajet a prendre en compte ainsi que leur poids(nombre d'utilisateur)
 """####################################################################################################################
@@ -58,18 +57,6 @@ def extract_travel(in_path, out_path):
     json.dump(out, open(out_path, "w"))
 
 
-#travel for bruxelles
-def extract_small():
-    data = json.load(open("out_dir/travel_user.json"))
-    cities = data["cities"]
-    travel = data["travel"]
-    small_cities = cities[68:86]  # Bruxelles
-    small_travel = []
-    for t in travel:
-        if t["residence"] in small_cities and t["work"] in small_cities:
-            small_travel.append(t)
-    small = {"cities": small_cities, "travel": small_travel}
-    json.dump(small, open("out_dir/travel_small.json", "w"))
 
 
 
@@ -96,6 +83,6 @@ def get_closest_stop_muni():
     json.dump(clst, open("out_dir/closest_stop.json", "w"))
     print("end")
 
-#extract_travel("data/TU_CENSUS_2011_COMMUTERS_MUNTY.txt","out_dir/travel_user.json")
+extract_travel("data/TU_CENSUS_2011_COMMUTERS_MUNTY.txt","out_dir/travel_user.json")
 #extract_small()
-get_closest_stop_muni()
+#get_closest_stop_muni()

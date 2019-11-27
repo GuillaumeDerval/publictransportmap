@@ -108,6 +108,10 @@ def min_distrib(list_Fi):
     :param first_time : list, first_time[i] : valeur du premier composant de la distrbution fi
     :return:
     """
+    if len(list_Fi) == 0:
+        print( "something strange here")
+        return Distribution([0])
+
     for Fi in list_Fi:
         assert Fi.check_cumulative_distrib()
 

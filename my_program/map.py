@@ -7,7 +7,7 @@ from shapely.ops import cascaded_union, Point
 class my_map:
     belgium_map = None
 
-    def __init__(self, path = "data/sh_statbel_statistical_sectors.geojson"):
+    def __init__(self, path = "data/tiny_data/sh_statbel_statistical_sectors.geojson"):
         self.__sector_map = {}
         self.__munty_map = {}
         self.__set_shape_sector(path)
@@ -34,7 +34,7 @@ class my_map:
                         self.__munty_map[refnis]["shape"].union(shape(elem["geometry"]).buffer(0))
                         self.__munty_map[refnis]["sector_ids"].append(sector_id)
                     else:
-                        self.__munty_map[refnis] = {"shape" : shape(elem["geometry"]).buffer(0) , "sector_ids" : [sector_id]}
+                        self.__munty_map[refnis] = {"shape": shape(elem["geometry"]).buffer(0), "sector_ids" : [sector_id]}
 
     def get_shape_sector(self, sector_id):
         return self.__sector_map[sector_id]

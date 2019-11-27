@@ -1,9 +1,9 @@
 #run this script to launch the complete execution
 
 import json
-import math
 import numpy as np
-
+from my_program.stat_distrib import *
+from my_program.walking_time import *
 
 
 
@@ -53,23 +53,22 @@ def mean_time_from_closest_station():
     print(unreachable, "trajet n'ont pas pu etre effectué soit ", unreachable/count_user, "% ")
     print("end")
 
-from my_program.stat_distrib import *
-from my_program.walking_time import *
 
 def mean_min_travel_time():  # only resid -> work
 
-    max_walking_time = 20 #todo change
+    max_walking_time = 0 #todo change
     time_sum = 0 # mean traveltime
     tot_travel = 0 # number of travel done
 
     # compute walking distrib
     stops = json.load(open("out_dir/stop_lambert_pos.json", "r"))
-    munty = json.load(open("out_dir/travel_small.json"))["cities"] #todo change to user
+    munty = json.load(open("out_dir/tiny/travel_user.json"))["cities"] #todo change to user
     refnis = [r[1] for r in munty]
     dico = get_all_walking_time_distrib(stops, refnis, max_walking_time= max_walking_time)
+    print("end distrib")
 
     #travel
-    travel = json.load(open("out_dir/travel_user.json"))["travel"]
+    travel = json.load(open("out_dir/tiny/travel_user.json"))["travel"] #todo change to user
     travel.sort(key=(lambda x: x["residence"][1])) # sort by residence's refnis
 
 
@@ -77,19 +76,22 @@ def mean_min_travel_time():  # only resid -> work
         resid_refnis = str(trav["residence"][1])
         work_refnis = str(trav["work"][1])
         list_distrib = []
-        starts= []
         for stop_rsd in get_reachable_stop(stops, resid_refnis, max_walking_time= max_walking_time):
             path = "../produce/out/{0}.npy".format(stop_rsd)
             TC_travel_array = np.load(path)
+            print("rsd "+stop_rsd)
             for stop_work in get_reachable_stop(stops, work_refnis, max_walking_time=max_walking_time):
+                print("work " + stop_work)
                 resid_distrib = dico[(stop_rsd, resid_refnis)]
                 work_distrib = dico[(stop_work, work_refnis)]
-                list_distrib.append(sum_distrib(resid_distrib,work_distrib))
-                starts.append(TC_travel_array[name_to_idx[stop_work]])
-        travel_time_distrib = min_distrib(list_distrib, starts)
-        occurence =  int(trav["n"]) # number of time where this travel is done
-        time_sum += travel_time_distrib.mean()* occurence
-    return time_sum /tot_travel
+                combi = sum_distrib(resid_distrib, work_distrib)
+                combi.start += TC_travel_array[name_to_idx[stop_work]]
+                list_distrib.append(combi)
+        travel_time_distrib = min_distrib(list_distrib)
+        occurence =  int(trav["n"])         # number of time where this travel is done
+        print(travel_time_distrib)
+        #time_sum += travel_time_distrib.mean()* occurence
+    #return time_sum /tot_travel
 
 
 
