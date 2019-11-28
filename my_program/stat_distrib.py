@@ -69,7 +69,7 @@ class Distribution:
         for i in range(0, len(self) - 1):
             if not (0 <= self[i] <= 1 and self[i] <= self[i + 1]):
                 return False
-        if self[len(self) - 1] != 1:
+        if  1 < self[len(self) - 1] or self[len(self) - 1] < 0.999:
             return False
         return True
 
@@ -131,7 +131,7 @@ def min_distrib(list_Fi):
         # P(F_min <= x ) = 1 - [ (1-P(f0 <= x)) * (1-P(f1 <= x)) * ... *(1-P(f(l-1) <= x))]
         prod = 0
         for Fi in list_Fi:
-            if Fi[i] == 1: # minimum found
+            if Fi[i] >= 0.999: # =1 -> minimum found
                 F_min.append(1.0)
                 return Distribution(F_min)
             else:
