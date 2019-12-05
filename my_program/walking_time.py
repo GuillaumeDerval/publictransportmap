@@ -7,7 +7,7 @@
 # function of cumulative distrribution =  function of repartition
 import csv
 from utils import WALKING_SPEED
-from shapely.geometry import Point, MultiPolygon
+from shapely.geometry import Point, Polygon, MultiPolygon
 from my_program.stat_distrib import Distribution
 from my_program.map import *
 
@@ -98,12 +98,14 @@ def get_reachable_stop(stop_list, munty, max_walking_time):
     if my_map.belgium_map is None : map = my_map()
     else: map = my_map.belgium_map
 
-    munty_shape = map.get_shape_munty(int(munty))
+    munty_shape = map.get_shape_munty(munty)
+    print(munty_shape.type)
 
     for stop in stop_list:
         pos_point = Point(stop[1][0], stop[1][1])
 
         if munty_shape.contains(pos_point):
+
             reachable_stop.append(stop)  #stop in the municipality
             print(stop)
         elif isinstance(munty_shape, MultiPolygon):      #stop not in the municipality and municipality in several part
