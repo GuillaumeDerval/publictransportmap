@@ -4,24 +4,19 @@ from shapely.geometry import mapping
 from my_program.monte_carlo import *
 
 # mix a map with the stop positions
-def map_stop(map_path,   out_path,  stop_lamber):
-    with open(map_path) as f:
-
-
-
-        features = json.load(f)["features"]
-        feature_collection = []
-        for stop in stop_lamber:
-            name = stop[0]
-            x = stop[1][0]
-            y = stop[1][1]
-            #feature_collection.append(elem)
-            point  = Point(x,  y). buffer(200)
-            point_dico = {'type' : 'feature',
-             'properties': {'Name': name, 'pos_x' : x, 'pos_y': y},
-                 'geometry' :  mapping(point)
-             }
-            feature_collection.append(point_dico)
+def map_stop( out_path,  stop_lamber):
+    feature_collection = []
+    for stop in stop_lamber:
+        name = stop[0]
+        x = stop[1][0]
+        y = stop[1][1]
+        #feature_collection.append(elem)
+        point  = Point(x,  y). buffer(20)
+        point_dico = {'type' : 'feature',
+         'properties': {'Name': name, 'pos_x' : x, 'pos_y': y},
+             'geometry' :  mapping(point)
+         }
+        feature_collection.append(point_dico)
     out = {
             'type': 'FeatureCollection',
             "features": feature_collection
@@ -51,17 +46,23 @@ def munty_shape_map(map, out_path, munty_list):
         dump(out, w)
 
 
-if my_map.belgium_map is None : map = my_map()
-else: map = my_map.belgium_map
+if __name__ == '__main__':
 
-stops = json.load(open("out_dir/stop_lambert_pos.json", "r"))
+    if my_map.belgium_map is None : map = my_map()
+    else: map = my_map.belgium_map
 
-munty = json.load(open("out_dir/tiny/travel_user.json"))["cities"] #todo change to user
-refnis = [str(r[1]) for r in munty]
-m_stops = []
-for r in refnis:
-    m_stops += get_reachable_stop(r, stops,map, 0)
+    stops = json.load(open("out_dir/stop_lambert_pos.json", "r"))
+    munty = json.load(open("out_dir/tiny/travel_user.json"))["cities"]
+    refnis = [str(r[1]) for r in munty]
+    m_stops = []
+    for r in refnis:
+        m_stops += get_reachable_stop(r, stops,map, 0)
 
-map_stop("data/tiny_data/sh_statbel_statistical_sectors.geojson", 'data/tiny_data/mixmap.geojson', m_stops)
-munty_shape_map(map, 'data/tiny_data/muntymap.geojson', refnis)
+    map_stop( 'data/tiny_data/mixmap.geojson', m_stops)
+    munty_shape_map(map, 'data/tiny_data/muntymap.geojson', refnis)
+
+    #test get_n_rdm_point
+    rdm = get_n_rdm_point(5250,"52011",map)
+    rdm = [("a",p) for p in rdm]
+    map_stop( 'data/tiny_data/rdmPoint.geojson',rdm)
 
