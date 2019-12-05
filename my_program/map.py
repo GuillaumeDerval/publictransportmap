@@ -31,7 +31,7 @@ class my_map:
                     refnis = str(elem["properties"]["CD_MUNTY_REFNIS"])
                     sector_id = str(elem["properties"]["CD_SECTOR"])
                     if refnis in self.__munty_map:
-                        self.__munty_map[refnis]["shape"].union(shape(elem["geometry"]).buffer(0))
+                        self.__munty_map[refnis]["shape"] = self.__munty_map[refnis]["shape"].union(shape(elem["geometry"]).buffer(0))
                         self.__munty_map[refnis]["sector_ids"].append(sector_id)
                     else:
                         self.__munty_map[refnis] = {"shape": shape(elem["geometry"]).buffer(0), "sector_ids" : [sector_id]}
