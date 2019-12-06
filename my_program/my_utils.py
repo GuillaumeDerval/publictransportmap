@@ -40,3 +40,9 @@ def get_stop_pos__belgian_lambert():
         pos = WGS84_to_Lambert((float(data_stop[stop]["lon"]), float(data_stop[stop]["lat"])))
         stop_pos.append((id, pos))
     return stop_pos
+
+
+#stop id / name convertions
+idx_to_name = json.loads(open('../produce/out.json').read())["idx_to_name"]
+name_to_idx = {x: i for i, x in enumerate(idx_to_name)}
+

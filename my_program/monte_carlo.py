@@ -8,18 +8,25 @@
 # Hypothèse
 # pour chaque secteur la population est repartie uniformement
 
-# function of cumulative distrribution =  function of repartition
+# function of cumulative distribution =  function of repartition
 import csv
 from utils import WALKING_SPEED
 from shapely.geometry import MultiPolygon, Polygon, Point
-from my_program.Unused.stat_distrib import Distribution
 from my_program.map import *
 import random
 import math
+from my_program.my_utils import *
+import numpy as np
 
 population_by_sector_2011_path = "data/OPEN_DATA_SECTOREN_2011.csv"
 
-SPEED = WALKING_SPEED /0.06 #in m/s
+max_walking_time = 30 # in min
+SPEED = WALKING_SPEED /0.06 #in m/min
+#map
+if my_map.belgium_map is None:
+    map = my_map()
+else:
+    map = my_map.belgium_map
 
 
 
@@ -33,7 +40,7 @@ def sectors_population2011( path = "data/OPEN_DATA_SECTOREN_2011.csv"):
     return sectors_pop
 
 
-def get_n_rdm_point(n, munty, map):
+def get_n_rdm_point(n, munty):
     "pick a rdm point in the shape, the probability of select a point depend on the number of people in the sector"
 
 
@@ -65,7 +72,6 @@ def get_n_rdm_point(n, munty, map):
                 i += 1
             yield sect_ids[i]
 
-    print("map")
 
     sect_ids = map.get_sector_ids(munty)
     all_sector_pop = sectors_population2011()
@@ -83,13 +89,12 @@ def get_n_rdm_point(n, munty, map):
 ################################## Compute the optimal time for a given travel ########################
 
 
-def get_reachable_stop( munty, stop_list, map,  max_walking_time):
+def get_reachable_stop_munty( munty, stop_list):
     """
     Compute a list containing every reachable stop in a walking_time < max_walking_time for a given munty
 
     :param stop_list: [(stop_id, (coord_x, coord_y))]
     :param munty: refnis of the municipality
-    :param max_walking_time:
     :return: [(stop_id, (coord_x, coord_y))] where distance (munty, stop) < max_walking_time
     """
     reachable_stop = []
@@ -114,20 +119,77 @@ def get_reachable_stop( munty, stop_list, map,  max_walking_time):
                 reachable_stop.append(stop)
     return reachable_stop
 
-def optimal_travel_time(resid,rsd_munty, work, work_munty):
-    # todo
-    raise NotImplementedError
+def get_reachable_stop_pt( point, stop_list):
+    """
+        Compute a list containing every reachable stop in a walking_time < max_walking_time for a given point
+
+        :param stop_list: [(stop_id, (coord_x, coord_y))]
+        :param point: (x,y) coordinates of the point
+        :return: [(stop_id, (coord_x, coord_y))] where distance (point, stop) < max_walking_time
+        """
+    reachable_stop = []
+    for stop in stop_list:
+        if distance_Eucli(point, stop[1]) < max_walking_time * SPEED:
+            reachable_stop.append(stop)
+    return reachable_stop
+
+
+def optimal_travel_time(resid, work, stop_list_rsd, stop_list_work):
+    stop_list_rsd = get_reachable_stop_pt(resid, stop_list_rsd)
+    stop_list_work = get_reachable_stop_pt(work, stop_list_work)
+
+    opti_time = math.inf
+
+    for stop_rsd in stop_list_rsd:
+        walk1 = distance_Eucli(resid,stop_rsd[1])/SPEED  # walking time
+        path = "../produce/out/{0}.npy".format(stop_rsd[0])
+        TC_travel_array = np.load(path)
+        for stop_work in stop_list_work:
+            walk2 = distance_Eucli(work, stop_work[1])/SPEED
+            time = walk1 + walk2 + TC_travel_array[name_to_idx(stop_work[0])]
+            opti_time = min(time, opti_time)
+
+    if opti_time == math.inf: return "unreachable"
+    return opti_time
 
 ################################## Monte Carlo #########################################################
 
-def monte_carlo(travel):
-    # todo
-    raise NotImplementedError
+def monte_carlo(travel, iter, stop_list_rsd, stop_list_work):
+    """
+
+    :param travel:
+    :param iter: number of iteration
+    :return: mean, var
+    """
+
+    #todo case unreachable
+
+    tot_time= 0
+    tot_time2 = 0
+
+    rsd_munty = str(travel["residence"][1])
+    work_munty = str(travel["work"][1])
+
+    resid_list = get_n_rdm_point(iter, rsd_munty)
+    work_list = get_n_rdm_point(iter, work_munty)
+    for rsd, work in zip(resid_list, work_list):
+        time = optimal_travel_time(rsd, work, stop_list_rsd, stop_list_work)
+        tot_time += time
+        tot_time2 += time ^ 2
+
+    mean = tot_time/iter
+    var = tot_time2/(iter - 1)          # todo check iter or iter -1
+    return mean, var
+
 
 
 if __name__ == '__main__':
+    travel = json.load(open("out_dir/travel_user.json"))["travel"]
+    for trav in travel:
+        n = int(trav["n"])
 
-    if my_map.belgium_map is None : map = my_map()
-    else: map = my_map.belgium_map
+    count_user = 0
+    tot_time = 0
+    unreachable = 0
 
-    a = get_n_rdm_point(20, "52011", map)
+    a = get_n_rdm_point(20, "52011")
