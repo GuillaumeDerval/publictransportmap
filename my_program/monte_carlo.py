@@ -154,18 +154,19 @@ def optimal_travel_time(resid, work, stop_list_rsd, stop_list_work):
 
 ################################## Monte Carlo #########################################################
 
-def monte_carlo(travel, iter, stop_list_rsd, stop_list_work):
-    """
+def __iter_by_pop(pop, reducing_factor):
+    iteration = pop // reducing_factor
+    #avoid bias
+    remaining = (pop % reducing_factor) / reducing_factor
+    if random.random() < remaining:
+        iteration += 1
+    return iteration
 
-    :param travel:
-    :param iter: number of iteration
-    :return: mean, var
-    """
-
-    #todo case unreachable
+def monte_carlo_travel(travel, iter, stop_list_rsd, stop_list_work, get_total = False):
 
     tot_time= 0
     tot_time2 = 0
+    unreachable = 0
 
     rsd_munty = str(travel["residence"][1])
     work_munty = str(travel["work"][1])
@@ -174,22 +175,59 @@ def monte_carlo(travel, iter, stop_list_rsd, stop_list_work):
     work_list = get_n_rdm_point(iter, work_munty)
     for rsd, work in zip(resid_list, work_list):
         time = optimal_travel_time(rsd, work, stop_list_rsd, stop_list_work)
-        tot_time += time
-        tot_time2 += time ^ 2
+        if time == "unreachable":
+            unreachable += 1
+        else :
+            tot_time += time
+            tot_time2 += time ** 2
 
-    mean = tot_time/iter
-    var = tot_time2/(iter - 1)          # todo check iter or iter -1
-    return mean, var
+    if get_total : return tot_time, tot_time2, unreachable
+
+    mean = tot_time/(iter - unreachable)
+    var = tot_time2/(iter - unreachable - 1)          # todo check iter or iter -1
+    return mean, var, unreachable
+
+
+def monte_carlo(travel_path,stop_list, get_total= False): # todo improve by sorting and get_reachable_stop_munty
+
+    REDUCING_FACTOR = 100
+
+    travel = json.load(open(travel_path))["travel"]
+    assert len(travel) > 0
+    #travel.sort(key=(lambda x: x["residence"][1]))
+
+    time_munty = {}
+    for trav in travel:
+        rsd_munty = trav["residence"][1]
+        n = int(trav["n"])
+        iters = __iter_by_pop(n, REDUCING_FACTOR)
+        print("monte carlo", trav, "iteration :", iters)
+        tot_Time, tot_time2, unreachable = monte_carlo_travel(trav, iters, stop_list, stop_list, get_total=True)
+        if rsd_munty not in time_munty:
+            time_munty[rsd_munty] = (tot_Time, tot_time2, unreachable, iters, n)
+        else:
+            old_tot_time, old_tot_time2, old_unreachable, old_iter, old_n = time_munty[rsd_munty]
+            time_munty[rsd_munty] = (tot_Time + old_tot_time, tot_time2 + old_tot_time2, unreachable + old_unreachable,
+                                     iters + old_iter, n + old_n)
+
+    if get_total : return time_munty
+
+    #comupte mean and var
+    for munty in time_munty.keys():
+        tot_Time, tot_time2, unreachable, iters, n = time_munty[munty]
+        if (iters - unreachable) > 0: mean = tot_Time / (iters - unreachable)
+        else: mean = -1
+        if (iters - unreachable -1) > 0: var = tot_time2 / (iters - unreachable -1)
+        else: var = -1
+        time_munty[munty] = (mean, var, unreachable /iters, iters, n)
+    return time_munty
+
+
 
 
 
 if __name__ == '__main__':
-    travel = json.load(open("out_dir/travel_user.json"))["travel"]
-    for trav in travel:
-        n = int(trav["n"])
 
-    count_user = 0
-    tot_time = 0
-    unreachable = 0
 
-    a = get_n_rdm_point(20, "52011")
+    computations = monte_carlo("out_dir/travel_user.json", json.load(open("out_dir/stop_lambert_pos.json", "r")))
+

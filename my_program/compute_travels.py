@@ -43,8 +43,8 @@ def extract_travel(in_path, out_path):
         idx = 0
         for row in reader:
             if not (row["CD_MUNTY_REFNIS_WORK"] in ["", "-"," ","_"] or row["CD_MUNTY_REFNIS_RESIDENCE"] in ["", "-"," ","_"]):
-                resid = (row["TX_MUNTY_RESIDENCE_DESCR_FR"],int(row["CD_MUNTY_REFNIS_RESIDENCE"]))
-                work = (row["TX_MUNTY_WORK_DESCR_FR"],int(row["CD_MUNTY_REFNIS_WORK"]))
+                resid = (row["TX_MUNTY_RESIDENCE_DESCR_FR"],str(row["CD_MUNTY_REFNIS_RESIDENCE"]))
+                work = (row["TX_MUNTY_WORK_DESCR_FR"],str(row["CD_MUNTY_REFNIS_WORK"]))
                 n = row["OBS_VALUE"]
                 if len(travel) > 0  and work == travel[len(travel)-1]["work"] and resid == travel[len(travel)-1]["residence"]:
                     travel[len(travel)-1] = {"residence": resid, "work": work, "n": int(n) + int(travel[len(travel)-1]["n"])}
