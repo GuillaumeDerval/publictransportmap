@@ -11,7 +11,7 @@
 # function of cumulative distribution =  function of repartition
 import csv
 from utils import WALKING_SPEED
-from shapely.geometry import MultiPolygon, Polygon, Point
+from shapely.geometry import MultiPolygon
 from my_program.map import *
 import random
 import math
@@ -20,8 +20,9 @@ import numpy as np
 
 population_by_sector_2011_path = "data/OPEN_DATA_SECTOREN_2011.csv"
 
-max_walking_time = 30 # in min
+max_walking_time = 60 # in min
 SPEED = WALKING_SPEED /0.06 #in m/min
+SPEED = 15/0.06
 #map
 if my_map.belgium_map is None:
     map = my_map()
@@ -138,7 +139,8 @@ def optimal_travel_time(resid, work, stop_list_rsd, stop_list_work):
     stop_list_rsd = get_reachable_stop_pt(resid, stop_list_rsd)
     stop_list_work = get_reachable_stop_pt(work, stop_list_work)
 
-    opti_time = math.inf
+    dist_without_TC = distance_Eucli(resid, work)/SPEED         # without Tc
+    opti_time = dist_without_TC
 
     for stop_rsd in stop_list_rsd:
         walk1 = distance_Eucli(resid,stop_rsd[1])/SPEED  # walking time
@@ -149,8 +151,9 @@ def optimal_travel_time(resid, work, stop_list_rsd, stop_list_work):
             time = walk1 + walk2 + TC_travel_array[name_to_idx(stop_work[0])]
             opti_time = min(time, opti_time)
 
-    if opti_time == math.inf: return "unreachable"
-    return opti_time
+    if opti_time == dist_without_TC > 2*max_walking_time:
+        return (dist_without_TC, "unreachable")
+    return opti_time, "reachable"
 
 ################################## Monte Carlo #########################################################
 
@@ -163,6 +166,7 @@ def __iter_by_pop(pop, reducing_factor):
     return iteration
 
 def monte_carlo_travel(travel, iter, stop_list_rsd, stop_list_work, get_total = False):
+    if iter <= 0: return (0,0,0)
 
     tot_time= 0
     tot_time2 = 0
@@ -174,16 +178,16 @@ def monte_carlo_travel(travel, iter, stop_list_rsd, stop_list_work, get_total = 
     resid_list = get_n_rdm_point(iter, rsd_munty)
     work_list = get_n_rdm_point(iter, work_munty)
     for rsd, work in zip(resid_list, work_list):
-        time = optimal_travel_time(rsd, work, stop_list_rsd, stop_list_work)
-        if time == "unreachable":
+        time, is_reachable = optimal_travel_time(rsd, work, stop_list_rsd, stop_list_work)
+        if is_reachable == "unreachable":
             unreachable += 1
-        else :
+        else:
             tot_time += time
             tot_time2 += time ** 2
 
     if get_total : return tot_time, tot_time2, unreachable
 
-    mean = tot_time/(iter - unreachable)
+    mean = tot_time/(iter - unreachable)               # todo case iter - unreachable = 0
     var = tot_time2/(iter - unreachable - 1)          # todo check iter or iter -1
     return mean, var, unreachable
 

@@ -64,10 +64,16 @@ def travel_time_shape_map(out_path):
     for refnis in munty_list:
         name = refnis
         shape = map.get_shape_munty(refnis)
-        dico = {'type': 'feature',
-                'properties': {'Name': name, "Time": time.get(refnis, -1)[0]},
-                'geometry': mapping(shape)
-                }
+        if refnis not in time or time[refnis][0] < 0:
+            dico = {'type': 'feature',
+                        'properties': {'Name': name, "Unreachable": time.get(refnis, (0,0,None))[2]},
+                        'geometry': mapping(shape)
+                        }
+        else:
+            dico = {'type': 'feature',
+                    'properties': {'Name': name, "Time": time[refnis][0], "Var": time[refnis][1], "Unreachable": time[refnis][2]},
+                    'geometry': mapping(shape)
+                    }
         feature_collection.append(dico)
     out = {
         'type': 'FeatureCollection',
@@ -85,7 +91,7 @@ if __name__ == '__main__':
     if my_map.belgium_map is None : map = my_map()
     else: map = my_map.belgium_map
 
-    #travel_time_shape_map('data/tiny_data/timeMap.geojson')
+    travel_time_shape_map('data/tiny_data/timeMap.geojson')
 
     stops = json.load(open("out_dir/stop_lambert_pos.json", "r"))
     munty = json.load(open("out_dir/tiny/travel_user.json"))["cities"]
