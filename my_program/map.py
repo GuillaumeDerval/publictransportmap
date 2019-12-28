@@ -12,6 +12,7 @@ class my_map:
         self.__munty_map = {}
         self.__set_shape_sector(path)
         self.__set_shape_munty(path)
+        self.__path = path
         my_map.belgium_map = self
 
     def __set_shape_sector(self,path):
@@ -35,6 +36,19 @@ class my_map:
                         self.__munty_map[refnis]["sector_ids"].append(sector_id)
                     else:
                         self.__munty_map[refnis] = {"shape": shape(elem["geometry"]).buffer(0), "sector_ids" : [sector_id]}
+
+    def get_total_shape(self):
+        with open(self.__path) as f:
+              features = json.load(f)["features"]
+              first = True
+              total_shape = None
+              for elem in features:
+                  if first:
+                      total_shape  = shape(elem["geometry"]).buffer(0)
+                      first = False
+                  else:
+                      total_shape = total_shape.union(shape(elem["geometry"]).buffer(0))
+        return total_shape
 
     def get_shape_sector(self, sector_id):
         return self.__sector_map[sector_id]

@@ -4,6 +4,7 @@ from shapely.geometry import mapping
 from my_program.monte_carlo import *
 from my_program.monte_carlo import monte_carlo
 
+
 # mix a map with the stop positions
 def map_stop( out_path,  stop_lamber):
     feature_collection = []
@@ -47,6 +48,22 @@ def munty_shape_map(map, out_path, munty_list):
         dump(out, w)
 
 
+def country_shape_map(map, out_path):
+
+    shape = map.get_total_shape()
+    dico = {'type': 'feature',
+                  'properties': {'Name': "country"},
+                  'geometry': mapping(shape)
+                  }
+    feature_collection = [dico]
+    out = {
+        'type': 'FeatureCollection',
+        "features": feature_collection
+    }
+
+    with open(out_path, 'w') as w:
+        dump(out, w)
+
 def travel_time_shape_map(out_path):
     #compute mean travel time
     munty = json.load(open("out_dir/tiny/travel_user.json"))["cities"]
@@ -88,8 +105,12 @@ def travel_time_shape_map(out_path):
 
 if __name__ == '__main__':
 
+
+
     if my_map.belgium_map is None : map = my_map()
     else: map = my_map.belgium_map
+    country_shape_map(map,'data/tiny_data/Belgium.geojson')
+    print('ok')
 
     travel_time_shape_map('data/tiny_data/timeMap.geojson')
 
