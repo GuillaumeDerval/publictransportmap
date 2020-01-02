@@ -46,7 +46,6 @@ def get_stop_pos__belgian_lambert():
 __idx_to_name = json.loads(open('../produce/out.json').read())["idx_to_name"]
 my_name_to_idx = {x: i for i, x in enumerate(__idx_to_name)}
 
-
 def name_to_idx(name):
     return my_name_to_idx[name]
 

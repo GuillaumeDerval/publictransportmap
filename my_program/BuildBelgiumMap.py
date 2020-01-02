@@ -1,4 +1,3 @@
-from my_program.map import *
 from geojson import dump
 from shapely.geometry import mapping, LineString
 from my_program.my_utils import WGS84_to_Lambert

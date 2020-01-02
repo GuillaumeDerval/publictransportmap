@@ -1,11 +1,6 @@
 #run this script to launch the complete execution
 
-import json
 import numpy as np
-from my_program.stat_distrib import *
-from my_program.walking_time import *
-
-
 
 #todo remove ____________________________________________________
 data = json.loads(open('../produce/out.json').read())

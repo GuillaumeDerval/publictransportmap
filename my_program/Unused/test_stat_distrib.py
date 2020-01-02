@@ -1,7 +1,4 @@
 from unittest import TestCase
-from my_program.stat_distrib import *
-
-
 
 
 class TestCheck_distrib(TestCase):

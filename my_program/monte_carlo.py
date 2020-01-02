@@ -9,10 +9,8 @@
 # pour chaque secteur la population est repartie uniformement
 
 # function of cumulative distribution =  function of repartition
-import csv
 from utils import WALKING_SPEED
 from shapely.geometry import MultiPolygon
-from my_program.map import *
 import random
 import math
 from my_program.my_utils import *
@@ -23,6 +21,7 @@ population_by_sector_2011_path = "data/OPEN_DATA_SECTOREN_2011.csv"
 max_walking_time = 60 # in min
 SPEED = WALKING_SPEED /0.06 #in m/min
 SPEED = 15/0.06
+
 #map
 if my_map.belgium_map is None:
     map = my_map()
@@ -64,7 +63,7 @@ def get_n_rdm_point(n, munty):
         for i in range(1, len(sect_pop)):
             sect_cumul_pop.append(sect_pop[i] / tot_pop + sect_cumul_pop[i - 1])
 
-        # select a sector depending of the number of person in ths sector
+        # select a sector depending of the number of person in this sector
         for _ in range(n):
             rdm = random.random()
             # todo improve binary search
@@ -233,5 +232,10 @@ def monte_carlo(travel_path,stop_list, get_total= False): # todo improve by sort
 if __name__ == '__main__':
 
 
-    computations = monte_carlo("out_dir/travel_user.json", json.load(open("out_dir/stop_lambert_pos.json", "r")))
+    computations = monte_carlo("data/tiny_data/travel_user.json", json.load(open("out_dir/stop_lambert_pos.json", "r")))
 
+
+
+# amelioration monte carlo : liste par comumne a utiliser
+# ordonner les temps à pied (org -> Tc et TC-> dest) et l'utiliser comme borne inferieur
+# ??? ainsi que  temps de trajet max et min entre 2 commune ??? 2 arrondisement ????

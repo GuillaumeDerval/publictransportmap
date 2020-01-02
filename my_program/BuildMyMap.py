@@ -1,8 +1,6 @@
-from my_program.map import *
 from geojson import dump
 from shapely.geometry import mapping
-from my_program.monte_carlo import *
-from my_program.monte_carlo import monte_carlo
+from my_program import monte_carlo
 
 
 # mix a map with the stop positions

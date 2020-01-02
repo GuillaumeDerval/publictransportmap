@@ -1,6 +1,3 @@
-import csv
-import json
-from my_program.map import *
 from my_program.my_utils import *
 
 # Cet class est charger de determiner au mieux les trajet a prendre en compte ainsi que leur poids(nombre d'utilisateur)

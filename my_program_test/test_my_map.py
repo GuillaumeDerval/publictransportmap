@@ -1,6 +1,6 @@
 from unittest import TestCase
-from shapely.geometry import shape, mapping
-from my_program.map import *
+from shapely.geometry import shape
+
 
 class TestMy_map(TestCase):
 

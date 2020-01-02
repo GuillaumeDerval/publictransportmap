@@ -5,11 +5,9 @@
 # pour chaque secteur la population est repartie uniformement
 
 # function of cumulative distrribution =  function of repartition
-import csv
 from utils import WALKING_SPEED
-from shapely.geometry import Point, Polygon, MultiPolygon
-from my_program.stat_distrib import Distribution
-from my_program.map import *
+from shapely.geometry import MultiPolygon
+from my_program import Distribution
 
 #population_by_sector_2019_path = "data/OPEN_DATA_SECTOREN_2019.csv"
 population_by_sector_2011_path = "data/OPEN_DATA_SECTOREN_2011.csv"
