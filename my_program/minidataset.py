@@ -40,7 +40,7 @@ for t in travel:
     if t["residence"] in small_cities and t["work"] in small_cities:
         small_travel.append(t)
 small = {"cities": small_cities, "travel": small_travel}
-json.dump(small, open("out_dir/tiny/travel_user.json", "w"))
+json.dump(small, open("data/tiny_data/travel_user.json", "w"))
 
 
 
