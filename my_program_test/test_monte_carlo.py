@@ -79,8 +79,30 @@ class TestMonte_carlo(TestCase):
         self.assertEqual(40, mc.stop_munty.get_max_time("D", "C"))
         self.assertEqual(15, mc.stop_munty.get_min_time("D", "C"))
 
-    def test_optimal_travel_time(self):
-        self.fail()
+    def test_optimal_travel_time1(self):
+        #opti path with only walk
+        rsd = (3000.0,4000.0)
+        work = (3000.0,1000.0)
+        time_exp = 3000/mc.SPEED
+        time = mc.optimal_travel_time(rsd, "C", work, "A")[0]  # should take path rsd->work
+        self.assertAlmostEqual(time_exp, time, 0.01)
+
+    def test_optimal_travel_time2(self):
+        #opti path with only walk
+        rsd = (2000.0,1000.0)
+        work = (3000.0,4000.0)
+        time_exp = 2000/mc.SPEED + 10
+        time = mc.optimal_travel_time(rsd, "A", work, "C")[0]   # should take path rsd->S0->S4->work
+        self.assertAlmostEqual(time_exp, time, 0.01)
+
+    def test_optimal_travel_time3(self):
+        #opti path with only walk
+        rsd = (6000.0,5000.0)
+        work = (3000.0,6100.0)
+        time_exp = 1005/mc.SPEED + 35
+        time = mc.optimal_travel_time(rsd, "D", work, "C")[0]    # should take path S5->S3->work
+        self.assertAlmostEqual(time_exp, time, 1)
+
 
     def test_monte_carlo_travel(self):
         self.fail()

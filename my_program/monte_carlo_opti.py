@@ -186,19 +186,53 @@ class stop_munty:
         return cls.__min_max_time[munty_org][munty_dest][1]
 
 ################################## Monte Carlo #########################################################
-def optimal_travel_time(resid,munty_rsd, work, munty_work):
-    stop_list_rsd = stop_munty.get_reachable_stop_pt(resid, munty_rsd)
-    stop_list_work = stop_munty.get_reachable_stop_pt(work, munty_work)
+def optimal_travel_time(resid_pt, munty_rsd, work_pt, munty_work):
+    stop_list_rsd = stop_munty.get_reachable_stop_pt(resid_pt, munty_rsd)
+    stop_list_work = stop_munty.get_reachable_stop_pt(work_pt, munty_work)
 
-    dist_without_TC = distance_Eucli(resid, work)/SPEED         # without Tc
+    def make_return():
+        if opti_time == dist_without_TC > 2 * MAX_WALKING_TIME:
+            return (dist_without_TC, "unreachable")
+        return opti_time, "reachable"
+
+
+    dist_without_TC = distance_Eucli(resid_pt, work_pt) / SPEED         # without Tc
     opti_time = dist_without_TC
 
+    if len(stop_list_rsd) == 0 or len(stop_list_work) == 0 : return make_return()
+
+
+    stop_list_rsd.sort(key=lambda x: distance_Eucli(x[1], resid_pt))
+    stop_list_work.sort(key=lambda x: distance_Eucli(x[1], work_pt))
+    min_walk2 = distance_Eucli(stop_list_work[0][1], work_pt) / SPEED
+    min_trav = stop_munty.get_min_time(munty_rsd, munty_work)
+
     for stop_rsd in stop_list_rsd:
-        walk1 = distance_Eucli(resid,stop_rsd[1])/SPEED  # walking time
+        walk1 = distance_Eucli(resid_pt, stop_rsd[1]) / SPEED  # walking time
+        if walk1 + min_walk2 + min_trav >= opti_time : return  make_return()
         path = PATH.TRAVEL_TIME + "{0}.npy".format(stop_rsd[0])
         TC_travel_array = np.load(path)
         for stop_work in stop_list_work:
-            walk2 = distance_Eucli(work, stop_work[1])/SPEED
+            walk2 = distance_Eucli(work_pt, stop_work[1]) / SPEED
+            if walk1 + walk2 + min_trav >= opti_time: return make_return()
+            time = walk1 + walk2 + TC_travel_array[name_to_idx(stop_work[0])]
+            opti_time = min(time, opti_time)
+
+    return make_return()
+
+def optimal_travel_time2(resid_pt, munty_rsd, work_pt, munty_work):
+    stop_list_rsd = stop_munty.get_reachable_stop_pt(resid_pt, munty_rsd)
+    stop_list_work = stop_munty.get_reachable_stop_pt(work_pt, munty_work)
+
+    dist_without_TC = distance_Eucli(resid_pt, work_pt) / SPEED         # without Tc
+    opti_time = dist_without_TC
+
+    for stop_rsd in stop_list_rsd:
+        walk1 = distance_Eucli(resid_pt, stop_rsd[1]) / SPEED  # walking time
+        path = PATH.TRAVEL_TIME + "{0}.npy".format(stop_rsd[0])
+        TC_travel_array = np.load(path)
+        for stop_work in stop_list_work:
+            walk2 = distance_Eucli(work_pt, stop_work[1]) / SPEED
             time = walk1 + walk2 + TC_travel_array[name_to_idx(stop_work[0])]
             opti_time = min(time, opti_time)
 
