@@ -3,13 +3,10 @@ import json
 from shapely.geometry import shape, mapping, LineString
 #import geojson
 from geojson import dump
-
+import numpy as np
 
 
 # map creation : geojson
-
-
-
 A1 = {'type': 'feature', 'properties': {'CD_SECTOR': "A1", 'CD_MUNTY_REFNIS' : 'A'},
       'geometry': {'type': 'Polygon', 'coordinates':[[[1000., 1000.], [1000., 2000.],[2000., 2000.], [2000., 1000.],[1000., 1000.]]]}}
 
@@ -34,9 +31,11 @@ C3 = {'type': 'feature', 'properties': {'CD_SECTOR': "C3", 'CD_MUNTY_REFNIS' : '
        'geometry': {'type': 'Polygon', 'coordinates':
            [[[1000., 6000.],[1000., 7000.], [3000., 7000.],[3000., 6000.], [1000., 6000.]]]}}
 
+D1 = {'type': 'feature', 'properties': {'CD_SECTOR': "D1", 'CD_MUNTY_REFNIS' : 'D'},
+       'geometry': {'type': 'Polygon', 'coordinates':
+           [[[5000., 4000.],[7000., 4000.], [7000., 6000.],[5000., 6000.], [5000., 4000.]]]}}
 
-
-feature_collection = [A1,A2, B1,C1,C2,C3]  # key = refnis
+feature_collection = [A1,A2, B1,C1,C2,C3,D1]  # key = refnis
 
 out = {
         'type': 'FeatureCollection',
@@ -46,3 +45,17 @@ out = {
 with open('data/smallmap.geojson', 'w') as w:
     dump(out, w)
 
+
+# Time of travel
+y = np.array([0,35,-1,30,10,25], dtype=np.int)
+np.save("data/out/S0.npy", y.astype(np.int16))
+y = np.array([35,0,-1,5,25,40], dtype=np.int)
+np.save("data/out/S1.npy", y.astype(np.int16))
+y = np.full((6,), -1, dtype=np.int)
+np.save("data/out/S2.npy", y.astype(np.int16))
+y = np.array([30,5,-1,0,20,35], dtype=np.int)
+np.save("data/out/S3.npy", y.astype(np.int16))
+y = np.array([60,25,-1,20,0,15], dtype=np.int)
+np.save("data/out/S4.npy", y.astype(np.int16))
+y = np.array([25,40,-1,35,15,0], dtype=np.int)
+np.save("data/out/S5.npy", y.astype(np.int16))

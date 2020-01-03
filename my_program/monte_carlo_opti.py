@@ -16,14 +16,13 @@ import math
 from my_program.my_utils import *
 from my_program.map import my_map
 import numpy as np
+import my_program.path as PATH
 
-population_by_sector_2011_path = "data/OPEN_DATA_SECTOREN_2011.csv"
 
-max_walking_time = 60 # in min
+MAX_WALKING_TIME = 60 # in min
 SPEED = WALKING_SPEED /0.06 #in m/min
 SPEED = 15/0.06
 
-#map
 
 
 def get_n_rdm_point(n, munty):
@@ -99,7 +98,7 @@ def get_n_rdm_point(n, munty):
 ################################## Compute the optimal time for a given travel ########################
 
 class stop_munty:
-    stop_list = json.load(open("../my_program/out_dir/stop_lambert_pos.json", "r"))
+    stop_list = json.load(open(PATH.STOP_LIST, "r"))
     __reachable_stop_munty = {}
     __min_max_time = {}  # store min and max time for each couple of munty orgin -> munty dest
 
@@ -129,12 +128,12 @@ class stop_munty:
                 elif isinstance(munty_shape, MultiPolygon):      #stop not in the municipality and municipality in several part
                     for poly in munty_shape:
                         dist = poly.exterior.distance(pos_point)
-                        if dist < max_walking_time * SPEED:
+                        if dist < MAX_WALKING_TIME * SPEED:
                             reachable_stop.append(stop)
                             break
                 else:        #stop not in the municipality and one block municipality
                     dist = munty_shape.exterior.distance(pos_point)
-                    if dist < max_walking_time * SPEED:
+                    if dist < MAX_WALKING_TIME * SPEED:
                         reachable_stop.append(stop)
 
             cls.__reachable_stop_munty[munty] = reachable_stop
@@ -153,7 +152,7 @@ class stop_munty:
         stop_list_munty = cls.get_reachable_stop_munty(munty)
         reachable_stop = []
         for stop in stop_list_munty:
-            if distance_Eucli(point, stop[1]) < max_walking_time * SPEED:
+            if distance_Eucli(point, stop[1]) < MAX_WALKING_TIME * SPEED:
                 reachable_stop.append(stop)
         return reachable_stop
 
@@ -162,14 +161,16 @@ class stop_munty:
         if munty_org in cls.__min_max_time and munty_dest in cls.__min_max_time[munty_org]:
             return cls.__min_max_time[munty_org][munty_dest][0]
         else :
-            min_time = -1
-            max_time = math.inf
+            min_time = math.inf
+            max_time = -1
             for org, _ in cls.get_reachable_stop_munty(munty_org):
-                path = "../produce/out/{0}.npy".format(org)
+                path = PATH.TRAVEL_TIME + "{0}.npy".format(org)
                 TC_travel_array = np.load(path)
                 for dest, _ in cls.get_reachable_stop_munty(munty_dest):
-                    min_time = min(min_time, TC_travel_array[name_to_idx(dest)])
-                    max_time = max(max_time, TC_travel_array[name_to_idx(dest)])
+                    time = TC_travel_array[name_to_idx(dest)]
+                    if time >= 0:
+                        min_time = min(min_time, time)
+                        max_time = max(max_time, time)
 
             #save result
             if munty_org not in cls.__min_max_time:
@@ -194,14 +195,14 @@ def optimal_travel_time(resid,munty_rsd, work, munty_work):
 
     for stop_rsd in stop_list_rsd:
         walk1 = distance_Eucli(resid,stop_rsd[1])/SPEED  # walking time
-        path = "../produce/out/{0}.npy".format(stop_rsd[0])
+        path = PATH.TRAVEL_TIME + "{0}.npy".format(stop_rsd[0])
         TC_travel_array = np.load(path)
         for stop_work in stop_list_work:
             walk2 = distance_Eucli(work, stop_work[1])/SPEED
             time = walk1 + walk2 + TC_travel_array[name_to_idx(stop_work[0])]
             opti_time = min(time, opti_time)
 
-    if opti_time == dist_without_TC > 2*max_walking_time:
+    if opti_time == dist_without_TC > 2*MAX_WALKING_TIME:
         return (dist_without_TC, "unreachable")
     return opti_time, "reachable"
 
@@ -281,8 +282,8 @@ def monte_carlo(travel_path, get_total= False): # todo improve by sorting
 
 
 if __name__ == '__main__':
-    map = my_map.get_map(path_shape = "../my_program/data/tiny_data/sh_statbel_statistical_sectors.geojson", path_pop  = "../my_program/data/tiny_data/OPEN_DATA_SECTOREN_2011.csv") # todo all map
-    computations = monte_carlo("data/tiny_data/travel_user.json")
+    map = my_map.get_map(path_shape = PATH.SHAPE, path_pop  = PATH.POP)
+    computations = monte_carlo(PATH.TRAVEL)
 
 
 
