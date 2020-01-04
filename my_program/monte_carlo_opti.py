@@ -17,6 +17,7 @@ from my_program.my_utils import *
 from my_program.map import my_map
 import numpy as np
 import my_program.path as PATH
+import time
 
 
 MAX_WALKING_TIME = 60 # in min
@@ -277,7 +278,7 @@ def monte_carlo_travel(travel, iter,  get_total = False):
     return mean, var, unreachable
 
 
-def monte_carlo(travel_path, get_total= False): # todo improve by sorting
+def monte_carlo(travel_path, get_total= False):
 
     REDUCING_FACTOR = 100
 
@@ -308,7 +309,9 @@ def monte_carlo(travel_path, get_total= False): # todo improve by sorting
         else: mean = -1
         if (iters - unreachable -1) > 0: var = tot_time2 / (iters - unreachable -1)
         else: var = -1
-        time_munty[munty] = (mean, var, unreachable /iters, iters, n)
+        if iters >0: unreach =  unreachable /iters
+        else : unreach = -1
+        time_munty[munty] = (mean, var,unreach, iters, n)
     return time_munty
 
 
@@ -317,8 +320,11 @@ def monte_carlo(travel_path, get_total= False): # todo improve by sorting
 
 if __name__ == '__main__':
     map = my_map.get_map(path_shape = PATH.SHAPE, path_pop  = PATH.POP)
-    computations = monte_carlo(PATH.TRAVEL)
 
+    start = time.time()
+    computations = monte_carlo(PATH.TRAVEL)
+    end = time.time()
+    print("time : ", end - start)
 
 
 # amelioration monte carlo : liste par comumne a utiliser

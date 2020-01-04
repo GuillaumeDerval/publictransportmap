@@ -38,7 +38,8 @@ class my_map:
             reader = csv.DictReader(csvfile, delimiter=';')
             for row in reader:
                 name = str(row["\ufeffCD_REFNIS"]) + str(row["CD_SECTOR"])
-                sector[name]["pop"] = int(row["POPULATION"])
+                if name in sector:
+                    sector[name]["pop"] = int(row["POPULATION"])
 
     def __set_shape_munty(self):
         with open(self.path_shape) as f:

@@ -10,11 +10,15 @@
 
 # function of cumulative distribution =  function of repartition
 from utils import WALKING_SPEED
-from shapely.geometry import MultiPolygon
+from shapely.geometry import MultiPolygon, Point
 import random
 import math
 from my_program.my_utils import *
 import numpy as np
+import my_program.map as mapp
+import csv
+import my_program.path as path
+import time
 
 population_by_sector_2011_path = "data/OPEN_DATA_SECTOREN_2011.csv"
 
@@ -23,10 +27,8 @@ SPEED = WALKING_SPEED /0.06 #in m/min
 SPEED = 15/0.06
 
 #map
-if my_map.belgium_map is None:
-    map = my_map()
-else:
-    map = my_map.belgium_map
+map = mapp.my_map.get_map(path.SHAPE, path.POP)
+
 
 
 
@@ -231,9 +233,10 @@ def monte_carlo(travel_path,stop_list, get_total= False): # todo improve by sort
 
 if __name__ == '__main__':
 
-
+    start = time.time()
     computations = monte_carlo("data/tiny_data/travel_user.json", json.load(open("out_dir/stop_lambert_pos.json", "r")))
-
+    end = time.time()
+    print("time : " , end - start)
 
 
 # amelioration monte carlo : liste par comumne a utiliser

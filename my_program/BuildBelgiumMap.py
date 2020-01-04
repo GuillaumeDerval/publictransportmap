@@ -1,7 +1,8 @@
 from geojson import dump
-from shapely.geometry import mapping, LineString
+from shapely.geometry import mapping, LineString, Point
 from my_program.my_utils import WGS84_to_Lambert
 import time
+import json
 
 # mix a map with the stop positions
 def map_stop(in_path, out_path):
