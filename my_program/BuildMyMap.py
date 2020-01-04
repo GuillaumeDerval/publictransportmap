@@ -75,21 +75,29 @@ def travel_time_shape_map(out_path):
     for r in munty_list:
         m_stops += MC.stop_munty.get_reachable_stop_munty(r)
 
-
     time = MC.monte_carlo(PATH.TRAVEL)
 
     feature_collection = []
     for refnis in munty_list:
         name = refnis
         shape = map.get_shape_munty(refnis)
-        if refnis not in time or time[refnis][0] < 0:
+        if refnis not in time:
             dico = {'type': 'feature',
-                        'properties': {'Name': name, "Unreachable": time.get(refnis, (0,0,None))[2]},
+                        'properties': {'name': name, "time": None , "var": None,
+                                    "walk1" : None, "walk2" : None,
+                                    "walk" : None,"TC" : None,
+                                    "unreachable": None,"iteration": None,
+                                    "pop" : map.get_pop_munty(name), "resid": None, "work": None},
                         'geometry': mapping(shape)
                         }
         else:
+            result = time[refnis]
             dico = {'type': 'feature',
-                    'properties': {'Name': name, "Time": time[refnis][0], "Var": time[refnis][1], "Unreachable": time[refnis][2]},
+                    'properties': {'name': name, "time": result.mean(), "var": result.var,
+                                    "walk1" : result.walk1(), "walk2" : result.walk2(),
+                                    "walk" : result.walk1() + result.walk2(),"TC" : result.TC(),
+                                    "unreachable": result.prop_unreachable(),"iteration": result.iteration,
+                                    "pop" : result.pop, "resid": result.resid, "work": result.work},
                     'geometry': mapping(shape)
                     }
         feature_collection.append(dico)
@@ -102,29 +110,27 @@ def travel_time_shape_map(out_path):
         dump(out, w)
 
 
-
-
 if __name__ == '__main__':
 
     start = time.time()
 
     map = MAP.my_map.get_map(PATH.SHAPE, PATH.POP)
     #country_shape_map(map,'data/maps/Belgium.geojson')
-    print('time map genaration : ', time.time() -start)
+    print('time map genaration : ', time.time() - start)
 
     start = time.time()
-    travel_time_shape_map('data/maps/timeMap.geojson')
+    travel_time_shape_map(PATH.OUT_TIME_MAP)
     print('monte carlo : ',time.time() -start)
 
-    stops = json.load(open("out_dir/stop_lambert_pos.json", "r"))
+    stops = json.load(open(PATH.STOP_LIST, "r"))
     munty = json.load(open(PATH.TRAVEL))["cities"]
     refnis = [str(r[1]) for r in munty]
-    munty_shape_map(map, 'data/maps/muntymap.geojson', refnis)
+    munty_shape_map(map, PATH.OUT_MUNTY_MAP, refnis)
     m_stops = []
     for r in refnis:
         m_stops += MC.stop_munty.get_reachable_stop_munty(r)
 
-    map_stop('data/maps/mixmap.geojson', m_stops)
+    map_stop(PATH.OUT_STOP_MAP, m_stops)
 
 
     """

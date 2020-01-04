@@ -25,7 +25,6 @@ SPEED = WALKING_SPEED /0.06 #in m/min
 SPEED = 15/0.06
 
 
-
 def get_n_rdm_point(n, munty):
     "pick a rdm point in the shape, the probability of select a point depend on the number of people in the sector"
     map = my_map.get_map()
@@ -108,7 +107,6 @@ class stop_munty:
         """
         Compute a list containing every reachable stop in a walking_time < max_walking_time for a given munty
 
-        :param stop_list: [(stop_id, (coord_x, coord_y))]
         :param munty: refnis of the municipality
         :return: [(stop_id, (coord_x, coord_y))] where distance (munty, stop) < max_walking_time
         """
@@ -146,8 +144,8 @@ class stop_munty:
         """
             Compute a list containing every reachable stop in a walking_time < max_walking_time for a given point
 
-            :param stop_list: [(stop_id, (coord_x, coord_y))]
             :param point: (x,y) coordinates of the point
+            :param munty: munnicipality where the point is located
             :return: [(stop_id, (coord_x, coord_y))] where distance (point, stop) < max_walking_time
             """
         stop_list_munty = cls.get_reachable_stop_munty(munty)
@@ -191,16 +189,14 @@ def optimal_travel_time(resid_pt, munty_rsd, work_pt, munty_work):
     stop_list_rsd = stop_munty.get_reachable_stop_pt(resid_pt, munty_rsd)
     stop_list_work = stop_munty.get_reachable_stop_pt(work_pt, munty_work)
 
-    def make_return():
-        if opti_time == dist_without_TC > 2 * MAX_WALKING_TIME:
-            return (dist_without_TC, "unreachable")
-        return opti_time, "reachable"
+    dist = distance_Eucli(resid_pt, work_pt)
+    time_without_TC =  dist/ SPEED         # without Tc
+    #opti time : (time, walk1, walk2, TC,dist, is_reachable)
+    opti_time = (time_without_TC, time_without_TC/2, time_without_TC/2, 0,dist,time_without_TC > (2 * MAX_WALKING_TIME))
 
 
-    dist_without_TC = distance_Eucli(resid_pt, work_pt) / SPEED         # without Tc
-    opti_time = dist_without_TC
 
-    if len(stop_list_rsd) == 0 or len(stop_list_work) == 0 : return make_return()
+    if len(stop_list_rsd) == 0 or len(stop_list_work) == 0 : return opti_time
 
 
     stop_list_rsd.sort(key=lambda x: distance_Eucli(x[1], resid_pt))
@@ -210,110 +206,127 @@ def optimal_travel_time(resid_pt, munty_rsd, work_pt, munty_work):
 
     for stop_rsd in stop_list_rsd:
         walk1 = distance_Eucli(resid_pt, stop_rsd[1]) / SPEED  # walking time
-        if walk1 + min_walk2 + min_trav >= opti_time : return  make_return()
+        if walk1 + min_walk2 + min_trav >= opti_time[0] : return  opti_time
         path = PATH.TRAVEL_TIME + "{0}.npy".format(stop_rsd[0])
         TC_travel_array = np.load(path)
         for stop_work in stop_list_work:
             walk2 = distance_Eucli(work_pt, stop_work[1]) / SPEED
-            if walk1 + walk2 + min_trav >= opti_time: return make_return()
-            time = walk1 + walk2 + TC_travel_array[name_to_idx(stop_work[0])]
-            opti_time = min(time, opti_time)
+            if walk1 + walk2 + min_trav >= opti_time[0]: return opti_time
+            TC = TC_travel_array[name_to_idx(stop_work[0])]
+            time = walk1 + walk2 + TC
+            if opti_time[0] > time:
+                opti_time = (time, walk1, walk2, TC, dist, True)
 
-    return make_return()
-
-def optimal_travel_time2(resid_pt, munty_rsd, work_pt, munty_work):
-    stop_list_rsd = stop_munty.get_reachable_stop_pt(resid_pt, munty_rsd)
-    stop_list_work = stop_munty.get_reachable_stop_pt(work_pt, munty_work)
-
-    dist_without_TC = distance_Eucli(resid_pt, work_pt) / SPEED         # without Tc
-    opti_time = dist_without_TC
-
-    for stop_rsd in stop_list_rsd:
-        walk1 = distance_Eucli(resid_pt, stop_rsd[1]) / SPEED  # walking time
-        path = PATH.TRAVEL_TIME + "{0}.npy".format(stop_rsd[0])
-        TC_travel_array = np.load(path)
-        for stop_work in stop_list_work:
-            walk2 = distance_Eucli(work_pt, stop_work[1]) / SPEED
-            time = walk1 + walk2 + TC_travel_array[name_to_idx(stop_work[0])]
-            opti_time = min(time, opti_time)
-
-    if opti_time == dist_without_TC > 2*MAX_WALKING_TIME:
-        return (dist_without_TC, "unreachable")
-    return opti_time, "reachable"
+    return opti_time
 
 
 
-def __iter_by_pop(pop, reducing_factor):
-    iteration = pop // reducing_factor
-    #avoid bias
-    remaining = (pop % reducing_factor) / reducing_factor
-    if random.random() < remaining:
-        iteration += 1
-    return iteration
-
-def monte_carlo_travel(travel, iter,  get_total = False):
-    if iter <= 0: return (0,0,0)
-
-    tot_time= 0
-    tot_time2 = 0
-    unreachable = 0
-
-    rsd_munty = str(travel["residence"][1])
-    work_munty = str(travel["work"][1])
-
-    resid_list = get_n_rdm_point(iter, rsd_munty)
-    work_list = get_n_rdm_point(iter, work_munty)
-    for rsd, work in zip(resid_list, work_list):
-        time, is_reachable = optimal_travel_time(rsd,rsd_munty, work, work_munty)
-        if is_reachable == "unreachable":
-            unreachable += 1
-        else:
-            tot_time += time
-            tot_time2 += time ** 2
-
-    if get_total : return tot_time, tot_time2, unreachable
-
-    mean = tot_time/(iter - unreachable)               # todo case iter - unreachable = 0
-    var = tot_time2/(iter - unreachable - 1)          # todo check iter or iter -1
-    return mean, var, unreachable
 
 
 def monte_carlo(travel_path, get_total= False):
 
-    REDUCING_FACTOR = 100
+    REDUCING_FACTOR = 25
+
+    class result:
+        def __init__(self):
+            self.tot_time = 0
+            self.tot_time2 = 0  # sum of squared(time)
+            self.tot_walk1 = 0
+            self.tot_walk2 = 0
+            self.tot_TC = 0
+            self.tot_dist = 0.0
+            self.iteration = 0
+            self.unreachable = 0
+            self.pop = 0        # nb resident according to sector pop
+            self.resid = 0      # nb resident  according to travel
+            self.work = 0       # nb workers  according to travel
+
+        def add(self, time , walk1 = 0, walk2 = 0, TC = 0, dist = 0,iter = 1, unreachable =0):
+            self.tot_time += time
+            self.tot_time2 += time**2
+            self.tot_walk1 += walk1
+            self.tot_walk2 += walk2
+            self.tot_TC += TC
+            self.tot_dist += dist
+            self.iteration += iter
+
+        def __str__(self):
+            "(mean time {}, var {},mean_dist {}, iteration {})".format(self.tot_time/self.iteration,
+                                                                       self.tot_time2/self.iteration-1,
+                                                                       self.tot_dist/self.iteration,
+                                                                       self.iteration)
+
+        def mean(self):
+            n = self.iteration - self.unreachable
+            if n > 0 : return self.tot_time/ n
+            else: return None
+
+        def walk1(self):
+            n = self.iteration - self.unreachable
+            if n > 0 : return self.tot_walk1/ n
+            else: return None
+
+        def walk2(self):
+            n = self.iteration - self.unreachable
+            if n > 0 : return self.tot_walk1/ n
+            else: return None
+
+        def TC(self):
+            n = self.iteration - self.unreachable
+            if n > 0 : return self.tot_walk1/ n
+            else: return None
+
+        def mean_dist(self):
+            n = self.iteration
+            if n > 0 : return self.tot_dist/ n
+            else: return None
+
+        def mean_dist_reachable(self):
+            n = self.iteration - self.unreachable
+            if n > 0: return self.tot_time / n
+            else: return None
+
+        def var(self):
+            n = self.iteration - self.unreachable -1 #todo check unbiased var
+            if n > 0 : return self.tot_time2/ n
+            else: return None
+
+        def prop_unreachable(self):
+            n = self.iteration
+            if n > 0 : return self.unreachable/n
+            else: return None
+
+    def __iter_by_pop(pop, reducing_factor):
+        iteration = pop // reducing_factor
+        # avoid bias
+        remaining = (pop % reducing_factor) / reducing_factor
+        if random.random() < remaining:
+            iteration += 1
+        return iteration
 
     travel = json.load(open(travel_path))["travel"]
     assert len(travel) > 0
-    #travel.sort(key=(lambda x: x["residence"][1]))
+    travel.sort(key=(lambda x: x["residence"][1]))
 
-    time_munty = {}
+    all_results = {}                # contains result for each munty
     for trav in travel:
-        rsd_munty = trav["residence"][1]
+        rsd_munty = str(trav["residence"][1])
+        work_munty = str(trav["work"][1])
+        res = all_results.get(rsd_munty, result())
         n = int(trav["n"])
+        res.resid += n
+        res.work += n
+
+        # compute monte carlo for iter travel
         iters = __iter_by_pop(n, REDUCING_FACTOR)
         print("monte carlo", trav, "iteration :", iters)
-        tot_Time, tot_time2, unreachable = monte_carlo_travel(trav, iters, get_total=True)
-        if rsd_munty not in time_munty:
-            time_munty[rsd_munty] = (tot_Time, tot_time2, unreachable, iters, n)
-        else:
-            old_tot_time, old_tot_time2, old_unreachable, old_iter, old_n = time_munty[rsd_munty]
-            time_munty[rsd_munty] = (tot_Time + old_tot_time, tot_time2 + old_tot_time2, unreachable + old_unreachable,
-                                     iters + old_iter, n + old_n)
+        resid_list = get_n_rdm_point(iters, rsd_munty)
+        work_list = get_n_rdm_point(iters, work_munty)
+        for rsd, work in zip(resid_list, work_list):
+            (time, walk1, walk2, TC, dist, is_reachable) = optimal_travel_time(rsd, rsd_munty, work, work_munty)
+            res.add(time, walk1, walk2, TC,dist,1, is_reachable)
 
-    if get_total : return time_munty
-
-    #comupte mean and var
-    for munty in time_munty.keys():
-        tot_Time, tot_time2, unreachable, iters, n = time_munty[munty]
-        if (iters - unreachable) > 0: mean = tot_Time / (iters - unreachable)
-        else: mean = -1
-        if (iters - unreachable -1) > 0: var = tot_time2 / (iters - unreachable -1)
-        else: var = -1
-        if iters >0: unreach =  unreachable /iters
-        else : unreach = -1
-        time_munty[munty] = (mean, var,unreach, iters, n)
-    return time_munty
-
+    return all_results
 
 
 
