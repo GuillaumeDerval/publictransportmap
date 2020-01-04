@@ -93,7 +93,7 @@ def travel_time_shape_map(out_path):
         else:
             result = time[refnis]
             dico = {'type': 'feature',
-                    'properties': {'name': name, "time": result.mean(), "var": result.var,
+                    'properties': {'name': name, "time": result.mean(), "var": result.var(),
                                     "walk1" : result.walk1(), "walk2" : result.walk2(),
                                     "walk" : result.walk1() + result.walk2(),"TC" : result.TC(),
                                     "unreachable": result.prop_unreachable(),"iteration": result.iteration,

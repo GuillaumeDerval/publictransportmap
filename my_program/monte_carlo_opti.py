@@ -326,6 +326,8 @@ def monte_carlo(travel_path, get_total= False):
             (time, walk1, walk2, TC, dist, is_reachable) = optimal_travel_time(rsd, rsd_munty, work, work_munty)
             res.add(time, walk1, walk2, TC,dist,1, is_reachable)
 
+        all_results[rsd_munty] = res
+
     return all_results
 
 
