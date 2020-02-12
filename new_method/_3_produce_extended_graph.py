@@ -5,16 +5,19 @@ from collections import deque
 
 """
     rajoute des connection pour pouvoir faire un trajet qui s'etant sur 2 jour ???
+    
+    transformation des noeud : passage de nom, temps  à un seul chiffre ????
 
     in  : ../produce/train_bus_simplified.json
     out : ../produce/out.json
 """
 
-MAX_TIME = 28*60*60//10 #todo 24 or 28
+MAX_TIME = 28*60*60//10 # 28 car certaine donnees depasse 24h pour des raisons pratiques
 
 print("--- Loading data")
 data = json.load(open("../produce/train_bus_simplified.json"))
 
+#A chaque nom de stop associe un nombre et vice-versa
 idx_to_name = list(data.keys())
 name_to_idx = {x: i for i, x in enumerate(idx_to_name)}
 print(name_to_idx)
@@ -25,9 +28,15 @@ print(name_to_idx)
 def wtf(c, b):
     raise Exception("wtf")
     return b+1
+
+#change le format des donnee : {id:[(id_nei, departure_time, arrival_time), ...], ...}
 data = {name_to_idx[x]: [(name_to_idx[a], b, (c if c >= b else wtf(c, b))) for a,b,c in y["nei"] if 0 <= b < MAX_TIME and 0 <= c < MAX_TIME] for x, y in data.items()}
+#change le format des donnee : [[(id_nei, departure_time, arrival_time), ...]] L'index correspond au stop d'origine
 data = [data[x] for x in range(0, len(idx_to_name))]
 
+
+#Cree une liste qui  pour chaque stop :
+#     cree un set qui contient tout les temps pour lequel un  TC arrive ou part de ce stop
 print("--- Computing nodes to create")
 used_nodes = [set() for _ in range(0, len(idx_to_name))]
 for source, y in enumerate(data):
@@ -46,29 +55,41 @@ for source, y in enumerate(data):
 print("NB ORIG NODES {}".format(len(data)))
 print("NB GRAPH NODES {}".format(sum([len(y) for y in used_nodes])))
 
+
+
 def process_nodes(data):
+    """
+    Les donnee sont mise sous une forme transformable en graph (matrice d'adjacance)
+    -> chaque noeud regroup l'id du stop et les temps
+    :param data:
+    :return:
+    """
+    def process_node(name, content):
+        connections = sorted(content, key=lambda x: x[1])  # sort by start time
+        possible_times = sorted(used_nodes[name])
+        c_id = 0
+
+        for p_id, time in enumerate(possible_times):
+            nei = []
+
+            #arret representant une connection
+            while c_id != len(connections) and connections[c_id][1] == time:
+                nei.append((connections[c_id][0] * MAX_TIME + connections[c_id][2]))
+                c_id += 1
+
+            #arret representant le passage d'un temps à un autre (rester sur place)
+            if p_id + 1 != len(possible_times):
+                nei.append((name * MAX_TIME + possible_times[p_id + 1]))
+
+            yield ((name * MAX_TIME + time), nei)
+
     d = dict()
     for name, content in enumerate(data):
         for x, y in process_node(name, content):
             d[x] = y
     return d
 
-def process_node(name, content):
-    connections = sorted(content, key=lambda x: x[1]) # sort by start time
-    possible_times = sorted(used_nodes[name])
-    c_id = 0
 
-    for p_id, time in enumerate(possible_times):
-        nei = []
-
-        while c_id != len(connections) and connections[c_id][1] == time:
-            nei.append((connections[c_id][0] * MAX_TIME + connections[c_id][2]))
-            c_id += 1
-
-        if p_id + 1 != len(possible_times):
-            nei.append((name * MAX_TIME + possible_times[p_id + 1]))
-
-        yield ((name * MAX_TIME + time), nei)
 
 print("--- Computing graph")
 print(time.time())

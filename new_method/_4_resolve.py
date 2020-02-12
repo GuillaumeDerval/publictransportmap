@@ -22,6 +22,9 @@ MAX_TIME = data["max_time"]
 used_nodes = data["used_nodes"]
 data = None
 
+
+#gare la meme structure que walking time mais remplace le  nom du stop par son id
+#{stop_id1 : [(distance_time, stop_id_2), ...], ...}
 walking_time = {name_to_idx[x]: [(a, name_to_idx[b]) for a, b in y] for x, y in walking_time.items()}
 
 # Generate graph points
@@ -68,9 +71,11 @@ def compute_for_node(idx):  #idx =  stop_id (only sncb)
             next_node_idx = next // MAX_TIME
             bdist = distance[next]
 
+            #perme dobtenir la distance minimum pour chaque stop (ie. dist min pour tout les temps)
             if min_dist_to_node[next_node_idx] == -1 or min_dist_to_node[next_node_idx] > bdist:
                 min_dist_to_node[next_node_idx] = bdist
 
+            #Tester les trajet à pied
             for delta_t, nei_idx in walking_time[next_node_idx]:
                 dist_from_source = bdist + delta_t
                 if min_dist_to_node[nei_idx] == -1 or min_dist_to_node[nei_idx] > dist_from_source:
