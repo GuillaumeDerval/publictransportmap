@@ -118,7 +118,8 @@ def process_thread(x):
 
 # process_thread("sncb8015345")
 pool = Pool(94)
-for x in pool.imap_unordered(process_thread, [x for x in name_to_idx if x.startswith("sncb")]):
+#for x in pool.imap_unordered(process_thread, [x for x in name_to_idx if x.startswith("sncb")]):
+for x in pool.imap_unordered(process_thread, [x for x in name_to_idx]):
     print(x)
 
 print("end 4bis_resolve.py")

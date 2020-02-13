@@ -191,8 +191,10 @@ def optimal_travel_time(resid_pt, munty_rsd, work_pt, munty_work):
 
     dist = distance_Eucli(resid_pt, work_pt)
     time_without_TC =  dist/ SPEED         # without Tc
-    #opti time : (time, walk1, walk2, TC,dist, is_reachable)
-    opti_time = (time_without_TC, time_without_TC/2, time_without_TC/2, 0,dist,time_without_TC > (2 * MAX_WALKING_TIME))
+    #opti time : (time, walk1, walk2, TC,dist, unreachable)
+    if time_without_TC > (2 * MAX_WALKING_TIME) : unreachable = 1
+    else :  unreachable = 0
+    opti_time = (time_without_TC, time_without_TC/2, time_without_TC/2, 0,dist,unreachable)
 
 
 
@@ -213,9 +215,10 @@ def optimal_travel_time(resid_pt, munty_rsd, work_pt, munty_work):
             walk2 = distance_Eucli(work_pt, stop_work[1]) / SPEED
             if walk1 + walk2 + min_trav >= opti_time[0]: return opti_time
             TC = TC_travel_array[name_to_idx(stop_work[0])]
-            time = walk1 + walk2 + TC
-            if opti_time[0] > time:
-                opti_time = (time, walk1, walk2, TC, dist, True)
+            if TC > 0 :
+                time = walk1 + walk2 + TC
+                if opti_time[0] > time:
+                    opti_time = (time, walk1, walk2, TC, dist, 0)
 
     return opti_time
 
@@ -234,21 +237,28 @@ def monte_carlo(travel_path, get_total= False):
             self.tot_walk1 = 0
             self.tot_walk2 = 0
             self.tot_TC = 0
+            self.tot_TC_user_only = 0
             self.tot_dist = 0.0
             self.iteration = 0
             self.unreachable = 0
+            self.TC_user = 0
             self.pop = 0        # nb resident according to sector pop
             self.resid = 0      # nb resident  according to travel
             self.work = 0       # nb workers  according to travel
 
         def add(self, time , walk1 = 0, walk2 = 0, TC = 0, dist = 0,iter = 1, unreachable =0):
-            self.tot_time += time
-            self.tot_time2 += time**2
-            self.tot_walk1 += walk1
-            self.tot_walk2 += walk2
-            self.tot_TC += TC
-            self.tot_dist += dist
+            self.unreachable += unreachable
             self.iteration += iter
+            if unreachable == 0:
+                self.tot_time += time
+                self.tot_time2 += time**2
+                self.tot_walk1 += walk1
+                self.tot_walk2 += walk2
+                self.tot_TC += TC
+                self.tot_dist += dist
+                if TC > 0 :
+                    self.TC_user += 1
+                    self.tot_TC_user_only += TC
 
         def __str__(self):
             "(mean time {}, var {},mean_dist {}, iteration {})".format(self.tot_time/self.iteration,
@@ -268,13 +278,20 @@ def monte_carlo(travel_path, get_total= False):
 
         def walk2(self):
             n = self.iteration - self.unreachable
-            if n > 0 : return self.tot_walk1/ n
+            if n > 0 : return self.tot_walk2/ n
             else: return None
 
         def TC(self):
             n = self.iteration - self.unreachable
-            if n > 0 : return self.tot_walk1/ n
+            if n > 0 : return self.tot_TC/ n
             else: return None
+
+        def TC_user_only(self):
+            n = self.TC_user
+            if n > 0:
+                return self.tot_TC_user_only / n
+            else:
+                return None
 
         def mean_dist(self):
             n = self.iteration
@@ -283,7 +300,7 @@ def monte_carlo(travel_path, get_total= False):
 
         def mean_dist_reachable(self):
             n = self.iteration - self.unreachable
-            if n > 0: return self.tot_time / n
+            if n > 0: return self.tot_dist / n
             else: return None
 
         def var(self):
@@ -294,6 +311,11 @@ def monte_carlo(travel_path, get_total= False):
         def prop_unreachable(self):
             n = self.iteration
             if n > 0 : return self.unreachable/n
+            else: return None
+
+        def prop_TC_users(self):
+            n = self.iteration - self.unreachable
+            if n > 0 : return self.TC_user/n
             else: return None
 
     def __iter_by_pop(pop, reducing_factor):
@@ -315,7 +337,7 @@ def monte_carlo(travel_path, get_total= False):
         res = all_results.get(rsd_munty, result())
         n = int(trav["n"])
         res.resid += n
-        res.work += n
+        res.pop = my_map.get_map().get_pop_munty(rsd_munty)
 
         # compute monte carlo for iter travel
         iters = __iter_by_pop(n, REDUCING_FACTOR)
@@ -323,10 +345,15 @@ def monte_carlo(travel_path, get_total= False):
         resid_list = get_n_rdm_point(iters, rsd_munty)
         work_list = get_n_rdm_point(iters, work_munty)
         for rsd, work in zip(resid_list, work_list):
-            (time, walk1, walk2, TC, dist, is_reachable) = optimal_travel_time(rsd, rsd_munty, work, work_munty)
-            res.add(time, walk1, walk2, TC,dist,1, is_reachable)
+            (time, walk1, walk2, TC, dist, unreachable) = optimal_travel_time(rsd, rsd_munty, work, work_munty)
+            res.add(time, walk1, walk2, TC,dist,1, unreachable)
 
         all_results[rsd_munty] = res
+
+        # number of worker
+        w = all_results.get(work_munty, result())
+        w.work += n
+        all_results[work_munty] = w
 
     return all_results
 

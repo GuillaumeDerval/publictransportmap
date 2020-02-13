@@ -104,8 +104,5 @@ class TestMonte_carlo(TestCase):
         self.assertAlmostEqual(time_exp, time, 1)
 
 
-    def test_monte_carlo_travel(self):
-        self.fail()
-
     def test_monte_carlo(self):
         self.fail()

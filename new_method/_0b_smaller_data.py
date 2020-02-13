@@ -50,6 +50,6 @@ if __name__ == '__main__':
     for path,out in zip(in_paths,out_paths):
         print("Reduce data in : ", path, "and store it into", out)
         data = json.load(open(path))
-        valid = valid_stop_square(data, 50.77083, 50.77083, 6.105277,6.105277)
+        valid = valid_stop_square(data, 50.0, 50.200, 5.80,6.0)
         reduced = reduce_data(data, valid)
         json.dump(reduced, open(out, "w"))

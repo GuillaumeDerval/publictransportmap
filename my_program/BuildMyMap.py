@@ -86,6 +86,7 @@ def travel_time_shape_map(out_path):
                         'properties': {'name': name, "time": None , "var": None,
                                     "walk1" : None, "walk2" : None,
                                     "walk" : None,"TC" : None,
+                                    "distance": None, "prop_TC_users": None,
                                     "unreachable": None,"iteration": None,
                                     "pop" : map.get_pop_munty(name), "resid": None, "work": None},
                         'geometry': mapping(shape)
@@ -95,7 +96,8 @@ def travel_time_shape_map(out_path):
             dico = {'type': 'feature',
                     'properties': {'name': name, "time": result.mean(), "var": result.var(),
                                     "walk1" : result.walk1(), "walk2" : result.walk2(),
-                                    "walk" : result.walk1() + result.walk2(),"TC" : result.TC(),
+                                    "walk" : result.walk1() + result.walk2(),"TC" : result.TC(),"TC_user_only": result.TC_user_only(),
+                                   "distance": result.mean_dist_reachable(), "prop_TC_users" : result.prop_TC_users(),
                                     "unreachable": result.prop_unreachable(),"iteration": result.iteration,
                                     "pop" : result.pop, "resid": result.resid, "work": result.work},
                     'geometry': mapping(shape)
