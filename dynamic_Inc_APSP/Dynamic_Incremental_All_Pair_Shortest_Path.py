@@ -1,30 +1,79 @@
-import json
-import numpy as np
 from collections import deque
 import my_program.path as PATH
 from dynamic_Inc_APSP.Data_structure import *
 
 
 class Dynamic_APSP:
-    def __init__(self):
+    def __init__(self, path = PATH.OUT):
+        out = json.loads(open(path).read())
+        self.graph = Graph()
+        self.idx_to_name = out["idx_to_name"]
+        self.name_to_idx = {x: i for i, x in enumerate(self.idx_to_name)}
+        self.distance = Distance(self.idx_to_name, self.name_to_idx)      # todo verifier si probleme de mise a jour ici
+        self.__max_time = out["max_time"]
+        self.__used_node = out["used_nodes"]
 
-        self.graph = Graph(out)
+    def add_isolated_vertex(self,stop_name, time):
+        if stop_name in self.name_to_idx:
+            id = self.name_to_idx[stop_name]
+            # todo used_node
+        else:
+            id = len(self.name_to_idx) +1
+            self.idx_to_name.append(stop_name)
+            self.name_to_idx[stop_name] = id
+            # todo used_node
+        z = id*self.__max_time + time
+        self.graph.add_vertex(z)
 
-    def add_isolated_vertex(self,id, name):
-        self.graph.add_vertex(id, name)
-        # todo update dynamic APSP strucure
-        raise Exception("unimplemented")
+        return id
 
-    def add_edge_num(self, u,v, u_name = None, v_name = None):
-        if u_name is not None: self.add_isolated_vertex(u, u_name)
-        if v_name is not None: self.add_isolated_vertex(v, v_name)
+    def add_edge(self, u_stop_name, u_time, v_stop_name, v_time):
+        assert v_time >= u_time
 
-        #self.graph.add_edge(u,v)
+        u_id = self.add_isolated_vertex(u_stop_name, u_time)
+        v_id = self.add_isolated_vertex(v_stop_name, v_time)
+        u = u_id*self.__max_time + u_time
+        v = v_id*self.__max_time + v_time
+
+        w = v % self.__max_time - u % self.__max_time
+
+        self.graph.add_edge(u, v)
+
+        # 4 cas sont possibles lors de l'ajout d'aret :
+
+        # cas 1 : u and v are leafs
+        if self.graph.is_leaf(u) and self.graph.is_leaf(v):
+            self.distance.update_dist(u, v, w)
+
+        # cas 2 : u  is a leaf
+        elif self.graph.is_leaf(u):
+            # if path v-> . then dist(u, . ) = dist(v,.) + dist(u,v)
+            dist_v = self.distance.dist_from(v)
+            def upd(d):
+                if d != -1: return d + w
+                else: return -1
+            dist_u =[upd(d) for d in dist_v]
+            dist_u[u] = 0
+            self.distance.update_dist_from(u, dist_u)
+
+        # cas 3 : v  is a leaf
+        elif self.graph.is_leaf(v):
+            # for node x :compute dist v a partir de dist(.,u)
+            for x in self.graph.vertex:
+                dist_u = self.distance.dist(x, u)
+                if dist_u != -1:
+                    self.distance.update_dist(x, v, dist_u + w)
+            self.distance.update_dist(v, v, 0)
+
+        # cas 4 : neither u neither v is a leaf
+        else:
+            self.__APSP_edge(self.graph, u, v)
+
+
+
 
         # todo other stuff
         raise Exception("unimplemented")
-
-    def add_edge(self, u_stop_id, u_time, v_stop_id, v_time):
 
 
     def add_vertex(self, z_stop_id, z_time, z_name, Z_in, Z_out):
@@ -39,7 +88,7 @@ class Dynamic_APSP:
         # todo
         raise Exception("unimplemented")
 
-
+#################################################################################################################
 
     def __find_affected_sources(self,graph, u, v):
         """
@@ -65,37 +114,23 @@ class Dynamic_APSP:
             graph.vis = {v: False for v in graph.vertex}  # Reset vis(·) to false
         return S
 
-    def __APSP_edge(self,graph, u, v):
-        # 3 cas sont possibles lors de l'ajout d'aret
+    def __APSP_edge(self, graph, u, v):
+        """
+        Ajout non trivial d'une arete dans le graph
+        :param graph: a Data_Structure graph
+        :param u: number of the node
+        :param v: number of the node
+        :return:
+        """
         # cas 1 : u et v deja existant
-        # cas 2 : u ou v deja existant
-        # cas 3 : u et v inexistants
-
-        if u in graph.vertex and v in graph.vertex:
-            # cas 1 : u et v deja existant
-            # ajout d'un edge entre 2 dejà existant u,v:
-            # - w est defini par la difference de temps entre u et v
-            # - si il existait deja un moyen de joindre v à patir de u , dist(u,v) = difference de temps entre u et v = w
-            # - mis à jour inutile si il existe deja un chemin entre u et v
-            # - METTRE A JOUR UNIQUEMENT SSI DIST(U,V) = -1
-            # todo algo 1
-            raise Exception("cas 1 unimplemented")
-
-        elif v in graph.vertex:
-            # cas 2a : v existant et u inexistant, u->v
-            # calcul rapide dist(u, . ) = dist(v,.) + dist(u,v)
-            raise Exception("cas 2a unimplemented")
+        # ajout d'un edge entre 2 dejà existant u,v:
+        # - w est defini par la difference de temps entre u et v
+        # - si il existait deja un moyen de joindre v à patir de u , dist(u,v) = difference de temps entre u et v = w
+        # - mis à jour inutile si il existe deja un chemin entre u et v
+        # - METTRE A JOUR UNIQUEMENT SSI DIST(U,V) = -1
+        # todo algo 1
 
 
-        elif u in graph.vertex:
-            # cas 2b : u existant et v inexistant, u->v
-            # for node x :compute dist v a partir de dist(.,u)
-            raise Exception("cas 2b unimplemented")
-
-        else:
-            # cas 3 : u et v inexistants
-            # cree u, v
-            raise Exception("cas 2a unimplemented")
 
 
 

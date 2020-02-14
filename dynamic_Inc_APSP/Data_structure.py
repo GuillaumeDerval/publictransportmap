@@ -6,12 +6,17 @@ import my_program.path as PATH
 
 #Distance
 class Distance:
-    def dist(self,u,v):
+
+    def __init__(self, idx_to_name, name_to_idx):
+        self.idx_to_name = idx_to_name
+        self.name_to_idx = name_to_idx
+
+    def dist(self, u, v):
         """
         Return the minimal distance between u (id) and v (id)
         """
         return self.dist_from(u)[v]
-    def dist_from(self,s):
+    def dist_from(self, s):
         """
         Return the list of the minimal distance from source  s (id)
         """
@@ -37,8 +42,14 @@ class Distance:
 
 
 class Graph:
-    def __init__(self, path = PATH.OUT ):
-        out = json.loads(open(path).read())
+    """
+    Transforme le out.json en une structure de graph et permet le modification ainsi que leur sauvegarde
+
+    Propriete de ce graph quand il existe un chemin entre 2 de ces noeud il est toujour minimal
+    Pas de chemin est indiqué par -1
+    """
+    def __init__(self, out):
+        #out = json.loads(open(path).read())
         self.adj_matrix = out["graph"]
         self.vertex = self.adj_matrix.keys()
         self.V = len(self.adj_matrix)                            # number of vertex
@@ -52,28 +63,25 @@ class Graph:
 
         self.vis = {v: False for v in self.vertex}         #indicate if a node have been visited
 
-        self.idx_to_name = out["idx_to_name"]
-        self.__max_time = out["max_time"]
-        self.__used_node = out["used_nodes"]
 
-    def add_vertex(self, z, name):
-        self.adj_matrix[z] = []
-        self.reversed_adj_matrix[z] = []
-        self.vertex.append([z])
-        self.V += 1
-        self.vis = {z: False}
 
-        z_id = z // self.__max_time
-        assert z_id == self.V + 1
-        self.idx_to_name.append(name)
-
-        #todo used_node
+    def add_vertex(self, z):
+        if z not in self.vertex:
+            self.adj_matrix[z] = []
+            self.reversed_adj_matrix[z] = []
+            self.vertex.append([z])
+            self.V += 1
+            self.vis = {z: False}
 
     def add_edge(self, u, v):
         assert u in self.vertex
         assert v in self.vertex
 
-        self.E += 1
-        self.adj_matrix[u].append(v)
-        self.reversed_adj_matrix[v].append(u)
+        if v not in self.adj_matrix[u]:                         #keep a simple graph
+            self.E += 1
+            self.adj_matrix[u].append(v)
+            self.reversed_adj_matrix[v].append(u)
+
+    def is_leaf(self,v):
+        return len(self.adj_matrix[v]) == 0
 
