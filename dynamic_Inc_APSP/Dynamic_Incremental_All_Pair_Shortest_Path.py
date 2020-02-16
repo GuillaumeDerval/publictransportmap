@@ -10,17 +10,15 @@ import numpy as np
 class Dynamic_APSP:
     def __init__(self, path = PATH.OUT):
         out = json.loads(open(path).read())
-        self.graph = Graph()
+        self.graph = Graph(out)
         self.idx_to_name = out["idx_to_name"]
         self.name_to_idx = {x: i for i, x in enumerate(self.idx_to_name)}
-        self.pos_to_node = self.graph.vertex
-        self.node_to_pos = {x: i for i, x in enumerate(self.node_to_pos)}
         #self.distance = Distance(self.idx_to_name, self.name_to_idx)      # todo verifier si probleme de mise a jour ici
         self.path = Path_presence(self.graph.vertex)
         self.__max_time = out["max_time"]
         self.__used_node = out["used_nodes"]
 
-    def APSP_initialisation(self):
+    def initialisation(self):
         """
         Lance le calcul pour savoir si il existe un chemin entre chaque paire de noeud
         :return:
@@ -38,9 +36,9 @@ class Dynamic_APSP:
         node.sort(key = lambda x : x % self.__max_time, reverse = True)
         for x in node:
             self.path.set_is_path(x,x,True)
-            for nei in self.graph.adj_matrix:
+            for nei in self.graph.adj_matrix[x]:
                 path_x = self.path.is_path_from(x)
-                np.bitwise_or(x1 = path_x, x2 = self.path.is_path_from(nei), out = path_x, dtype=np.bool)
+                np.bitwise_or(path_x, self.path.is_path_from(nei), out = path_x, dtype=np.bool)
 
     def add_isolated_vertex(self, stop_name, time):
         if stop_name in self.name_to_idx:
@@ -53,6 +51,7 @@ class Dynamic_APSP:
             self.__used_node.append(set(time))
         z = id*self.__max_time + time
         self.graph.add_vertex(z)
+        self.path.add_vertex(z)
 
         return id
 
@@ -64,7 +63,7 @@ class Dynamic_APSP:
         u = u_id*self.__max_time + u_time
         v = v_id*self.__max_time + v_time
 
-        w = v % self.__max_time - u % self.__max_time
+        #w = v % self.__max_time - u % self.__max_time
 
         self.graph.add_edge(u, v)
 
@@ -72,31 +71,27 @@ class Dynamic_APSP:
 
         # cas 1 : u and v are leafs
         if self.graph.is_leaf(u) and self.graph.is_leaf(v):
-            self.distance.update_dist(u, v, w)
+            self.path.set_is_path(u, v, True)
 
         # cas 2 : u  is a leaf
         elif self.graph.is_leaf(u):
             # if path v-> . then dist(u, . ) = dist(v,.) + dist(u,v)
-            dist_v = self.distance.dist_from(v)
-            def upd(d):
-                if d != -1: return d + w
-                else: return -1
-            dist_u =[upd(d) for d in dist_v]
-            dist_u[u] = 0
-            self.distance.update_dist_from(u, dist_u)
+            is_path_u = self.path.is_path_from(u)
+            is_path_v = self.path.is_path_from(v)
+            np.bitwise_or(x1=is_path_u, x2 = is_path_v, out= is_path_u, dtype=np.bool)
 
         # cas 3 : v  is a leaf
         elif self.graph.is_leaf(v):
             # for node x :compute dist v a partir de dist(.,u)
             for x in self.graph.vertex:
-                dist_u = self.distance.dist(x, u)
-                if dist_u != -1:
-                    self.distance.update_dist(x, v, dist_u + w)
-            self.distance.update_dist(v, v, 0)
+                is_path_u = self.path.is_path(x, u)
+                if is_path_u:
+                    self.path.set_is_path(x, v, True)
+
 
         # cas 4 : neither u neither v is a leaf
         else:
-            self.__APSP_edge(self.graph, u, v,w)
+            self.__APSP_edge(self.graph, u, v)
 
 
 
@@ -120,7 +115,7 @@ class Dynamic_APSP:
 #################################################################################################################
 
     @staticmethod
-    def __find_affected_sources(distance : Distance, graph : Graph, u :int, v : int):
+    def __find_affected_sources(path : Path_presence, graph : Graph, u :int, v : int):
         """
         Find affected sources
         Suit l'algo 4
@@ -129,14 +124,14 @@ class Dynamic_APSP:
         :return:
         """
         S = []  # affected source
-        if distance.dist(u, v) != -1:  # w < self.dist(u,v)
+        if not path.is_path(u, v):  # w < self.dist(u,v)
             Q = deque()
             Q.append(u)
             graph.vis[u] = True
             while len(Q) > 0:
                 x = Q.popleft()
                 for z in graph.reversed_adj_matrix[x]:
-                    if not graph.vis[z] and distance.dist(z, v) == -1 and distance.dist(z, u) != -1:  # .dist(z, v) > self.dist(z,u) + w
+                    if not graph.vis[z] and not path.is_path(z, v) and path.is_path(z, u) :  # .dist(z, v) > self.dist(z,u) + w
                         Q.append(z)
                         graph.vis[z] = True
                         S.append(z)
@@ -145,7 +140,7 @@ class Dynamic_APSP:
         return S
 
     @staticmethod
-    def __APSP_edge(distance: Distance, graph: Graph, u: int, v: int, w):
+    def __APSP_edge(path : Path_presence, graph: Graph, u: int, v: int):
         """
         Ajout non trivial d'une arete dans le graph
         :param graph: a Data_Structure graph
@@ -161,10 +156,10 @@ class Dynamic_APSP:
 
         # algo 1
 
-        if distance.dist(u, v) != -1:
+        if path.is_path(u, v):
             S, P = {}, {}
-            S[v] = Dynamic_APSP.__find_affected_sources(distance, graph, u, v)
-            distance.update_dist(u, v, w)
+            S[v] = Dynamic_APSP.__find_affected_sources(path, graph, u, v)
+            path.set_is_path(u, v, True)
             Q = deque()
             P[v] = v #todo find best structure
             Q.append(v)
@@ -173,18 +168,17 @@ class Dynamic_APSP:
                 y = Q.popleft()
                 # update distances for source nodes
                 for x in S[P[y]]:
-                    d_xy,d_xu,d_vy = distance.dist(x, y), distance.dist(x, u), distance.dist(v, y)
-                    if d_xy == -1 and d_xu != -1 and d_vy != -1:
-                        distance.update_dist(x, y, d_xu + w + d_vy)
+                    if not path.is_path(x, y) and path.is_path(x, u) and path.is_path(v, y):
+                        path.set_is_path(x, y, True)
                         if y != v:
                             S[y].append(y)
 
             #enqueue all neighbors that get closer to u
             for z in graph.reversed_adj_matrix(y):
-                if not graph.vis(z) and distance.dist(u, z) == -1 and distance.dist(v, z) != -1:
-                    distance.update_dist(u, z, distance.dist(v, z) + w)
+                if not graph.vis(z) and not path.is_path(u, z)  and path.is_path(v, z):
+                    path.set_is_path(u, z, True)
                     Q.append([y, z])
-                    graph.vis[z]= True
+                    graph.vis[z] = True
                     P[z] = y
 
 
@@ -196,11 +190,14 @@ class Dynamic_APSP:
 
 
 if __name__ == '__main__':
-    Dynamic_APSP()
+    print("start")
+    print("creation data structure + graph")
+    APSP = Dynamic_APSP()
+    print("creation is_path + initialisation")
+    APSP.initialisation()
+
     print("finish")
-    #{"idx_to_name": ["a", "b", "c"], "max_time": 100,
-    # "graph": {"0": [110,170, 270, 50],"50" : [170,270],"110": [120], "120":[50,170],"170":[],"270":[] },
-    # "used_nodes": [[10,50],  [110,120,170], [270] ]}
+    #{"idx_to_name": ["a", "b", "c"], "max_time": 100, "graph": {"0": [110,170, 270, 50],"50" : [170,270],"110": [120], "120":[50,170],"170":[],"270":[] }, "used_nodes": [[10,50],  [110,120,170], [270] ]}
 
 
 
