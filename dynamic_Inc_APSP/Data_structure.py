@@ -11,7 +11,7 @@ class Distance:
         self.idx_to_name = idx_to_name
         self.name_to_idx = name_to_idx
 
-    def dist(self, u, v):
+    def dist(self, u: int, v: int) -> float:
         """
         Return the minimal distance between u (id) and v (id)
         """
@@ -31,6 +31,48 @@ class Distance:
         # todo optimise
         raise Exception("unimplemented")
     def update_dist_big_change(self,ids,dist_matrix):
+        """
+        Effectue une mise a jour des distance de plus grande ampleur
+        :param ids: liste des id dont les distances sont mise à jour
+        :param dist_matrix:  Liste d'array contenant les nouvelles distance
+        :return: None
+        """
+        # todo
+        raise Exception("unimplemented")
+
+
+class Path_presence:
+
+    def __init__(self, vertex):
+        self.pos_to_node = vertex
+        self.node_to_pos = {x: i for i, x in enumerate(self.node_to_pos)}
+        self.size = len(vertex)
+        self.is_reach = np.zeros((self.size, self.size), dtype=np.bool)
+
+    def is_path(self, u: int, v: int) -> bool:
+        """
+        Return the minimal distance between u (id) and v (id)
+        """
+        return self.is_reach[self.node_to_pos[u]][self.node_to_pos[v]]
+
+    def is_path_from(self, s):
+        """
+        Return the list of the minimal distance from source  s (id)
+        """
+        return self.is_reach[self.node_to_pos[s]]
+
+    def set_is_path(self, u, v, is_path):
+        """u,v are node number (ie : id*maxtime + time)"""
+        self.is_reach[self.node_to_pos[u]][self.node_to_pos[v]] = is_path
+        # todo optimise
+        #raise Exception("unimplemented")
+
+    def set_is_path_from(self, s, is_path_list):
+        self.is_reach[self.node_to_pos[s]] = is_path_list
+        # todo optimise
+        #raise Exception("unimplemented")
+
+    def set_is_path_big_change(self, ids, dist_matrix):
         """
         Effectue une mise a jour des distance de plus grande ampleur
         :param ids: liste des id dont les distances sont mise à jour
