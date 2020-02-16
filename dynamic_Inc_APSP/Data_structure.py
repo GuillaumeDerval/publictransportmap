@@ -44,10 +44,10 @@ class Distance:
 class Path_presence:
 
     def __init__(self, vertex):
-        self.pos_to_node = vertex
-        self.node_to_pos = {x: i for i, x in enumerate(self.node_to_pos)}
+        self.pos_to_node = vertex.copy()
+        self.node_to_pos = {x: i for i, x in enumerate(self.pos_to_node)}
         self.size = len(vertex)
-        self.is_reach = np.zeros((self.size, self.size), dtype=np.bool)
+        self.is_reach = np.zeros((self.size, self.size), dtype=np.bool, order ="F")
 
     def is_path(self, u: int, v: int) -> bool:
         """
@@ -82,6 +82,18 @@ class Path_presence:
         # todo
         raise Exception("unimplemented")
 
+    def add_node(self,n):
+        if n not in self.pos_to_node:
+            size : int = self.size
+            self.pos_to_node.append(n)
+            self.node_to_pos[n] = self.size
+            self.is_reach.resize(size, size + 1)
+            self.is_reach = np.concatenate((self.is_reach, np.zeros((1,self.size +1),dtype = np.bool)), axis=0)
+            self.size += 1
+            self.is_reach[size][size] = True
+
+
+
 
 class Graph:
     """
@@ -91,27 +103,24 @@ class Graph:
     Pas de chemin est indiqué par -1
     """
     def __init__(self, out):
-        #out = json.loads(open(path).read())
-        self.adj_matrix = out["graph"]
-        self.vertex = self.adj_matrix.keys()
+        self.adj_matrix = {int(k): value for k,value in out["graph"].items()}
+        self.vertex = [int(v) for v in self.adj_matrix.keys()]
         self.V = len(self.adj_matrix)                            # number of vertex
-        self.E = sum([len(nei) for nei in self.adj_matrix])      # number of edges
+        self.E = sum([len(nei) for _, nei in self.adj_matrix.items()])      # number of edges
 
         # adjacency matrix with reversed edge (if u -> v in g the v->u in rev_g)
         self.reversed_adj_matrix = {v: [] for v in self.vertex}
         for org in self.vertex:
             for dest in self.adj_matrix[org]:
-                self.reversed_adj_matrix[str(dest)].append(int(org))
+                self.reversed_adj_matrix[dest].append(org)
 
         self.vis = {v: False for v in self.vertex}         #indicate if a node have been visited
-
-
 
     def add_vertex(self, z):
         if z not in self.vertex:
             self.adj_matrix[z] = []
             self.reversed_adj_matrix[z] = []
-            self.vertex.append([z])
+            self.vertex.append(z)
             self.V += 1
             self.vis = {z: False}
 
@@ -124,6 +133,12 @@ class Graph:
             self.adj_matrix[u].append(v)
             self.reversed_adj_matrix[v].append(u)
 
-    def is_leaf(self,v):
-        return len(self.adj_matrix[v]) == 0
+    def is_isolated(self, v):
+        return len(self.adj_matrix[v]) + len(self.reversed_adj_matrix[v]) == 0
+
+    def in_degree(self, v):
+        return len(self.reversed_adj_matrix[v])
+
+    def out_degree(self, v):
+        return len(self.adj_matrix[v])
 

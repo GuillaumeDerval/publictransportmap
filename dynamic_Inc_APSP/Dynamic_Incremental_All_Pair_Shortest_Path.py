@@ -40,18 +40,20 @@ class Dynamic_APSP:
                 path_x = self.path.is_path_from(x)
                 np.bitwise_or(path_x, self.path.is_path_from(nei), out = path_x, dtype=np.bool)
 
-    def add_isolated_vertex(self, stop_name, time):
+    def add_isolated_vertex(self, stop_name : str, time : int):
         if stop_name in self.name_to_idx:
             id = self.name_to_idx[stop_name]
-            self.__used_node[id].add(time)
+            if time in self.__used_node[id]: return id
+            else:
+                self.__used_node[id].append(time)
         else:
-            id = len(self.name_to_idx) +1
+            id = len(self.name_to_idx)
             self.idx_to_name.append(stop_name)
             self.name_to_idx[stop_name] = id
-            self.__used_node.append(set(time))
+            self.__used_node.append([time])
         z = id*self.__max_time + time
         self.graph.add_vertex(z)
-        self.path.add_vertex(z)
+        self.path.add_node(z)
 
         return id
 
@@ -64,24 +66,22 @@ class Dynamic_APSP:
         v = v_id*self.__max_time + v_time
 
         #w = v % self.__max_time - u % self.__max_time
-
         self.graph.add_edge(u, v)
-
         # 4 cas sont possibles lors de l'ajout d'aret :
 
-        # cas 1 : u and v are leafs
-        if self.graph.is_leaf(u) and self.graph.is_leaf(v):
+        # cas 1 : u->v doesn't impact the rest of the graph
+        if self.graph.in_degree(u) == 0 and self.graph.out_degree(v) == 0:
             self.path.set_is_path(u, v, True)
 
-        # cas 2 : u  is a leaf
-        elif self.graph.is_leaf(u):
+        # cas 2 : no path to u
+        elif self.graph.in_degree(u) == 0:
             # if path v-> . then dist(u, . ) = dist(v,.) + dist(u,v)
             is_path_u = self.path.is_path_from(u)
             is_path_v = self.path.is_path_from(v)
-            np.bitwise_or(x1=is_path_u, x2 = is_path_v, out= is_path_u, dtype=np.bool)
+            np.bitwise_or(is_path_u, is_path_v, out= is_path_u, dtype=np.bool)
 
-        # cas 3 : v  is a leaf
-        elif self.graph.is_leaf(v):
+        # cas 3 : no path continue from v
+        elif self.graph.out_degree(v) == 0:
             # for node x :compute dist v a partir de dist(.,u)
             for x in self.graph.vertex:
                 is_path_u = self.path.is_path(x, u)
@@ -91,13 +91,7 @@ class Dynamic_APSP:
 
         # cas 4 : neither u neither v is a leaf
         else:
-            self.__APSP_edge(self.graph, u, v)
-
-
-
-
-        # todo other stuff
-        raise Exception("unimplemented")
+            self.__APSP_edge(self.path,self.graph, u, v)
 
 
     def add_vertex(self, z_stop_id, z_time, z_name, Z_in, Z_out):
@@ -195,10 +189,24 @@ if __name__ == '__main__':
     APSP = Dynamic_APSP()
     print("creation is_path + initialisation")
     APSP.initialisation()
-
+    print("add vertex")
+    APSP.add_isolated_vertex("d",30)
+    print("add vertex2")
+    APSP.add_isolated_vertex("c", 90)
+    print("add supid edge d30 -> c90")
+    APSP.add_edge("d",30,"c",90)
+    print("add edge b10 -> c90")
+    APSP.add_edge("b", 10, "c", 90)
+    print("add edge e0 -> b10")
+    APSP.add_edge("e", 0, "b", 10)
+    print("add edge b10 -> d30")
+    APSP.add_edge("b", 10, "d", 30)
     print("finish")
     #{"idx_to_name": ["a", "b", "c"], "max_time": 100, "graph": {"0": [110,170, 270, 50],"50" : [170,270],"110": [120], "120":[50,170],"170":[],"270":[] }, "used_nodes": [[10,50],  [110,120,170], [270] ]}
 
+    #{"idx_to_name": ["a", "b", "c","d","e"], "max_time": 100,
+  #"graph": {"0": [110,170, 270, 50],"50" : [170,270],"110": [120,290,330], "120":[50,170],"170":[],"270":[],"290": [],"330":[290],"400":[110] },
+  #"used_nodes": [[10,50],  [110,120,170], [270,290], [330],[400]]}
 
 
 
