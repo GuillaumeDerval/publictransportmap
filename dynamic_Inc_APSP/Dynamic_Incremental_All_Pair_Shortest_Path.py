@@ -1,7 +1,6 @@
 from collections import deque
 import my_program.path as PATH
 from dynamic_Inc_APSP.Data_structure import *
-import numpy as np
 
 """Ce code est base sur les algorithmes proposé dans l'article  Faster Incremental All-pairs Shortest Paths"""
 
@@ -33,12 +32,12 @@ class Dynamic_APSP:
         #   for nei in X_out:
         #           is_reach[x] = is_reach[x] or is reach[nei]
         node = self.graph.vertex
-        node.sort(key = lambda x : x % self.__max_time, reverse = True)
+        node.sort(key=lambda x: x % self.__max_time, reverse=True)
         for x in node:
-            self.path.set_is_path(x,x,True)
+            self.path.set_is_path(x, x, True)
             for nei in self.graph.adj_matrix[x]:
                 path_x = self.path.is_path_from(x)
-                np.bitwise_or(path_x, self.path.is_path_from(nei), out = path_x, dtype=np.bool)
+                Path_presence.or_in_place(path_x, nei)
 
     def add_isolated_vertex(self, stop_name : str, time : int):
         if stop_name in self.name_to_idx:
@@ -78,7 +77,7 @@ class Dynamic_APSP:
             # if path v-> . then dist(u, . ) = dist(v,.) + dist(u,v)
             is_path_u = self.path.is_path_from(u)
             is_path_v = self.path.is_path_from(v)
-            np.bitwise_or(is_path_u, is_path_v, out= is_path_u, dtype=np.bool)
+            Path_presence.or_in_place(is_path_u, is_path_v)
 
         # cas 3 : no path continue from v
         elif self.graph.out_degree(v) == 0:
@@ -93,16 +92,35 @@ class Dynamic_APSP:
         else:
             self.__APSP_edge(self.path,self.graph, u, v)
 
-
     def add_vertex(self, z_stop_id, z_time, z_name, Z_in, Z_out):
         # todo
         raise Exception("unimplemented")
 
-    def save_distance(self, out_directory_path):
+
+
+    def get_distance_change(self):
+        # todo
+        raise Exception("unimplemented")
+
+    def get_distance_without_change(self):
+        # todo
+        raise Exception("unimplemented")
+
+    def get_distance_change_from(self, stop_name):
+        # todo
+        raise Exception("unimplemented")
+
+    def get_distance_without_change_from(self, stop_name):
+        # todo
+        raise Exception("unimplemented")
+
+
+
+    def hard_save_distance(self, out_directory_path):
         #todo
         raise Exception("unimplemented")
 
-    def save_graph(self, out_path):
+    def hard_save_graph(self, out_path):
         # todo
         raise Exception("unimplemented")
 
@@ -155,7 +173,7 @@ class Dynamic_APSP:
             S[v] = Dynamic_APSP.__find_affected_sources(path, graph, u, v)
             path.set_is_path(u, v, True)
             Q = deque()
-            P[v] = v #todo find best structure
+            P[v] = v
             Q.append(v)
             graph.vis[v] = True
             while len(Q) > 0:
