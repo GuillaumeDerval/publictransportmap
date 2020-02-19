@@ -30,15 +30,8 @@ class Distance:
         # todo
         # todo optimise
         raise Exception("unimplemented")
-    def update_dist_big_change(self,ids,dist_matrix):
-        """
-        Effectue une mise a jour des distance de plus grande ampleur
-        :param ids: liste des id dont les distances sont mise à jour
-        :param dist_matrix:  Liste d'array contenant les nouvelles distance
-        :return: None
-        """
-        # todo
-        raise Exception("unimplemented")
+
+
 
 
 class Path_presence:

@@ -37,7 +37,7 @@ class Dynamic_APSP:
             self.path.set_is_path(x, x, True)
             for nei in self.graph.adj_matrix[x]:
                 path_x = self.path.is_path_from(x)
-                Path_presence.or_in_place(path_x, nei)
+                self.path.or_in_place(path_x, nei)
 
     def add_isolated_vertex(self, stop_name : str, time : int):
         if stop_name in self.name_to_idx:
@@ -50,6 +50,7 @@ class Dynamic_APSP:
             self.idx_to_name.append(stop_name)
             self.name_to_idx[stop_name] = id
             self.__used_node.append([time])
+            #todo distance.add_node
         z = id*self.__max_time + time
         self.graph.add_vertex(z)
         self.path.add_node(z)
@@ -77,7 +78,7 @@ class Dynamic_APSP:
             # if path v-> . then dist(u, . ) = dist(v,.) + dist(u,v)
             is_path_u = self.path.is_path_from(u)
             is_path_v = self.path.is_path_from(v)
-            Path_presence.or_in_place(is_path_u, is_path_v)
+            self.path.or_in_place(is_path_u, is_path_v)
 
         # cas 3 : no path continue from v
         elif self.graph.out_degree(v) == 0:

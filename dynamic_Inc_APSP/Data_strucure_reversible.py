@@ -1,44 +1,144 @@
-import json
 import numpy as np
 import my_program.path as PATH
+from math import inf
 
 
-
-#Distance
+# Distance
 class Distance:
 
-    def __init__(self, idx_to_name, name_to_idx):
-        self.idx_to_name = idx_to_name
-        self.name_to_idx = name_to_idx
+    # !!! attention le distance sont mise à jour seulement après un appel a update()
 
-    def dist(self, u: int, v: int) -> float:
+    def __init__(self, name_to_idx,idx_to_name, max_time, used_node, path_presence):
+        self.name_to_idx = name_to_idx
+        self.idx_to_name = idx_to_name
+        self.max_time = max_time
+        self.used_node = used_node
+        self.presence: Path_presence = path_presence
+        self.size: int = len(name_to_idx)
+        self.distance = [np.full((self.size,), -1, dtype=np.int)]*self.size
+        self.__compute_distances()
+        self.__backup = {"size": self.size, "change_distance": {}}
+        self.__backup_stack = []  # permet de faire une recherche sur plusieur etage
+        #todo changeable size
+
+    def __compute_distances(self):
+        for source_idx,destination_idx in zip(range(self.size), range(self.size)):
+            src, dest = self.used_node[source_idx], self.used_node[destination_idx]
+            mini = inf
+            for s in src.sort(lambda x: x % self.max_time):
+                for d in dest.sort(lambda x: x % self.max_time):
+                    if s % self.max_time > d % self.max_time:
+                        pass
+                        # dest = dest[1:] #todo optimise
+                    elif self.presence.is_reach[s][d]:
+                        time = d % self.max_time - s % self.max_time
+                        mini = min(time, mini)
+                        break  # because dest are sorted
+            self.distance[source_idx][destination_idx] = mini
+
+    def dist(self, s_name: str, d_name: str) -> float:
         """
-        Return the minimal distance between u (id) and v (id)
+        Return the minimal distance between u_name and v_name
         """
-        return self.dist_from(u)[v]
-    def dist_from(self, s):
+        s_idx = self.name_to_idx[s_name]
+        d_idx = self.name_to_idx[d_name]
+        return self.distance[s_idx][d_idx]
+
+    def dist_from(self, s_name):
         """
         Return the list of the minimal distance from source  s (id)
         """
-        path = PATH.TRAVEL_TIME + "{0}.npy".format(self.idx_to_name[s])
-        return np.load(path)
-    def update_dist(self, u,v, dist):
-        # todo
-        # todo optimise
-        raise Exception("unimplemented")
-    def update_dist_from(self, s, dist_list):
-        # todo
-        # todo optimise
-        raise Exception("unimplemented")
-    def update_dist_big_change(self,ids,dist_matrix):
+        s_idx = self.name_to_idx[s_name]
+        return self.distance[s_idx]
+
+    def dist_before_change(self, s_name: str, d_name: str) -> float:
         """
-        Effectue une mise a jour des distance de plus grande ampleur
-        :param ids: liste des id dont les distances sont mise à jour
-        :param dist_matrix:  Liste d'array contenant les nouvelles distance
-        :return: None
+        Return the minimal distance between u (id) and v (id)
         """
-        # todo
+        if s_name in self.__backup["change_distance"] and d_name in self.__backup["change_distance"][s_name]:
+            return self.__backup["change_distance"][s_name][d_name]
+        else:
+            return self.dist(s_name, d_name)
+        #path = PATH.TRAVEL_TIME + "{0}.npy".format(self.idx_to_name[s])
+        #return np.load(path)
+
+    def dist_from_before_change(self, s_name):
+        """
+        Return the list of the minimal distance from source  s (id)
+        """
+        if s_name in self.__backup["change_distance"]:
+            s_idx = self.name_to_idx[s_name]
+            distance = self.distance[s_idx].copy()
+            for d_name in self.__backup["change_distance"][s_name]:
+                d_idx = self.name_to_idx[d_name]
+                distance[d_idx] = self.__backup["change_distance"][s_name][d_name]
+            return distance
+        else:
+            s_idx = self.name_to_idx[s_name]
+            return self.distance[s_idx]
+
+    def add_isolated_vertex(self, name, idx):
+        # inc size
+        #update distance
         raise Exception("unimplemented")
+
+    def update(self):
+        # hypothese : distance à la bonne taille
+        changes = self.presence.get_changes()
+        for s, content in changes["single_change"].items():
+            s_name = self.idx_to_name[s // self.max_time]
+            for d, value in content.items():
+                d_name = self.idx_to_name[d // self.max_time]
+                time = d % self.max_time - s % self.max_time
+                self.single_update(s_name, d_name, time)
+
+        for s, new_line in changes["line_change"].items():
+            s_name = s // self.max_time
+            for i in range(len(changes["idx_order"])):
+                d = changes["idx_order"][i]
+                d_name = self.idx_to_name[d // self.max_time]
+                time = d % self.max_time - s % self.max_time
+                self.single_update(s_name, d_name, time)
+
+    def single_update(self, s_name, d_name, new_time):
+        if new_time < self.distance[s_name][d_name]:
+            old_value = self.distance[s_name][d_name]
+            self.distance[s_name][d_name] = new_time
+            # backup : ("change_distance",s,d,old_value)
+            if d_name not in self.__backup["change_distance"].get(s_name, {}):
+                if s_name not in self.__backup["change_distance"]:
+                    self.__backup["change_distance"][s_name] = {}
+                self.__backup["change_distance"][s_name][d_name] = old_value
+
+    def save(self):
+        self.__backup_stack.append(self.__backup)
+        self.__backup = {"size": self.size, "change_distance": {}}
+
+    def restore(self):
+        assert self.__backup["size"] <= self.size, "suppression of node is not yet implemented "
+        self.size = self.__backup["size"]
+
+        # restore old distance value
+        for s_name in self.__backup["change_distance"]:
+            for d_name,old_value in self.__backup["change_distance"][s_name].items():
+                self.distance[s_name][d_name] = old_value
+
+        self.__backup = self.__backup_stack.pop()
+
+    def get_changes(self):
+        """
+        retourne l'ensemble de nouvelle valeur de is_reach, leur position est indique par les cle du dictionnaire
+        (new_value, old_value)
+        :return:
+        """
+        changes = {"size": (self.size, self.__backup["size"]),"change_distance": {}}
+        # distance
+        for s_name in self.__backup["change_distance"]:
+            for d_name in self.__backup["change_distance"][s_name]:
+                if s_name not in changes["change_distance"]:
+                    changes["change_distance"][s_name] = {}
+                changes["change_distance"][s_name][d_name] = (self.dist(s_name,d_name), self.dist_before_change(s_name, d_name))
+        return changes
 
 
 class Path_presence:
@@ -51,7 +151,7 @@ class Path_presence:
 
         # reversible state -> trailer (see constraint programing)
         self.__true_size = self.size
-        self.__backup = []
+        self.__backup = {"size": self.size, "single_change" : {},"line_change" : {} }
         self.__backup_stack = []  # permet de faire une recherche sur plusieur etage
 
     def is_path(self, u: int, v: int) -> bool:
@@ -75,24 +175,37 @@ class Path_presence:
         assert v < self.size
         old_value = self.is_reach[self.vertex_to_pos[u]][self.vertex_to_pos[v]]
         self.is_reach[self.vertex_to_pos[u]][self.vertex_to_pos[v]] = is_path
-        self.__backup.append(("set_is_path",u,v,old_value))
+        # backup : ("set_is_path",u,v,old_value)
+        if u not in self.__backup["line_change"]and v not in self.__backup["single_change"].get(u, {}):
+            if u not in self.__backup["single_change"]:
+                self.__backup["single_change"][u] = {}
+            self.__backup["single_change"][u][v] = old_value
 
     def set_is_path_from(self, s, is_path_list):
         assert s < self.size
         old_values = self.is_reach[self.vertex_to_pos[s]]
         self.is_reach[self.vertex_to_pos[s]] = is_path_list
-        self.__backup.append(("set_is_path_from", s, old_values))
+        # backup : ("set_is_path_from", s, old_values))
+        if s not in self.__backup["line_change"]:
+            self.__backup["line_change"][s] = old_values
+            if s in self.__backup["single_change"]:
+                self.__backup["single_change"].pop(s)
 
-    @staticmethod
+
     def or_in_place(self, x1, x2):
         """
         :param x1: np.array of bool
         :param x2: np.array of bool
         :after: x1 = x1 and x2, x2 unchanged
         """
-        old_values = self.is_reach[self.node_to_pos[x1]]
-        np.bitwise_or(x1, self.path.is_path_from(x2 ), out=x1, dtype=np.bool)
-        self.__backup = (("set_is_path_from", x1, old_values))
+        old_values = self.is_reach[self.vertex_to_pos[x1]]
+        np.bitwise_or(x1, x2, out=x1, dtype=np.bool)
+
+        #backup
+        if x1 not in self.__backup["line_change"]:
+            self.__backup["line_change"][x1] = old_values
+            if x1 in self.__backup["single_change"]:
+                self.__backup["single_change"].pop(x1)
 
     def add_vertex(self, n):
         if n not in self.pos_to_vertex:
@@ -110,7 +223,6 @@ class Path_presence:
 
             self.size += 1
             self.is_reach[size][size] = True
-            self.__backup.append(("add_vertex",n))
 
     def __remove_vertex(self):
         """
@@ -118,31 +230,44 @@ class Path_presence:
         :return:
         """
         n = self.pos_to_vertex.pop()
-        self.__true_size -= 1
         self.size -= 1
-        self.__backup.append(("remove_vertex", n))
+        #self.__backup.rm(n) #todo if we keep remove
 
     def save(self):
         self.__backup_stack.append(self.__backup)
         self.__backup = []
 
     def restore(self):
-        self.__backup.reverse()
-        for log in self.__backup:
-            if log[0] == "add_vertex":
-                self.__remove_vertex()
-            elif log[0] == "rm_vertex":
-                self.add_vertex(log[1])
-            elif log[0] == "set_is_path":
-                self.set_is_path(log[1],log[2])
-                self.__backup.pop()
-            elif log[0] == "set_is_path_from":
-                self.set_is_path_from(log[1],log[2])
-                self.__backup.pop()
-            else:
-                raise Exception("Unhandeled log")
+        assert self.__backup["size"] <= self.size, "suppression of node is not yet implemented "
+        self.size = self.__backup["size"]
+        # restore line
+        for s in self.__backup["line_change"]:
+            self.is_reach[self.vertex_to_pos[s]] = self.__backup["line_change"][s]
+        # restore single value
+        for u in self.__backup["single_change"]:
+            for v in self.__backup["single_change"][u]:
+                self.is_reach[self.vertex_to_pos[u]][self.vertex_to_pos[v]] = self.__backup["single_change"][u][v]
 
-        self.__change_log = self.__backup_stack.pop()
+        self.__backup = self.__backup_stack.pop()
+
+    def get_changes(self):
+        """
+        retourne l'ensemble de nouvelle valeur de is_reach, leur position est indique par les cle du dictionnaire
+        :return:
+        """
+        new_values = {"size": self.size,"idx_order": self.pos_to_vertex, "single_change" : {}, "line_change": {}}
+        # restore line
+        for s in self.__backup["line_change"]:
+            new_values["line_change"][s] = self.is_reach[self.vertex_to_pos[s]]
+        # restore single value
+        for u in self.__backup["single_change"]:
+            for v in self.__backup["single_change"][u]:
+                if u not in new_values["single_change"]:
+                    new_values["single_change"][u] = {}
+                new_values["single_change"][u][v] = self.is_reach[self.vertex_to_pos[u]][self.vertex_to_pos[v]]
+
+        return new_values
+
 
 
 
