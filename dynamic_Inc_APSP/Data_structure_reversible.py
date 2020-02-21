@@ -7,7 +7,7 @@ from math import inf
 class Distance:
 
     # !!! attention le distance sont mise à jour seulement après un appel a update()
-    # todo sauvegarde sur des fichie rpour limiter l'utilisation de memoire ???
+    # todo sauvegarde sur des fichie pour limiter l'utilisation de memoire ???
 
     def __init__(self, name_to_idx, idx_to_name, max_time, used_node, path_presence):
         self.name_to_idx = name_to_idx
@@ -24,12 +24,13 @@ class Distance:
 
     def __compute_distances(self):
         for source_idx in range(self.size):
+            src = self.used_node[source_idx].copy()
             for destination_idx in range(self.size):
-                src, dest = self.used_node[source_idx], self.used_node[destination_idx]
+                dest = self.used_node[destination_idx].copy()
                 mini = inf
                 src.sort(key=lambda x: x % self.max_time)
+                dest.sort(key=lambda x: x % self.max_time)
                 for s in src:
-                    dest.sort(key=lambda x: x % self.max_time)
                     for d in dest:
                         if s % self.max_time > d % self.max_time:
                             pass
@@ -167,7 +168,7 @@ class PathPresence:
 
     def is_path(self, u: int, v: int) -> bool:
         """
-        Return the minimal distance between u (id) and v (id)
+        Return the minimal distance between u (pos-time node) and v (pos-time node)
         """
         assert u in self.vertex_to_pos
         assert v in self.vertex_to_pos
@@ -226,8 +227,9 @@ class PathPresence:
             size: int = self.size
             self.pos_to_vertex.append(n)
             self.vertex_to_pos[n] = self.size
-            if size + 1 < self.__true_size:
-                self.is_reach.resize(size, size + 1)
+            if size + 1 > self.__true_size:
+                self.is_reach= np.resize(self.is_reach,(size, size + 1))
+                #self.is_reach.resize(size, size + 1)
                 self.is_reach = np.concatenate((self.is_reach, np.zeros((1, self.size + 1), dtype=np.bool)), axis=0)
                 self.__true_size += 1
             else:   # set values to False
@@ -375,3 +377,17 @@ class Graph:
             else: raise Exception("Unhandeled log")
 
         self.__change_log = self.__stack_log.pop()
+
+    def __eq__(self, other):
+        if isinstance(other, Graph):
+            if self.V == other.V and self.vertex == other.vertex:
+                if self.E == other.E and  self.adj_matrix == other.adj_matrix:
+                    return True
+                else:
+                    print("bad adj matrix")
+            else:
+                print("bad vertex matrix")
+        else:
+            print("bad instance")
+        return False
+        #return isinstance(other, Graph) and self.V == other.V and self.E == other.E and self.vertex == other.vertex and self.adj_matrix == other.adj_matrix

@@ -14,12 +14,12 @@ class Dynamic_APSP:
         self.idx_to_name = out["idx_to_name"]
         self.name_to_idx = {x: i for i, x in enumerate(self.idx_to_name)}
         self.__max_time = out["max_time"]
-        self.__used_node = out["used_nodes"]
+        self.used_node = out["used_nodes"]
 
         self.path = PathPresence(self.graph.vertex)
         self.initialisation()
 
-        self.distance = Distance(self.name_to_idx, self.idx_to_name, self.__max_time, self.__used_node, self.path)
+        self.distance = Distance(self.name_to_idx, self.idx_to_name, self.__max_time, self.used_node, self.path)
 
     def initialisation(self):
         """
@@ -45,17 +45,19 @@ class Dynamic_APSP:
     def add_isolated_vertex(self, stop_name: str, time: int):
         if stop_name in self.name_to_idx:
             idx = self.name_to_idx[stop_name]
-            if time in self.__used_node[idx]:
+            z = idx*self.__max_time+time
+            if z in self.used_node[idx]:
                 return idx
             else:
-                self.__used_node[idx].append(time)
+                self.used_node[idx].append(z)
         else:
             idx = len(self.name_to_idx)
             self.idx_to_name.append(stop_name)
             self.name_to_idx[stop_name] = idx
-            self.__used_node.append([time])
+            z = idx*self.__max_time + time
+            self.used_node.append([z])
             self.distance.add_isolated_vertex(stop_name, idx)
-        z = idx*self.__max_time + time
+
         self.graph.add_vertex(z)
         self.path.add_vertex(z)
 
@@ -80,9 +82,7 @@ class Dynamic_APSP:
         # cas 2 : no path to u
         elif self.graph.in_degree(u) == 0:
             # if path v-> . then dist(u, . ) = dist(v,.) + dist(u,v)
-            is_path_u = self.path.is_path_from(u)
-            is_path_v = self.path.is_path_from(v)
-            self.path.or_in_place(is_path_u, is_path_v)
+            self.path.or_in_place(u, v)
 
         # cas 3 : no path continue from v
         elif self.graph.out_degree(v) == 0:
@@ -107,7 +107,7 @@ class Dynamic_APSP:
 
     def hard_save_graph(self, out_path=PATH.OUT):
         json.dump({"idx_to_name": self.idx_to_name, "max_time": self.__max_time,
-                   "graph": self.graph.adj_matrix, "used_nodes": self.__used_node
+                   "graph": self.graph.adj_matrix, "used_nodes": self.used_node
                    }, open(out_path, 'w'))
 
     #################################################################################################################
