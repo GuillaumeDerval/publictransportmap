@@ -9,17 +9,21 @@ import json
 
 class Dynamic_APSP:
     def __init__(self, path=PATH.OUT):
-        out = json.loads(open(path).read())
+        with open(path) as file:
+            out = json.loads(file.read())
         self.graph = Graph(out)
         self.idx_to_name = out["idx_to_name"]
         self.name_to_idx = {x: i for i, x in enumerate(self.idx_to_name)}
         self.__max_time = out["max_time"]
-        self.used_node = out["used_nodes"]
+        self.used_time = out["used_times"]
+        #sort used_time by time
+        for used in self.used_time:
+            used.sort()
 
         self.path = PathPresence(self.graph.vertex)
         self.initialisation()
 
-        self.distance = Distance(self.name_to_idx, self.idx_to_name, self.__max_time, self.used_node, self.path)
+        self.distance = Distance(self.name_to_idx, self.idx_to_name, self.__max_time, self.used_time, self.path)
 
     def initialisation(self):
         """
@@ -35,27 +39,56 @@ class Dynamic_APSP:
         #   is_reach[x][x] = True
         #   for nei in X_out:
         #           is_reach[x] = is_reach[x] or is reach[nei]
+
+        # on peut passer d'un  noeud a l'autre au meme instant
+
+        def init_time_level(time : int, node_list : list, adj_matrix):
+            wait__for_change = {} #{n, m} if the value of n is changed then m must be recomputed
+            while len(node_list) > 0:
+                x = node_list.pop()
+                neightboors = adj_matrix[x]
+                for nei in neightboors:
+                    old_x_value = self.path.is_path_from(x).copy()
+                    self.path.or_in_place(x, nei)
+                    new_x_value = self.path.is_path_from(x)
+                    if not np.array_equal(new_x_value, old_x_value): #check if change
+                        node_list.extend(wait__for_change.get(x, []))
+                    if time == nei % self.__max_time:
+                        if nei not in wait__for_change: wait__for_change[nei] = [x]
+                        else: wait__for_change[nei].append(x)
+
+
+
         node = self.graph.vertex
         node.sort(key=lambda x: x % self.__max_time, reverse=True)
+        time = -1
+        node_list = []
         for x in node:
+            x_time = x % self.__max_time
             self.path.set_is_path(x, x, True)
-            for nei in self.graph.adj_matrix[x]:
-                self.path.or_in_place(x, nei)
+            if x_time != time:
+                init_time_level(time, node_list, self.graph.adj_matrix)
+                node_list = [x]
+                time = x_time
+            else:
+                node_list.append(x)
+        init_time_level(time, node_list, self.graph.adj_matrix)
+
 
     def add_isolated_vertex(self, stop_name: str, time: int):
         if stop_name in self.name_to_idx:
             idx = self.name_to_idx[stop_name]
-            z = idx*self.__max_time+time
-            if z in self.used_node[idx]:
+            #z = idx*self.__max_time+time
+            if time in self.used_time[idx]:
                 return idx
             else:
-                self.used_node[idx].append(z)
+                self.used_time[idx].append(time)
         else:
             idx = len(self.name_to_idx)
             self.idx_to_name.append(stop_name)
             self.name_to_idx[stop_name] = idx
             z = idx*self.__max_time + time
-            self.used_node.append([z])
+            self.used_time.append(time)
             self.distance.add_isolated_vertex(stop_name, idx)
 
         self.graph.add_vertex(z)
@@ -106,9 +139,10 @@ class Dynamic_APSP:
         self.distance.hard_save(out_directory_path)
 
     def hard_save_graph(self, out_path=PATH.OUT):
-        json.dump({"idx_to_name": self.idx_to_name, "max_time": self.__max_time,
-                   "graph": self.graph.adj_matrix, "used_nodes": self.used_node
-                   }, open(out_path, 'w'))
+        with open(out_path, 'w') as out_file:
+            json.dump({"idx_to_name": self.idx_to_name, "max_time": self.__max_time,
+                       "graph": self.graph.adj_matrix, "used_times": self.used_time
+                       }, out_file)
 
     #################################################################################################################
 
@@ -207,11 +241,11 @@ if __name__ == '__main__':
     print("add edge b10 -> d30")
     APSP.add_edge("b", 10, "d", 30)
     print("finish")
-    #{"idx_to_name": ["a", "b", "c"], "max_time": 100, "graph": {"0": [110,170, 270, 50],"50" : [170,270],"110": [120], "120":[50,170],"170":[],"270":[] }, "used_nodes": [[10,50],  [110,120,170], [270] ]}
+    #{"idx_to_name": ["a", "b", "c"], "max_time": 100, "graph": {"0": [110,170, 270, 50],"50" : [170,270],"110": [120], "120":[50,170],"170":[],"270":[] }, "used_times": [[10,50],  [110,120,170], [270] ]}
 
     #{"idx_to_name": ["a", "b", "c","d","e"], "max_time": 100,
   #"graph": {"0": [110,170, 270, 50],"50" : [170,270],"110": [120,290,330], "120":[50,170],"170":[],"270":[],"290": [],"330":[290],"400":[110] },
-  #"used_nodes": [[10,50],  [110,120,170], [270,290], [330],[400]]}
+  #"used_times": [[10,50],  [110,120,170], [270,290], [330],[400]]}
 
 
 

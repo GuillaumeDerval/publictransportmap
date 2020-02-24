@@ -9,11 +9,11 @@ class Distance:
     # !!! attention le distance sont mise à jour seulement après un appel a update()
     # todo sauvegarde sur des fichie pour limiter l'utilisation de memoire ???
 
-    def __init__(self, name_to_idx, idx_to_name, max_time, used_node, path_presence):
+    def __init__(self, name_to_idx, idx_to_name, max_time, used_time, path_presence):
         self.name_to_idx = name_to_idx
         self.idx_to_name = idx_to_name
         self.max_time = max_time
-        self.used_node = used_node
+        self.used_time = used_time                          #used node are sorted by time
         self.is_reachable: PathPresence = path_presence
         self.size: int = len(name_to_idx)
         self.distance = [np.full((self.size,), -1, dtype=np.int) for _ in range(self.size)]
@@ -24,17 +24,17 @@ class Distance:
 
     def __compute_distances(self):
         for source_idx in range(self.size):
-            src = self.used_node[source_idx].copy()
+            src_time_list = self.used_time[source_idx]
             for destination_idx in range(self.size):
-                dest = self.used_node[destination_idx].copy()
+                dest_time_list = self.used_time[destination_idx]
                 mini = inf
-                src.sort(key=lambda x: x % self.max_time)
-                dest.sort(key=lambda x: x % self.max_time)
-                for s in src:
-                    for d in dest:
-                        if s % self.max_time > d % self.max_time:
-                            pass
-                            # dest = dest[1:] #todo optimise
+                for stime in src_time_list:
+                    s = source_idx*self.max_time + stime
+                    for dtime in dest_time_list:
+                        d = destination_idx * self.max_time + dtime
+                        if stime > dtime:
+                            #pass
+                            dest_time_list = dest_time_list[1:]
                         elif self.is_reachable.is_path(s, d):
                             time = d % self.max_time - s % self.max_time
                             mini = min(time, mini)
