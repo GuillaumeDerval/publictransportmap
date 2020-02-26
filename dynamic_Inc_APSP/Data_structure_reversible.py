@@ -7,7 +7,7 @@ from math import inf
 class Distance:
 
     # !!! attention le distance sont mise à jour seulement après un appel a update()
-    # todo sauvegarde sur des fichie pour limiter l'utilisation de memoire ???
+    # todo sauvegarde sur des fichiers pour limiter l'utilisation de memoire ???
 
     def __init__(self, name_to_idx, idx_to_name, max_time, used_time, path_presence):
         self.name_to_idx = name_to_idx
@@ -22,7 +22,6 @@ class Distance:
         self.__compute_distances()
         self.__backup = {"size": self.size, "change_distance": {}}
         self.__backup_stack = []  # permet de faire une recherche sur plusieur etage
-
 
     def __compute_distances(self):
         for source_idx in range(self.size):
@@ -111,26 +110,31 @@ class Distance:
             self.size += 1
 
     def update(self):
-        self.__update_size()
-        changes = self.is_reachable.get_changes()
-        for s, content in changes["single_change"].items():
-            s_name = self.idx_to_name[s // self.max_time]
-            for d, value in content.items():
-                d_name = self.idx_to_name[d // self.max_time]
-                time = d % self.max_time - s % self.max_time
-                self.single_update(s_name, d_name, time)
+        if not self.up_to_date:
+            self.__update_size()
+            changes = self.is_reachable.get_changes()
+            for s, content in changes["single_change"].items():
+                s_name = self.idx_to_name[s // self.max_time]
+                for d, value in content.items():
+                    if value:
+                        d_name = self.idx_to_name[d // self.max_time]
+                        time = d % self.max_time - s % self.max_time
+                        self.single_update(s_name, d_name, time)
 
-        for s, new_line in changes["line_change"].items():
-            s_name = self.idx_to_name[s // self.max_time]
-            for i in range(len(changes["idx_order"])):
-                d = changes["idx_order"][i]
-                d_name = self.idx_to_name[d // self.max_time]
-                time = d % self.max_time - s % self.max_time
-                self.single_update(s_name, d_name, time)
+            for s, new_line in changes["line_change"].items():
+                s_name = self.idx_to_name[s // self.max_time]
+                for i in range(len(changes["idx_order"])):
+                    if new_line[i]:
+                        d = changes["idx_order"][i]
+                        d_name = self.idx_to_name[d // self.max_time]
+                        time = d % self.max_time - s % self.max_time
+                        assert time >= 0
+                        self.single_update(s_name, d_name, time)
+            self.up_to_date =True
 
     def single_update(self, s_name, d_name, new_time):
         self.__update_size()
-        if new_time < self.dist(s_name, d_name):
+        if new_time < self.dist(s_name, d_name) or self.dist(s_name, d_name) == -1:
             old_value = self.dist(s_name, d_name)
             self.__set_dist(s_name, d_name, new_time)
             # backup : ("change_distance",s,d,old_value)
@@ -267,14 +271,14 @@ class PathPresence:
         """u,v are node number (ie : id*maxtime + time)"""
         assert u in self.vertex_to_pos
         assert v in self.vertex_to_pos
-        old_value = self.is_reach[self.vertex_to_pos[u]][self.vertex_to_pos[v]]
+        old_value = self.is_path(u,v) #self.is_reach[self.vertex_to_pos[u]][self.vertex_to_pos[v]]
         if old_value != is_path:
             self.is_reach[self.vertex_to_pos[u]][self.vertex_to_pos[v]] = is_path
             # backup : ("set_is_path",u,v,old_value)
             if u not in self.__backup["line_change"]and v not in self.__backup["single_change"].get(u, {}):
                 if u not in self.__backup["single_change"]:
-                    self.__backup["single_change"][u] = {}
-                self.__backup["single_change"][u][v] = old_value
+                    self.__backup["single_change"][u] = {v: old_value}
+                else: self.__backup["single_change"][u][v] = old_value
 
     def set_is_path_from(self, s, is_path_list):
         assert s in self.vertex_to_pos
@@ -287,7 +291,7 @@ class PathPresence:
                 if s in self.__backup["single_change"]:
                     self.__backup["single_change"].pop(s)
 
-    def or_in_place(self, x1 : int, x2 : int):
+    def or_in_place(self, x1: int, x2 : int):
         """
         :param x1: index of a  np.array of bool indication presence of a path
         :param x2: index of a  np.array of bool indication presence of a path
@@ -295,7 +299,7 @@ class PathPresence:
         """
         assert x1 in self.vertex_to_pos
         assert x2 in self.vertex_to_pos
-        old_values = self.is_reach[self.vertex_to_pos[x1]]
+        old_values = self.is_path_from(x1).copy()
         path_x1 = self.is_path_from(x1)
         path_x2 = self.is_path_from(x2)
         np.bitwise_or(path_x1, path_x2, out=path_x1, dtype=np.bool)
@@ -312,8 +316,9 @@ class PathPresence:
             self.pos_to_vertex.append(n)
             self.vertex_to_pos[n] = self.size
             if size + 1 > self.__true_size:
-                self.is_reach= np.resize(self.is_reach,(size, size + 1))
+                #self.is_reach= np.resize(self.is_reach,(size, size + 1))
                 #self.is_reach.resize(size, size + 1)
+                self.is_reach = np.concatenate((self.is_reach, np.zeros((self.size,1), dtype=np.bool)), axis=1)
                 self.is_reach = np.concatenate((self.is_reach, np.zeros((1, self.size + 1), dtype=np.bool)), axis=0)
                 self.__true_size += 1
             else:   # set values to False

@@ -77,8 +77,6 @@ class Dynamic_APSP:
                 if is_path_u:
                     self.path.set_is_path(x, v, True)
 
-
-
         # cas 4 : neither u neither v is a leaf
         else:
             self.__APSP_edge(self.path, self.graph, u, v)

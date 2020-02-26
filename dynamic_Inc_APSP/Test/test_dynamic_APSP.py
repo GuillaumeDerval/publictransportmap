@@ -184,6 +184,16 @@ class TestDynamic_APSP(TestCase):
         self.assertTrue(comparisson)
 
     def test_add_edge_mini_2(self):
+        # add edge (u,v) where deg_in(u) = 0
+        def my_change(APSP):
+            APSP.add_edge("d", 0, "a", 0)
+            #APSP.add_edge("c", 40, "a", 50)
+            #APSP.add_edge("a", 0, "c", 40)
+
+        comparisson = check_if_correct_modification(my_change)
+        self.assertTrue(comparisson)
+
+    def test_add_edge_mini_3(self):
         # add edge (u,v) where deg_out(v) = 0
         def my_change(APSP):
             APSP.add_edge("c", 70, "d", 90)
@@ -192,55 +202,51 @@ class TestDynamic_APSP(TestCase):
         comparisson = check_if_correct_modification(my_change)
         self.assertTrue(comparisson)
 
-    def test_add_edge_mini_3(self):
-        # add edge (u,v) where deg_in(u) = 0
-        def my_change(APSP):
-            APSP.add_edge("d", 0, "a", 0)
-            APSP.add_edge("c", 40, "a", 50)
-            APSP.add_edge("a", 0, "c", 40)
-
-        comparisson = check_if_correct_modification(my_change)
-        self.assertTrue(comparisson)
-
     def test_add_edge_mini_4(self):
         # add edge (u,v)
         def my_change(APSP):
             APSP.add_edge("d", 0, "a", 0)
-            APSP.add_edge("a", 0, "c", 40)
-            APSP.add_edge("c", 40, "a", 50)
+            #APSP.add_edge("a", 0, "c", 40)
+            #APSP.add_edge("c", 40, "a", 50)
 
         comparisson = check_if_correct_modification(my_change)
         self.assertTrue(comparisson)
 
     def test_add_edge_rdm_mini(self):
         def my_change(APSP : Dynamic_APSP):
-            rdm.seed(7654321)
+            rdm.seed(7654)
             i = 10
             for _ in range(50):
                 is_new_name1 = rdm.randint(0, 3)
                 if is_new_name1 == 0:
                     name1= str(i)
                     i += 1
-                    time1 = rdm.randint(0, APSP.max_time/3 -1)
+                    time1 = rdm.randint(0, APSP.max_time -1)
                 else:
-                    name1 = rdm.sample(APSP.idx_to_name).pop()
+                    name1 = rdm.sample(APSP.idx_to_name,1).pop()
                     is_new_time = rdm.randint(0, 3)
                     if is_new_time == 0:
-                        time1 = rdm.randint(0, APSP.max_time / 3 - 1)
-                    else: time1  = rdm.sample(APSP.used_time[APSP.name_to_idx[name1]],1).pop()
+                        time1 = rdm.randint(0, APSP.max_time - 1)
+                    else: time1 = rdm.sample(APSP.used_time[APSP.name_to_idx[name1]],1).pop()
 
                 is_new_name2 = rdm.randint(0, 3)
                 if is_new_name2 == 0:
                     name2 = str(i)
                     i += 1
-                    time2 = rdm.randint(0, APSP.max_time / 3 - 1)
+                    time2 = rdm.randint(time1, APSP.max_time - 1)
                 else:
-                    name2 = rdm.sample(APSP.idx_to_name).pop()
+                    name2 = rdm.sample(APSP.idx_to_name,1).pop()
                     is_new_time = rdm.randint(0, 3)
                     if is_new_time == 0:
-                        time2 = rdm.randint(0, APSP.max_time / 3 - 1)
+                        time2 = rdm.randint(time1, APSP.max_time - 1)
                     else:
-                        time2 = rdm.sample(APSP.used_time[APSP.name_to_idx[name1]], 1).pop()
+                        possible_time = []
+                        for t in APSP.used_time[APSP.name_to_idx[name2]]:
+                            if t >= time1:
+                                possible_time.append(t)
+                        if len(possible_time) > 0:
+                            time2 = rdm.sample(possible_time, 1).pop()
+                        else: time2 = rdm.randint(time1, APSP.max_time - 1)
 
                 APSP.add_edge(name1, time1, name2, time2)
 
@@ -254,33 +260,36 @@ class TestDynamic_APSP(TestCase):
             for _ in range(200):
                 is_new_name1 = rdm.randint(0, 3)
                 if is_new_name1 == 0:
-                    name1= str(i)
+                    name1 = str(i)
                     i += 1
-                    time1 = rdm.randint(0, APSP.max_time/3 -1)
+                    time1 = rdm.randint(0, APSP.max_time - 1)
                 else:
-                    name1 = rdm.sample(APSP.idx_to_name).pop()
+                    name1 = rdm.sample(APSP.idx_to_name, 1).pop()
                     is_new_time = rdm.randint(0, 3)
                     if is_new_time == 0:
-                        time1 = rdm.randint(0, APSP.max_time / 3 - 1)
+                        time1 = rdm.randint(0, APSP.max_time - 1)
                     else:
-                        idx = APSP.name_to_idx[name1]
-                        if len(APSP.used_time[idx]) != 0:
-                            time1 = APSP.used_time[idx][rdm.randint(0, len(APSP.used_time[idx]) - 1)]
+                        time1 = rdm.sample(APSP.used_time[APSP.name_to_idx[name1]], 1).pop()
 
                 is_new_name2 = rdm.randint(0, 3)
                 if is_new_name2 == 0:
                     name2 = str(i)
                     i += 1
-                    time2 = rdm.randint(0, APSP.max_time / 3 - 1)
+                    time2 = rdm.randint(time1, APSP.max_time - 1)
                 else:
-                    name2 = rdm.sample(APSP.idx_to_name).pop()
+                    name2 = rdm.sample(APSP.idx_to_name, 1).pop()
                     is_new_time = rdm.randint(0, 3)
                     if is_new_time == 0:
-                        time2 = rdm.randint(0, APSP.max_time / 3 - 1)
+                        time2 = rdm.randint(time1, APSP.max_time - 1)
                     else:
-                        idx = APSP.name_to_idx[name2]
-                        if len(APSP.used_time[idx]) != 0:
-                            time2 = APSP.used_time[idx][rdm.randint(0, len(APSP.used_time[idx]) - 1)]
+                        possible_time = []
+                        for t in APSP.used_time[APSP.name_to_idx[name2]]:
+                            if t >= time1:
+                                possible_time.append(t)
+                        if len(possible_time) > 0:
+                            time2 = rdm.sample(possible_time, 1).pop()
+                        else:
+                            time2 = rdm.randint(time1, APSP.max_time - 1)
 
                 APSP.add_edge(name1, time1, name2, time2)
 
@@ -321,7 +330,7 @@ def compare_results(path_distance_dir_exp, path_distance_dir_actu):
 def check_if_correct_modification(modification_function,graph_path = "mini.json"):
     APSP = Dynamic_APSP(graph_path)
     modification_function(APSP)
-    APSP.distance.update()
+    #APSP.distance.update()
     APSP.hard_save_graph("data_test/save.json")
     APSP.hard_save_distance("data_test/computed/")
     Expect = Dynamic_APSP("data_test/save.json")
