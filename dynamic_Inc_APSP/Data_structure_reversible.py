@@ -16,11 +16,13 @@ class Distance:
         self.used_time = used_time                          #used node are sorted by time
         self.is_reachable: PathPresence = path_presence
         self.size: int = len(name_to_idx)
+        self.__true_size = self.size
         self.distance = [np.full((self.size,), -1, dtype=np.int) for _ in range(self.size)]
+        self.up_to_date = True
         self.__compute_distances()
         self.__backup = {"size": self.size, "change_distance": {}}
         self.__backup_stack = []  # permet de faire une recherche sur plusieur etage
-        # todo changeable size
+
 
     def __compute_distances(self):
         for source_idx in range(self.size):
@@ -42,6 +44,10 @@ class Distance:
                 if mini == inf: mini = -1
                 self.distance[source_idx][destination_idx] = mini
 
+                # un noeud sans used_time peut se rejoindre lui meme
+                if source_idx == destination_idx:
+                    self.distance[source_idx][destination_idx] = 0
+
     def dist(self, s_name: str, d_name: str) -> float:
         """
         Return the minimal distance between u_name and v_name
@@ -49,6 +55,14 @@ class Distance:
         s_idx = self.name_to_idx[s_name]
         d_idx = self.name_to_idx[d_name]
         return self.distance[s_idx][d_idx]
+
+    def __set_dist(self, s_name: str, d_name: str, new_value : int):
+        """
+        Return the minimal distance between u_name and v_name
+        """
+        s_idx = self.name_to_idx[s_name]
+        d_idx = self.name_to_idx[d_name]
+        self.distance[s_idx][d_idx] = new_value
 
     def dist_from(self, s_name):
         """
@@ -83,13 +97,21 @@ class Distance:
             s_idx = self.name_to_idx[s_name]
             return self.distance[s_idx]
 
-    def add_isolated_vertex(self, name, idx):
-        # inc size
-        # update distance
-        raise Exception("unimplemented")
+    def __update_size(self):
+        while self.size < len(self.idx_to_name):
+            if self.size + 1 > self.__true_size:
+                self.distance = np.concatenate((self.distance, np.full((self.size,1),-1, dtype=np.int)), axis=1)
+                self.distance = np.concatenate((self.distance, np.full((1, self.size + 1),-1, dtype=np.int)), axis=0)
+                self.__true_size += 1
+            else:   # set values to False
+                for i in range(self.size + 1):
+                    self.distance[i][self.size] = -1
+                self.distance[self.size] = np.full((1, self.size + 1),-1, dtype=np.int)
+            self.distance[self.size][self.size] = 0
+            self.size += 1
 
     def update(self):
-        # hypothese : distance à la bonne taille
+        self.__update_size()
         changes = self.is_reachable.get_changes()
         for s, content in changes["single_change"].items():
             s_name = self.idx_to_name[s // self.max_time]
@@ -99,7 +121,7 @@ class Distance:
                 self.single_update(s_name, d_name, time)
 
         for s, new_line in changes["line_change"].items():
-            s_name = s // self.max_time
+            s_name = self.idx_to_name[s // self.max_time]
             for i in range(len(changes["idx_order"])):
                 d = changes["idx_order"][i]
                 d_name = self.idx_to_name[d // self.max_time]
@@ -107,9 +129,10 @@ class Distance:
                 self.single_update(s_name, d_name, time)
 
     def single_update(self, s_name, d_name, new_time):
-        if new_time < self.distance[s_name][d_name]:
-            old_value = self.distance[s_name][d_name]
-            self.distance[s_name][d_name] = new_time
+        self.__update_size()
+        if new_time < self.dist(s_name, d_name):
+            old_value = self.dist(s_name, d_name)
+            self.__set_dist(s_name, d_name, new_time)
             # backup : ("change_distance",s,d,old_value)
             if d_name not in self.__backup["change_distance"].get(s_name, {}):
                 if s_name not in self.__backup["change_distance"]:
@@ -117,6 +140,7 @@ class Distance:
                 self.__backup["change_distance"][s_name][d_name] = old_value
 
     def save(self):
+        if not self.up_to_date: self.update()
         self.__backup_stack.append(self.__backup)
         self.__backup = {"size": self.size, "change_distance": {}}
 
@@ -130,6 +154,7 @@ class Distance:
                 self.distance[s_name][d_name] = old_value
 
         self.__backup = self.__backup_stack.pop()
+        self.up_to_date = True
 
     def get_changes(self):
         """
@@ -137,6 +162,9 @@ class Distance:
         (new_value, old_value)
         :return:
         """
+        if not self.up_to_date: self.update()
+
+
         changes = {"size": (self.size, self.__backup["size"]), "change_distance": {}}
         # distance
         for s_name in self.__backup["change_distance"]:
@@ -147,6 +175,8 @@ class Distance:
         return changes
 
     def hard_save(self, out_directory_path):
+        if not self.up_to_date: self.update()
+
         for idx in range(self.size):
             name = self.idx_to_name[idx]
             data = self.distance[idx]
@@ -165,6 +195,8 @@ class PathPresence:
         self.__true_size = self.size
         self.__backup = {"size": self.size, "single_change": {}, "line_change": {}}
         self.__backup_stack = []  # permet de faire une recherche sur plusieur etage
+
+
 
     def is_path(self, u: int, v: int) -> bool:
         """
@@ -186,22 +218,24 @@ class PathPresence:
         assert u in self.vertex_to_pos
         assert v in self.vertex_to_pos
         old_value = self.is_reach[self.vertex_to_pos[u]][self.vertex_to_pos[v]]
-        self.is_reach[self.vertex_to_pos[u]][self.vertex_to_pos[v]] = is_path
-        # backup : ("set_is_path",u,v,old_value)
-        if u not in self.__backup["line_change"]and v not in self.__backup["single_change"].get(u, {}):
-            if u not in self.__backup["single_change"]:
-                self.__backup["single_change"][u] = {}
-            self.__backup["single_change"][u][v] = old_value
+        if old_value != is_path:
+            self.is_reach[self.vertex_to_pos[u]][self.vertex_to_pos[v]] = is_path
+            # backup : ("set_is_path",u,v,old_value)
+            if u not in self.__backup["line_change"]and v not in self.__backup["single_change"].get(u, {}):
+                if u not in self.__backup["single_change"]:
+                    self.__backup["single_change"][u] = {}
+                self.__backup["single_change"][u][v] = old_value
 
     def set_is_path_from(self, s, is_path_list):
         assert s in self.vertex_to_pos
         old_values = self.is_reach[self.vertex_to_pos[s]]
-        self.is_reach[self.vertex_to_pos[s]] = is_path_list
-        # backup : ("set_is_path_from", s, old_values))
-        if s not in self.__backup["line_change"]:
-            self.__backup["line_change"][s] = old_values
-            if s in self.__backup["single_change"]:
-                self.__backup["single_change"].pop(s)
+        if not np.array_equal(old_values, is_path_list):
+            self.is_reach[self.vertex_to_pos[s]] = is_path_list
+            # backup : ("set_is_path_from", s, old_values))
+            if s not in self.__backup["line_change"]:
+                self.__backup["line_change"][s] = old_values
+                if s in self.__backup["single_change"]:
+                    self.__backup["single_change"].pop(s)
 
     def or_in_place(self, x1 : int, x2 : int):
         """
@@ -316,7 +350,7 @@ class Graph:
             self.reversed_adj_matrix[z] = []
             self.vertex.append(z)
             self.V += 1
-            self.vis = {z: False}
+            self.vis[z] = False
 
             self.__change_log.append(("add_vertex", z))
 

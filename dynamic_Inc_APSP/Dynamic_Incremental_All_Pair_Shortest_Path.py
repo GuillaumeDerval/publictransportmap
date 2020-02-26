@@ -14,8 +14,9 @@ class Dynamic_APSP:
         self.graph = Graph(out)
         self.idx_to_name = out["idx_to_name"]
         self.name_to_idx = {x: i for i, x in enumerate(self.idx_to_name)}
-        self.__max_time = out["max_time"]
+        self.max_time = out["max_time"]
         self.used_time = out["used_times"]
+        assert len(self.used_time) == len(self.idx_to_name) == len(self.name_to_idx)
         #sort used_time by time
         for used in self.used_time:
             used.sort()
@@ -23,7 +24,7 @@ class Dynamic_APSP:
         self.path = PathPresence(self.graph.vertex)
         self.initialisation()
 
-        self.distance = Distance(self.name_to_idx, self.idx_to_name, self.__max_time, self.used_time, self.path)
+        self.distance = Distance(self.name_to_idx, self.idx_to_name, self.max_time, self.used_time, self.path)
 
     def initialisation(self):
         """
@@ -53,18 +54,18 @@ class Dynamic_APSP:
                     new_x_value = self.path.is_path_from(x)
                     if not np.array_equal(new_x_value, old_x_value): #check if change
                         node_list.extend(wait__for_change.get(x, []))
-                    if time == nei % self.__max_time:
+                    if time == nei % self.max_time:
                         if nei not in wait__for_change: wait__for_change[nei] = [x]
                         else: wait__for_change[nei].append(x)
 
 
 
         node = self.graph.vertex
-        node.sort(key=lambda x: x % self.__max_time, reverse=True)
+        node.sort(key=lambda x: x % self.max_time, reverse=True)
         time = -1
         node_list = []
         for x in node:
-            x_time = x % self.__max_time
+            x_time = x % self.max_time
             self.path.set_is_path(x, x, True)
             if x_time != time:
                 init_time_level(time, node_list, self.graph.adj_matrix)
@@ -78,7 +79,7 @@ class Dynamic_APSP:
     def add_isolated_vertex(self, stop_name: str, time: int):
         if stop_name in self.name_to_idx:
             idx = self.name_to_idx[stop_name]
-            #z = idx*self.__max_time+time
+            z = idx * self.max_time + time
             if time in self.used_time[idx]:
                 return idx
             else:
@@ -87,22 +88,24 @@ class Dynamic_APSP:
             idx = len(self.name_to_idx)
             self.idx_to_name.append(stop_name)
             self.name_to_idx[stop_name] = idx
-            z = idx*self.__max_time + time
-            self.used_time.append(time)
-            self.distance.add_isolated_vertex(stop_name, idx)
+            z = idx * self.max_time + time
+            self.used_time.append([time])
+
 
         self.graph.add_vertex(z)
         self.path.add_vertex(z)
+        self.distance.up_to_date = False
 
         return idx
 
     def add_edge(self, u_stop_name, u_time, v_stop_name, v_time):
         assert v_time >= u_time
+        self.distance.up_to_date = False
 
         u_id = self.add_isolated_vertex(u_stop_name, u_time)
         v_id = self.add_isolated_vertex(v_stop_name, v_time)
-        u = u_id * self.__max_time + u_time
-        v = v_id * self.__max_time + v_time
+        u = u_id * self.max_time + u_time
+        v = v_id * self.max_time + v_time
 
         # w = v % self.__max_time - u % self.__max_time
         self.graph.add_edge(u, v)
@@ -132,6 +135,7 @@ class Dynamic_APSP:
             self.__APSP_edge(self.path, self.graph, u, v)
 
     def add_vertex(self, z_stop_id, z_time, z_name, Z_in, Z_out):
+        self.distance.up_to_date = False
         # todo
         raise Exception("unimplemented")
 
@@ -140,7 +144,7 @@ class Dynamic_APSP:
 
     def hard_save_graph(self, out_path=PATH.OUT):
         with open(out_path, 'w') as out_file:
-            json.dump({"idx_to_name": self.idx_to_name, "max_time": self.__max_time,
+            json.dump({"idx_to_name": self.idx_to_name, "max_time": self.max_time,
                        "graph": self.graph.adj_matrix, "used_times": self.used_time
                        }, out_file)
 
@@ -208,7 +212,7 @@ class Dynamic_APSP:
 
             # enqueue all neighbors that get closer to u
             for z in graph.reversed_adj_matrix[y]:
-                if not graph.vis(z) and not path.is_path(u, z) and path.is_path(v, z):
+                if not graph.vis[z] and not path.is_path(u, z) and path.is_path(v, z):
                     path.set_is_path(u, z, True)
                     Q.append([y, z])
                     graph.vis[z] = True
