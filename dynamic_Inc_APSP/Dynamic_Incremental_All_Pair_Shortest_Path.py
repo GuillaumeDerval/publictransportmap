@@ -21,59 +21,8 @@ class Dynamic_APSP:
         for used in self.used_time:
             used.sort()
 
-        self.path = PathPresence(self.graph.vertex)
-        self.initialisation()
-
+        self.path = PathPresence(self.graph, self.max_time)
         self.distance = Distance(self.name_to_idx, self.idx_to_name, self.max_time, self.used_time, self.path)
-
-    def initialisation(self):
-        """
-        Lance le calcul pour savoir si il existe un chemin entre chaque paire de noeud
-        :return:
-        """
-        # Idee : partir des noeud ayant les temps les plus grand
-        #        Les noeud atteingnable par un noeud x sont
-        #                   x (lui-meme) et
-        #                   tout les noeud atteignable à partir d'un de ces voisin (y tq x-> y in edge)
-
-        # Pour chaque noeud x in Node.sort(decreasing time) :
-        #   is_reach[x][x] = True
-        #   for nei in X_out:
-        #           is_reach[x] = is_reach[x] or is reach[nei]
-
-        # on peut passer d'un  noeud a l'autre au meme instant
-
-        def init_time_level(time : int, node_list : list, adj_matrix):
-            wait__for_change = {} #{n, m} if the value of n is changed then m must be recomputed
-            while len(node_list) > 0:
-                x = node_list.pop()
-                neightboors = adj_matrix[x]
-                for nei in neightboors:
-                    old_x_value = self.path.is_path_from(x).copy()
-                    self.path.or_in_place(x, nei)
-                    new_x_value = self.path.is_path_from(x)
-                    if not np.array_equal(new_x_value, old_x_value): #check if change
-                        node_list.extend(wait__for_change.get(x, []))
-                    if time == nei % self.max_time:
-                        if nei not in wait__for_change: wait__for_change[nei] = [x]
-                        else: wait__for_change[nei].append(x)
-
-
-
-        node = self.graph.vertex
-        node.sort(key=lambda x: x % self.max_time, reverse=True)
-        time = -1
-        node_list = []
-        for x in node:
-            x_time = x % self.max_time
-            self.path.set_is_path(x, x, True)
-            if x_time != time:
-                init_time_level(time, node_list, self.graph.adj_matrix)
-                node_list = [x]
-                time = x_time
-            else:
-                node_list.append(x)
-        init_time_level(time, node_list, self.graph.adj_matrix)
 
 
     def add_isolated_vertex(self, stop_name: str, time: int):

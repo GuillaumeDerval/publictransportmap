@@ -185,18 +185,68 @@ class Distance:
 
 class PathPresence:
 
-    def __init__(self, vertex):
+    def __init__(self, graph, max_time):
+        vertex = graph.vertex
         self.pos_to_vertex = vertex.copy()
         self.vertex_to_pos = {x: i for i, x in enumerate(self.pos_to_vertex)}
         self.size = len(vertex)
         self.is_reach = np.zeros((self.size, self.size), dtype=np.bool, order="F")
-
         # reversible state -> trailer (see constraint programing)
         self.__true_size = self.size
         self.__backup = {"size": self.size, "single_change": {}, "line_change": {}}
         self.__backup_stack = []  # permet de faire une recherche sur plusieur etage
+        self.initialisation(graph, max_time)
+        self.__backup = {"size": self.size, "single_change": {}, "line_change": {}}
 
 
+    def initialisation(self, graph, max_time):
+        """
+        Lance le calcul pour savoir si il existe un chemin entre chaque paire de noeud
+        :return:
+        """
+        # Idee : partir des noeud ayant les temps les plus grand
+        #        Les noeud atteingnable par un noeud x sont
+        #                   x (lui-meme) et
+        #                   tout les noeud atteignable à partir d'un de ces voisin (y tq x-> y in edge)
+
+        # Pour chaque noeud x in Node.sort(decreasing time) :
+        #   is_reach[x][x] = True
+        #   for nei in X_out:
+        #           is_reach[x] = is_reach[x] or is reach[nei]
+
+        # on peut passer d'un  noeud a l'autre au meme instant
+
+        def init_time_level(time : int, node_list : list, adj_matrix, max_time):
+            wait__for_change = {} #{n, m} if the value of n is changed then m must be recomputed
+            while len(node_list) > 0:
+                x = node_list.pop()
+                neightboors = adj_matrix[x]
+                for nei in neightboors:
+                    old_x_value = self.is_path_from(x).copy()
+                    self.or_in_place(x, nei)
+                    new_x_value = self.is_path_from(x)
+                    if not np.array_equal(new_x_value, old_x_value): #check if change
+                        node_list.extend(wait__for_change.get(x, []))
+                    if time == nei % max_time:
+                        if nei not in wait__for_change: wait__for_change[nei] = [x]
+                        else: wait__for_change[nei].append(x)
+
+
+
+        node = graph.vertex
+        node.sort(key=lambda x: x % max_time, reverse=True)
+        time = -1
+        node_list = []
+        for x in node:
+            x_time = x % max_time
+            self.set_is_path(x, x, True)
+            if x_time != time:
+                init_time_level(time, node_list, graph.adj_matrix,max_time)
+                node_list = [x]
+                time = x_time
+            else:
+                node_list.append(x)
+        init_time_level(time, node_list, graph.adj_matrix,max_time)
 
     def is_path(self, u: int, v: int) -> bool:
         """
