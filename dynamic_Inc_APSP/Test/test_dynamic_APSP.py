@@ -7,6 +7,17 @@ import random as rdm
 
 
 class TestDynamic_APSP(TestCase):
+    def setUp(self):
+        super().setUp()
+        for file_name in os.listdir("data_test/computed/"):
+            os.remove("data_test/computed/" + file_name)
+        for file_name in os.listdir("data_test/expected/"):
+            os.remove("data_test/expected/" + file_name)
+        for file_name in os.listdir("data_test/path_computed/"):
+            os.remove("data_test/path_computed/" + file_name)
+        for file_name in os.listdir("data_test/path_expected/"):
+            os.remove("data_test/path_expected/" + file_name)
+
 
     def test_save_graph_mini(self):
         APSP = Dynamic_APSP("mini.json")
@@ -84,24 +95,29 @@ class TestDynamic_APSP(TestCase):
 
     def test_add_isolated_vertex_mini_1(self):
         #add existing vertex
-        comparisson = check_if_correct_modification(lambda APSP: APSP.add_isolated_vertex("b",70))
-        self.assertTrue(comparisson)
+        path_comp, dist_comp = check_if_correct_modification(lambda APSP: APSP.add_isolated_vertex("b",70))
+        self.assertTrue(path_comp)
+        self.assertTrue(dist_comp)
 
     def test_add_isolated_vertex_mini_2(self):
         # add vertex with existing label
         def my_change(APSP):
             APSP.add_isolated_vertex("a", 90)
             APSP.add_isolated_vertex("c", 10)
-        comparisson = check_if_correct_modification(my_change)
-        self.assertTrue(comparisson)
+
+        path_comp, dist_comp = check_if_correct_modification(my_change)
+        self.assertTrue(path_comp)
+        self.assertTrue(dist_comp)
 
     def test_add_isolated_vertex_mini_3(self):
         # add vertex with new label
         def my_change(APSP):
             APSP.add_isolated_vertex("d", 15)
             APSP.add_isolated_vertex("k", 10)
-        comparisson = check_if_correct_modification(my_change)
-        self.assertTrue(comparisson)
+
+        path_comp, dist_comp = check_if_correct_modification(my_change)
+        self.assertTrue(path_comp)
+        self.assertTrue(dist_comp)
 
     def test_add_isolated_vertex_rdm_mini(self):
         # big the for added vertex
@@ -132,8 +148,9 @@ class TestDynamic_APSP(TestCase):
                     time = rdm.randint(0, APSP.max_time - 1)
                     APSP.add_isolated_vertex(name, time)
 
-        comparisson = check_if_correct_modification(my_change)
-        self.assertTrue(comparisson)
+        path_comp, dist_comp = check_if_correct_modification(my_change)
+        self.assertTrue(path_comp)
+        self.assertTrue(dist_comp)
 
     def test_add_isolated_vertex_rdm_medium(self):
         # big the for added vertex
@@ -163,8 +180,9 @@ class TestDynamic_APSP(TestCase):
                     time = rdm.randint(0, APSP.max_time - 1)
                     APSP.add_isolated_vertex(name, time)
 
-        comparisson = check_if_correct_modification(my_change,"medium.json")
-        self.assertTrue(comparisson)
+        path_comp, dist_comp = check_if_correct_modification(my_change, "medium.json")
+        self.assertTrue(path_comp)
+        self.assertTrue(dist_comp)
 
     def test_add_edge_mini_0(self):
         # add existing edge
@@ -180,8 +198,9 @@ class TestDynamic_APSP(TestCase):
             APSP.add_edge("b", 80, "c", 90)
             APSP.add_edge("a", 70, "a", 90)
 
-        comparisson = check_if_correct_modification(my_change)
-        self.assertTrue(comparisson)
+        path_comp, dist_comp = check_if_correct_modification(my_change)
+        self.assertTrue(path_comp)
+        self.assertTrue(dist_comp)
 
     def test_add_edge_mini_2(self):
         # add edge (u,v) where deg_in(u) = 0
@@ -190,8 +209,9 @@ class TestDynamic_APSP(TestCase):
             #APSP.add_edge("c", 40, "a", 50)
             #APSP.add_edge("a", 0, "c", 40)
 
-        comparisson = check_if_correct_modification(my_change)
-        self.assertTrue(comparisson)
+        path_comp, dist_comp = check_if_correct_modification(my_change)
+        self.assertTrue(path_comp)
+        self.assertTrue(dist_comp)
 
     def test_add_edge_mini_3(self):
         # add edge (u,v) where deg_out(v) = 0
@@ -199,24 +219,27 @@ class TestDynamic_APSP(TestCase):
             APSP.add_edge("c", 70, "d", 90)
             APSP.add_edge("a", 50, "d", 90)
             APSP.add_edge("d", 90, "a", 95)
-        comparisson = check_if_correct_modification(my_change)
-        self.assertTrue(comparisson)
+
+        path_comp, dist_comp = check_if_correct_modification(my_change)
+        self.assertTrue(path_comp)
+        self.assertTrue(dist_comp)
 
     def test_add_edge_mini_4(self):
         # add edge (u,v)
         def my_change(APSP):
-            APSP.add_edge("d", 0, "a", 0)
-            #APSP.add_edge("a", 0, "c", 40)
-            #APSP.add_edge("c", 40, "a", 50)
+            #APSP.add_edge("d", 0, "a", 0)
+            APSP.add_edge("a", 0, "c", 40)
+            APSP.add_edge("c", 40, "a", 50)
 
-        comparisson = check_if_correct_modification(my_change)
-        self.assertTrue(comparisson)
+        path_comp, dist_comp = check_if_correct_modification(my_change)
+        self.assertTrue(path_comp)
+        self.assertTrue(dist_comp)
 
     def test_add_edge_rdm_mini(self):
         def my_change(APSP : Dynamic_APSP):
-            rdm.seed(7654)
+            rdm.seed(76548)
             i = 10
-            for _ in range(50):
+            for _ in range(100):
                 is_new_name1 = rdm.randint(0, 3)
                 if is_new_name1 == 0:
                     name1= str(i)
@@ -247,29 +270,29 @@ class TestDynamic_APSP(TestCase):
                         if len(possible_time) > 0:
                             time2 = rdm.sample(possible_time, 1).pop()
                         else: time2 = rdm.randint(time1, APSP.max_time - 1)
-
+                print("add edge {} time {} to {} time {}".format(name1, time1, name2, time2))
                 APSP.add_edge(name1, time1, name2, time2)
 
-        comparisson = check_if_correct_modification(my_change)
-        self.assertTrue(comparisson)
+        path_comp, dist_comp = check_if_correct_modification(my_change)
+        self.assertTrue(path_comp)
+        self.assertTrue(dist_comp)
 
     def test_add_edge_rdm_medium(self):
         def my_change(APSP : Dynamic_APSP):
             rdm.seed(654321)
             i = 10
-            for _ in range(200):
+            for _ in range(50):
                 is_new_name1 = rdm.randint(0, 3)
                 if is_new_name1 == 0:
-                    name1 = str(i)
+                    name1= str(i)
                     i += 1
-                    time1 = rdm.randint(0, APSP.max_time - 1)
+                    time1 = rdm.randint(0, APSP.max_time -1)
                 else:
-                    name1 = rdm.sample(APSP.idx_to_name, 1).pop()
+                    name1 = rdm.sample(APSP.idx_to_name,1).pop()
                     is_new_time = rdm.randint(0, 3)
-                    if is_new_time == 0:
+                    if is_new_time == 0 or len(APSP.used_time[APSP.name_to_idx[name1]]) == 0:
                         time1 = rdm.randint(0, APSP.max_time - 1)
-                    else:
-                        time1 = rdm.sample(APSP.used_time[APSP.name_to_idx[name1]], 1).pop()
+                    else: time1 = rdm.sample(APSP.used_time[APSP.name_to_idx[name1]],1).pop()
 
                 is_new_name2 = rdm.randint(0, 3)
                 if is_new_name2 == 0:
@@ -277,7 +300,7 @@ class TestDynamic_APSP(TestCase):
                     i += 1
                     time2 = rdm.randint(time1, APSP.max_time - 1)
                 else:
-                    name2 = rdm.sample(APSP.idx_to_name, 1).pop()
+                    name2 = rdm.sample(APSP.idx_to_name,1).pop()
                     is_new_time = rdm.randint(0, 3)
                     if is_new_time == 0:
                         time2 = rdm.randint(time1, APSP.max_time - 1)
@@ -288,23 +311,17 @@ class TestDynamic_APSP(TestCase):
                                 possible_time.append(t)
                         if len(possible_time) > 0:
                             time2 = rdm.sample(possible_time, 1).pop()
-                        else:
-                            time2 = rdm.randint(time1, APSP.max_time - 1)
-
+                        else: time2 = rdm.randint(time1, APSP.max_time - 1)
+                print("add edge {} time {} to {} time {}".format(name1,time1,name2,time2))
                 APSP.add_edge(name1, time1, name2, time2)
 
-        comparisson = check_if_correct_modification(my_change,"medium.json")
-        self.assertTrue(comparisson)
+        path_comp, dist_comp = check_if_correct_modification(my_change, "medium.json")
+        self.assertTrue(path_comp)
+        self.assertTrue(dist_comp)
 
-    #def test_add_vertex(self):
+    # def test_add_vertex(self):
     #    self.fail()
 
-    def setUp(self):
-        super().setUp()
-        for file_name in os.listdir("data_test/computed/"):
-            os.remove("data_test/computed/" + file_name)
-        for file_name in os.listdir("data_test/expected/"):
-            os.remove("data_test/expected/" + file_name)
 
 
 def compare_results(path_distance_dir_exp, path_distance_dir_actu):
@@ -330,12 +347,17 @@ def compare_results(path_distance_dir_exp, path_distance_dir_actu):
 def check_if_correct_modification(modification_function,graph_path = "mini.json"):
     APSP = Dynamic_APSP(graph_path)
     modification_function(APSP)
-    #APSP.distance.update()
     APSP.hard_save_graph("data_test/save.json")
+    APSP.hard_save_is_reachable("data_test/path_computed/")
     APSP.hard_save_distance("data_test/computed/")
+
     Expect = Dynamic_APSP("data_test/save.json")
+    Expect.hard_save_is_reachable("data_test/path_expected/")
     Expect.hard_save_distance("data_test/expected/")
+    path_comp = compare_results("data_test/path_expected/", "data_test/path_computed/")
     comparisson = compare_results("data_test/expected/", "data_test/computed/")
-    return comparisson
+    return path_comp, comparisson
+
+
 
 

@@ -373,6 +373,12 @@ class PathPresence:
 
         return new_values
 
+    def hard_save(self, out_directory_path):
+        for pos in range(self.size):
+            v = self.pos_to_vertex[pos]
+            data = self.is_path_from(v)
+            np.save(out_directory_path + str(v) + ".npy", data.astype(np.bool))
+
 
 class Graph:
     """
