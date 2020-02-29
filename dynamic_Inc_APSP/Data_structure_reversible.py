@@ -340,7 +340,7 @@ class PathPresence:
 
     def save(self):
         self.__backup_stack.append(self.__backup)
-        self.__backup = []
+        self.__backup = {"size": self.size, "single_change": {}, "line_change": {}}
 
     def restore(self):
         assert self.__backup["size"] <= self.size, "suppression of node is not yet implemented "

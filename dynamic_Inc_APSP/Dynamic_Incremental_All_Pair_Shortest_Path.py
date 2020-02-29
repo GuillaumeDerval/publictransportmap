@@ -97,6 +97,16 @@ class Dynamic_APSP:
                        "graph": self.graph.adj_matrix, "used_times": self.used_time
                        }, out_file)
 
+    def save(self):
+        self.graph.save()
+        self.path.save()
+        self.distance.save()
+
+    def restore(self):
+        self.graph.restore()
+        self.path.restore()
+        self.distance.restore()
+
     #################################################################################################################
 
     @staticmethod
