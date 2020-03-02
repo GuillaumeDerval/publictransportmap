@@ -24,6 +24,11 @@ class Dynamic_APSP:
         self.path = PathPresence(self.graph, self.max_time)
         self.distance = Distance(self.name_to_idx, self.idx_to_name, self.max_time, self.used_time, self.path)
 
+        # reversible state -> record change
+        self.__change_log = []
+        self.__stack_log = []
+
+
     def add_isolated_vertex(self, stop_name: str, time: int):
         if stop_name in self.name_to_idx:
             idx = self.name_to_idx[stop_name]
@@ -32,13 +37,15 @@ class Dynamic_APSP:
                 return idx
             else:
                 self.used_time[idx].append(time)
+                self.__change_log.append(("add_time", stop_name, time))
         else:
             idx = len(self.name_to_idx)
             self.idx_to_name.append(stop_name)
             self.name_to_idx[stop_name] = idx
             z = idx * self.max_time + time
             self.used_time.append([time])
-
+            self.__change_log.append(("add_name", stop_name))
+            self.__change_log.append(("add_time", stop_name, time))
 
         self.graph.add_vertex(z)
         self.path.add_vertex(z)
@@ -102,10 +109,27 @@ class Dynamic_APSP:
         self.path.save()
         self.distance.save()
 
+        self.__stack_log.append(self.__change_log)
+        self.__change_log = []
+
     def restore(self):
         self.graph.restore()
         self.path.restore()
         self.distance.restore()
+
+        self.__change_log.reverse()
+        for log in self.__change_log:
+            if log[0] == "add_name":
+                self.name_to_idx.pop(log[1])
+                self.idx_to_name.pop()
+                self.used_time.pop()
+            elif log[0] == "add_time":
+                idx = self.name_to_idx[log[1]]
+                self.used_time[idx].remove(log[2])
+            else:
+                raise Exception("Unhandeled log")
+
+        self.__change_log = self.__stack_log.pop()
 
     #################################################################################################################
 

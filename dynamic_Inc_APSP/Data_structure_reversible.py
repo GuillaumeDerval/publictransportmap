@@ -68,7 +68,7 @@ class Distance:
         Return the list of the minimal distance from source  s (id)
         """
         s_idx = self.name_to_idx[s_name]
-        return self.distance[s_idx]
+        return self.distance[s_idx][:self.size]
 
     def dist_before_change(self, s_name: str, d_name: str) -> float:
         """
@@ -265,7 +265,7 @@ class PathPresence:
         Return the list of the minimal distance from source  s (id)
         """
         assert s in self.vertex_to_pos
-        return self.is_reach[self.vertex_to_pos[s]]
+        return self.is_reach[self.vertex_to_pos[s]][:self.size]
 
     def set_is_path(self, u, v, is_path):
         """u,v are node number (ie : id*maxtime + time)"""
@@ -324,7 +324,7 @@ class PathPresence:
             else:   # set values to False
                 for i in range(size + 1):
                     self.is_reach[i][size] = False
-                self.is_reach[size] = np.zeros((1, self.size + 1), dtype=np.bool)
+                self.is_reach[size] = np.zeros((1, self.__true_size), dtype=np.bool)
 
             self.size += 1
             self.is_reach[size][size] = True
@@ -347,7 +347,7 @@ class PathPresence:
         self.size = self.__backup["size"]
         # restore line
         for s in self.__backup["line_change"]:
-            self.is_reach[self.vertex_to_pos[s]] = self.__backup["line_change"][s]
+            self.is_reach[self.vertex_to_pos[s]][:self.size] = self.__backup["line_change"][s][:self.size]
         # restore single value
         for u in self.__backup["single_change"]:
             for v in self.__backup["single_change"][u]:
@@ -445,8 +445,8 @@ class Graph:
         assert v in self.vertex
         assert v in self.adj_matrix[u]
         self.E -= 1
-        self.adj_matrix[u].pop(v)
-        self.reversed_adj_matrix[v].pop(u)
+        self.adj_matrix[u].remove(v)
+        self.reversed_adj_matrix[v].remove(u)
         self.__change_log.append(("rm_edge", u, v))
 
     def is_isolated(self, v):
@@ -464,7 +464,7 @@ class Graph:
 
     def restore(self):
         self.__change_log.reverse()
-        for log in self.__change_log:
+        for log in self.__change_log.copy():
             if log[0] == "add_vertex": self.remove_vertex(log[1])
             elif log[0] == "rm_vertex": self.add_vertex(log[1])
             elif log[0] == "add_edge":self.remove_edge(log[1], log[2])

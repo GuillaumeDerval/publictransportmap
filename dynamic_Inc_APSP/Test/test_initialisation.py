@@ -7,10 +7,10 @@ from dynamic_Inc_APSP.Test.test_my_utils import compare_results
 class TestInitialisationAPSP(TestCase):
     def setUp(self):
         super().setUp()
-        for file_name in os.listdir("data_test/computed/"):
-            os.remove("data_test/computed/" + file_name)
-        for file_name in os.listdir("data_test/expected/"):
-            os.remove("data_test/expected/" + file_name)
+        for file_name in os.listdir("data_test/dist_computed/"):
+            os.remove("data_test/dist_computed/" + file_name)
+        for file_name in os.listdir("data_test/dist_expected/"):
+            os.remove("data_test/dist_expected/" + file_name)
         for file_name in os.listdir("data_test/path_computed/"):
             os.remove("data_test/path_computed/" + file_name)
         for file_name in os.listdir("data_test/path_expected/"):
@@ -37,7 +37,7 @@ class TestInitialisationAPSP(TestCase):
 
     def test_path_mini(self):
         exp_path = "data_test/path_mini_expected/"
-        compu_path = "data_test/computed/"
+        compu_path = "data_test/path_computed/"
         np.save(exp_path +"0.npy", np.array([1, 1, 1, 1, 1, 1], dtype= np.bool).astype(np.bool))
         np.save(exp_path + "50.npy", np.array([0, 1, 0, 0, 1, 1], dtype=np.bool).astype(np.bool))
         np.save(exp_path + "110.npy", np.array([0, 1, 1, 1, 1, 1], dtype=np.bool).astype(np.bool))
@@ -56,7 +56,7 @@ class TestInitialisationAPSP(TestCase):
 
     def test_save_distance_mini(self):
         exp_path = "data_test/dist_mini_expected/"
-        compu_path = "data_test/computed/"
+        compu_path = "data_test/dist_computed/"
         # np.save(exp_path + "a.npy", np.array([0, 10, 20]).astype(np.int16))
         # np.save(exp_path + "b.npy", np.array([30, 0, 50]).astype(np.int16))
         # np.save(exp_path + "c.npy", np.array([-1, -1, 0]).astype(np.int16))
@@ -70,8 +70,8 @@ class TestInitialisationAPSP(TestCase):
 
     def test_save_distance_medium(self):
         APSP = Dynamic_APSP("medium.json")
-        APSP.hard_save_distance("data_test/computed/")
-        comparisson = compare_results("data_test/dist_medium_expected/", "data_test/computed/")
+        APSP.hard_save_distance("data_test/dist_computed/")
+        comparisson = compare_results("data_test/dist_medium_expected/", "data_test/dist_computed/")
         self.assertTrue(comparisson)
 
 

@@ -8,10 +8,10 @@ from dynamic_Inc_APSP.Test.test_my_utils import *
 class TestDynamicAPSP(TestCase):
     def setUp(self):
         super().setUp()
-        for file_name in os.listdir("data_test/computed/"):
-            os.remove("data_test/computed/" + file_name)
-        for file_name in os.listdir("data_test/expected/"):
-            os.remove("data_test/expected/" + file_name)
+        for file_name in os.listdir("data_test/dist_computed/"):
+            os.remove("data_test/dist_computed/" + file_name)
+        for file_name in os.listdir("data_test/dist_expected/"):
+            os.remove("data_test/dist_expected/" + file_name)
         for file_name in os.listdir("data_test/path_computed/"):
             os.remove("data_test/path_computed/" + file_name)
         for file_name in os.listdir("data_test/path_expected/"):

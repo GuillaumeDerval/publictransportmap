@@ -28,11 +28,11 @@ def check_if_correct_modification(modification_function,graph_path = "mini.json"
     modification_function(APSP)
     APSP.hard_save_graph("data_test/save.json")
     APSP.hard_save_is_reachable("data_test/path_computed/")
-    APSP.hard_save_distance("data_test/computed/")
+    APSP.hard_save_distance("data_test/dist_computed/")
 
     Expect = Dynamic_APSP("data_test/save.json")
     Expect.hard_save_is_reachable("data_test/path_expected/")
-    Expect.hard_save_distance("data_test/expected/")
+    Expect.hard_save_distance("data_test/dist_expected/")
     path_comp = compare_results("data_test/path_expected/", "data_test/path_computed/")
-    compar = compare_results("data_test/expected/", "data_test/computed/")
+    compar = compare_results("data_test/dist_expected/", "data_test/dist_computed/")
     return path_comp, compar
