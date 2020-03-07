@@ -22,7 +22,8 @@ import time
 
 MAX_WALKING_TIME = 60 # in min
 SPEED = WALKING_SPEED /0.06 #in m/min
-SPEED = 15/0.06
+#SPEED = 15/0.06
+
 
 
 def get_n_rdm_point(n, munty):
@@ -98,6 +99,7 @@ def get_n_rdm_point(n, munty):
 ################################## Compute the optimal time for a given travel ########################
 
 class stop_munty:
+
     stop_list = json.load(open(PATH.STOP_LIST, "r"))
     __reachable_stop_munty = {}
     __min_max_time = {}  # store min and max time for each couple of munty orgin -> munty dest
@@ -106,6 +108,8 @@ class stop_munty:
     def get_reachable_stop_munty(cls, munty):
         """
         Compute a list containing every reachable stop in a walking_time < max_walking_time for a given munty
+
+        lazy: stop_munty n'est calculer que si elle est demandée
 
         :param munty: refnis of the municipality
         :return: [(stop_id, (coord_x, coord_y))] where distance (munty, stop) < max_walking_time
@@ -208,14 +212,14 @@ def optimal_travel_time(resid_pt, munty_rsd, work_pt, munty_work):
 
     for stop_rsd in stop_list_rsd:
         walk1 = distance_Eucli(resid_pt, stop_rsd[1]) / SPEED  # walking time
-        if walk1 + min_walk2 + min_trav >= opti_time[0] : return  opti_time
+        if walk1 + min_walk2 + min_trav >= opti_time[0]: return opti_time
         path = PATH.TRAVEL_TIME + "{0}.npy".format(stop_rsd[0])
         TC_travel_array = np.load(path)
         for stop_work in stop_list_work:
             walk2 = distance_Eucli(work_pt, stop_work[1]) / SPEED
             if walk1 + walk2 + min_trav >= opti_time[0]: return opti_time
             TC = TC_travel_array[name_to_idx(stop_work[0])]
-            if TC > 0 :
+            if TC > 0:
                 time = walk1 + walk2 + TC
                 if opti_time[0] > time:
                     opti_time = (time, walk1, walk2, TC, dist, 0)
@@ -259,6 +263,21 @@ def monte_carlo(travel_path, get_total= False):
                 if TC > 0 :
                     self.TC_user += 1
                     self.tot_TC_user_only += TC
+
+        def remove(self, time , walk1 = 0, walk2 = 0, TC = 0, dist = 0,iter = 1, unreachable =0):
+            self.unreachable -= unreachable
+            self.iteration -= iter
+            if unreachable == 0 :
+                self.tot_time -= time
+                self.tot_time2 -= time**2
+                self.tot_walk1 -= walk1
+                self.tot_walk2 -= walk2
+                self.tot_TC -= TC
+                self.tot_dist -= dist
+            if TC > 0:
+                self.TC_user -= 1
+                self.tot_TC_user_only -= TC
+
 
         def __str__(self):
             "(mean time {}, var {},mean_dist {}, iteration {})".format(self.tot_time/self.iteration,

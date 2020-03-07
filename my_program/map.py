@@ -56,6 +56,9 @@ class my_map:
                         self.__munty_map[refnis] = {"shape": shape(elem["geometry"]).buffer(0), "sector_ids" : [sector_id],
                                                     "pop": self.get_pop_sector(sector_id)}
 
+    def get_all_munty_refnis(self):
+        return self.__munty_map.keys()
+
 
     def get_total_shape(self):
         with open(self.path_shape) as f:

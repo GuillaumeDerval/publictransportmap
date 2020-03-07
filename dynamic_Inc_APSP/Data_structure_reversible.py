@@ -162,7 +162,7 @@ class Distance:
 
     def get_changes(self):
         """
-        retourne l'ensemble de nouvelle valeur de is_reach, leur position est indique par les cle du dictionnaire
+        retourne l'ensemble de nouvelle valeur de is_reach, leur stop_name est indique par les cle du dictionnaire
         (new_value, old_value)
         :return:
         """

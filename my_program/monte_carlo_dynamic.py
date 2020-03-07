@@ -1,0 +1,536 @@
+#Monte carlo
+
+################################## Pick a rdm travel ##################################################
+
+
+# Trouver la distribution des temps de marche par rapport a un stop (id) Pour chaque commune
+# nb les stop pourraient se trouver hors de la commune
+# Hypothèse
+# pour chaque secteur la population est repartie uniformement
+
+# dynamic :
+# 0) mettre ajours les structure : class stop_munty
+# 1) trouver la liste des pt(resid/work) potentiellement affecte
+#           => avoir une liste de pt utilise
+#           => permettre une recherche efficace parmis ces points
+# 2) mettre ajour les temps de parcours
+
+
+# reversible 2 choix:
+# sauvegarder l'etat antérieur ou
+# chaque action a sont inverse (=> supppression d'un aret , augmentationn de la duree d'un trajet)
+
+
+# function of cumulative distribution =  function of repartition
+from utils import WALKING_SPEED
+from shapely.geometry import MultiPolygon, Point
+import random
+import math
+from my_program.my_utils import *
+from my_program.map import my_map
+import my_program.path as PATH
+from dynamic_Inc_APSP.Data_structure_reversible import Distance
+
+
+MAX_WALKING_TIME = 60 # in min
+SPEED = WALKING_SPEED /0.06 #in m/min
+#SPEED = 15/0.06
+mapmap = my_map.get_map(path_shape=PATH.SHAPE, path_pop=PATH.POP)
+
+
+# ################################# Monte Carlo #########################################################
+class travellers_modelisation:
+
+    def __init__(self, travel_path: str, distance_oracle: Distance, reducing_factor: int, mymap=mapmap):
+        # virtual traveller genration
+        self.reducing_factor = reducing_factor
+        self.traveller_locations = {}   # dico {(munty_rsd, munty_work): (pt_rsd, pt_work,(best_rsd_stop, best_work_stop))}
+        self.__generate_virtual_travellers(travel_path)
+
+        # stop_munty
+        self.map = mymap
+        self.stop_list = json.load(open(PATH.STOP_LIST, "r"))
+        self.reachable_stop_from_munty = {munty: [] for munty in self.map.get_all_munty_refnis()}     # contient tout les stop atteignable depuis une commune
+        self.reachable_munty_from_stop = {pos: [] for pos in self.stop_list}   # contient tout les commune depuis un stop
+        self.__set_reachable_stop_from_munty(self.stop_list)
+
+        # access to distance
+        self.distance = distance_oracle
+
+        # min/max_time bound
+        self.__min_max_time = {}  # store min and max time for each couple of munty orgin -> munty dest
+
+        # computation
+        self.all_results = {}           # contains result for each munty
+        self.__estimate_travel_time()
+
+        # reversible structure
+        self.__change_log = []
+        self.__stack_log = []  # permet de faire une recherche sur plusieur etage
+
+    # ##################################### Virtual traveller generation ###############################################
+    def __generate_virtual_travellers(self, travel_path):
+
+        def get_n_rdm_point(n, munty):
+            "pick a rdm point in the shape, the probability of select a point depend on the number of people in the sector"
+            map = self.map
+            def rdm_point_shape(shape):
+                "pick uniformaly at rdm a point in the shape"
+                assert shape.area > 0
+
+                minx, miny, maxx, maxy = shape.bounds
+                x = random.randint(math.ceil(minx), math.floor(maxx))
+                y = random.randint(math.ceil(miny), math.floor(maxy))
+                p = (x, y)  # Point(x, y)
+                if shape.contains(Point(x, y)):
+                    return p
+                else:
+                    return rdm_point_shape(shape)
+
+            def get_n_rdm_sector(n, sect_ids):
+                sect_pop = [int(map.get_pop_sector(id)) for id in sect_ids]
+                tot_pop = map.get_pop_munty(munty)
+
+                sect_cumul_pop = [sect_pop[0] / tot_pop]
+                for i in range(1, len(sect_pop)):
+                    sect_cumul_pop.append(sect_pop[i] / tot_pop + sect_cumul_pop[i - 1])  # todo add in map ???
+
+                # select a sector depending of the number of person in this sector
+                for _ in range(n):
+                    rdm = random.random()
+
+                    def bin_search_le(arr, value):
+                        # return the max index i such that l[i] <= value
+                        l = 0
+                        r = len(arr) - 1
+                        mid = 0
+                        while l <= r:
+
+                            mid = l + (r - l) // 2
+
+                            # Check if x is present at mid
+                            if arr[mid] == value:
+                                return mid
+
+                                # If x is greater, ignore left half
+                            elif arr[mid] < value:
+                                l = mid + 1
+
+                            # If x is smaller, ignore right half
+                            else:
+                                r = mid - 1
+
+                        if arr[mid] < value: return mid + 1
+                        return mid
+
+                    i = bin_search_le(sect_cumul_pop, rdm)
+                    yield sect_ids[i]
+
+            sect_ids = map.get_sector_ids(munty)
+            rdm_sectors = get_n_rdm_sector(n, sect_ids)
+
+            out = []
+            for id in rdm_sectors:
+                shape = map.get_shape_sector(id)
+                out.append(rdm_point_shape(shape))
+            return out
+
+        def __iter_by_pop(pop, reducing_factor):
+            iteration = pop // reducing_factor
+            # avoid bias
+            remaining = (pop % reducing_factor) / reducing_factor
+            if random.random() < remaining:
+                iteration += 1
+            return iteration
+
+        travel = json.load(open(travel_path))["travel"]
+        assert len(travel) > 0
+        travel.sort(key=(lambda x: x["residence"][1]))
+
+        for trav in travel:
+            rsd_munty = str(trav["residence"][1])
+            work_munty = str(trav["work"][1])
+            n = int(trav["n"])
+
+            iters = __iter_by_pop(n, self.reducing_factor)
+            print("travellers genration: ", trav, "iteration :", iters)
+            resid_list = get_n_rdm_point(iters, rsd_munty)
+            work_list = get_n_rdm_point(iters, work_munty)
+            self.traveller_locations[(rsd_munty, work_munty)] = zip(resid_list, work_list)
+
+    # ##################################### Relation between stop position and municipality ############################
+
+    def __set_reachable_stop_from_munty(self, stop_list):
+        """
+        Compute a list containing every reachable stop in a walking_time < max_walking_time for a given munty
+
+        :param stop_list : a list containg all stop to considere
+        :modify: reachable_stop_from_munty : {munty1 : [stop1,stop2,...]} where walking_time(muntyi,stopi) < MAX_WALKING_TIME
+                 reachable_munty_from_stop: {stop1 : [munty1,munty2,...]} where walking_time(muntyi,stopi) < MAX_WALK_TIME
+        """
+
+        for munty in self.map.get_all_munty_refnis():
+            munty_shape = self.map.get_shape_munty(munty)
+
+            for stop in stop_list:
+                pos_point = Point(stop[1][0], stop[1][1])
+
+                if munty_shape.contains(pos_point):
+                    self.reachable_stop_from_munty[munty].append(stop)  # stop in the municipality
+                    self.reachable_munty_from_stop[stop].append(munty)
+
+                elif isinstance(munty_shape, MultiPolygon):      # stop not in the municipality and municipality in several part
+                    for poly in munty_shape:
+                        dist = poly.exterior.distance(pos_point)
+                        if dist < MAX_WALKING_TIME * SPEED:
+                            self.reachable_stop_from_munty[munty].append(stop)
+                            self.reachable_munty_from_stop[stop].append(munty)
+                            break
+                else:        # stop not in the municipality and one block municipality
+                    dist = munty_shape.exterior.distance(pos_point)
+                    if dist < MAX_WALKING_TIME * SPEED:
+                        self.reachable_stop_from_munty[munty].append(stop)
+                        self.reachable_munty_from_stop[stop].append(munty)
+
+    def get_reachable_stop_from_munty(self, munty):
+        """
+        Return a list containing every reachable stop in a walking_time < max_walking_time for a given munty
+
+        :param munty: refnis of the municipality
+        :return: [(stop_id, (coord_x, coord_y))] where distance (munty, stop) < max_walking_time
+        """
+        return self.reachable_stop_from_munty[munty]
+
+    def get_reachable_munty_from_stop(self, stop_name):
+        """
+        Return a list containing every reachable munty in a walking_time < max_walking_time for a given stop
+
+        :param stop_name: name of the stop          ex : TEC2068
+        :return: [refnis_munty1, refnis_munty2, ... ] where distance (munty, stop) < max_walking_time
+        """
+        return self.reachable_stop_from_munty[stop_name]
+
+    def get_reachable_stop_pt(self, point, munty):
+        """
+            Compute a list containing every reachable stop in a walking_time < max_walking_time for a given point
+
+            :param point: (x,y) coordinates of the point
+            :param munty: munnicipality where the point is located
+            :return: [(stop_id, (coord_x, coord_y))] where distance (point, stop) < max_walking_time
+            """
+        stop_list_munty = self.get_reachable_stop_from_munty(munty)
+        reachable_stop = []
+        for stop in stop_list_munty:
+            if distance_Eucli(point, stop[1]) < MAX_WALKING_TIME * SPEED:
+                reachable_stop.append(stop)
+        return reachable_stop
+
+    def add_stop(self, stop_name):
+        """
+        Ajoute un  stop qui n'était pas present dans la liste de stop initiale
+        :param stop_name:
+        """
+
+        if not isinstance(stop_name, list):
+            stop_name = [stop_name]
+        self.stop_list.extend(stop_name)
+        self.__set_reachable_stop_from_munty(stop_name)
+
+    def remove_stop(self, stop_name):
+        if not isinstance(stop_name, list):
+            stop_name = [stop_name]
+        for st in stop_name:
+            affected_munty = self.reachable_stop_from_munty.pop(st)
+            for munty in affected_munty:
+                self.reachable_stop_from_munty[munty].remove(st)
+
+    # ###################################### Min/Max Time   ############################################################
+    # Effectuer de manière parresseuse vu que plein de paire de commune ne seront potentiellement pas consideree
+
+    def get_min_time(self, munty_org, munty_dest):
+        if munty_org not in self.__min_max_time or munty_dest not in self.__min_max_time[munty_org]:
+            self.__compute_min_max_time(munty_org, munty_dest)  # trigger min/max time computation
+
+        return self.__min_max_time[munty_org][munty_dest][0]
+
+    def get_max_time(self, munty_org, munty_dest):
+        if munty_org not in self.__min_max_time or munty_dest not in self.__min_max_time[munty_org]:
+            self.__compute_min_max_time(munty_org, munty_dest)  # trigger min/max time computation
+
+        return self.__min_max_time[munty_org][munty_dest][1]
+
+    def update_travel_time(self, stop_name_org, stop_name_dest, new_distance, old_distance):
+        munty_org_list = self.reachable_munty_from_stop[stop_name_org]
+        munty_dest_list = self.reachable_munty_from_stop[stop_name_dest]
+
+        for munty_org in munty_org_list:
+            for munty_dest in munty_dest_list:
+
+                if new_distance == -1 or new_distance > old_distance:  # network deterioration
+                    self.__compute_min_max_time(munty_org, munty_dest)
+                else:  # network improvement
+                    # simply update min/max
+                    old_min_time = self.get_min_time(munty_org, munty_dest)  # trigger computation if not already done
+                    old_max_time = self.get_max_time(munty_org, munty_dest)
+                    self.__min_max_time[munty_org][munty_dest][0] = (
+                    min(new_distance, old_min_time), max(new_distance, old_max_time))
+
+    def __compute_min_max_time(self, munty_org, munty_dest):
+        """
+        Calcul le temps de trajet minimal et maximal entre  les stop de munty_org et munty_dest
+        """
+        min_time = math.inf
+        max_time = -1
+        for org, _ in self.get_reachable_stop_from_munty(munty_org):
+            TC_travel_array = self.distance.dist_from(org)
+            for dest, _ in self.get_reachable_stop_from_munty(munty_dest):
+                time = TC_travel_array[name_to_idx(dest)]
+                if time >= 0:
+                    min_time = min(min_time, time)
+                    max_time = max(max_time, time)
+
+        # save result
+        if munty_org not in self.__min_max_time:
+            self.__min_max_time[munty_org] = {}
+        self.__min_max_time[munty_org][munty_dest] = (min_time, max_time)
+
+    # #################################### Computations ################################################################
+    def __estimate_travel_time(self):
+        for rsd_munty, work_munty in self.traveller_locations.keys():
+            travellers = self.traveller_locations[(rsd_munty, work_munty)]
+            print("travels estimation: ", rsd_munty, work_munty, "iteration :", len(travellers))
+            res = self.all_results.get(rsd_munty, Result())
+            for i in range(len(travellers)):
+                rsd, work =  travellers[i]
+                opti_path, opti_time = self.optimal_travel_time(rsd, rsd_munty, work, work_munty)
+                travellers[i] = (rsd, work, opti_path)
+                (time, walk1, walk2, TC, dist, unreachable) = opti_time
+                res.add(time, walk1, walk2, TC, dist, 1, unreachable)
+
+            self.all_results[rsd_munty] = res
+
+            # number of worker
+            w = self.all_results.get(work_munty, Result())
+            self.all_results[work_munty] = w
+
+    def optimal_travel_time(self,resid_pt, munty_rsd, work_pt, munty_work):
+        stop_list_rsd = self.get_reachable_stop_pt(resid_pt, munty_rsd)
+        stop_list_work = self.get_reachable_stop_pt(work_pt, munty_work)
+
+        dist = distance_Eucli(resid_pt, work_pt)
+        time_without_TC = dist / SPEED  # without Tc
+        # opti time : (time, walk1, walk2, TC,dist, unreachable)
+        if time_without_TC > (2 * MAX_WALKING_TIME):
+            unreachable = 1
+        else:
+            unreachable = 0
+
+        opti_time = (time_without_TC, time_without_TC / 2, time_without_TC / 2, 0, dist, unreachable)
+        opti_path = (None, None)
+        opti = (opti_path, opti_time)
+
+
+        if len(stop_list_rsd) == 0 or len(stop_list_work) == 0: return opti_time
+
+        stop_list_rsd.sort(key=lambda x: distance_Eucli(x[1], resid_pt))
+        stop_list_work.sort(key=lambda x: distance_Eucli(x[1], work_pt))
+        min_walk2 = distance_Eucli(stop_list_work[0][1], work_pt) / SPEED
+        min_trav = self.get_min_time(munty_rsd, munty_work)
+
+        for stop_rsd in stop_list_rsd:
+            walk1 = distance_Eucli(resid_pt, stop_rsd[1]) / SPEED  # walking time
+            if walk1 + min_walk2 + min_trav >= opti_time[0]:
+                return opti
+            TC_travel_array = self.distance.dist_from(stop_rsd[0])
+            for stop_work in stop_list_work:
+                walk2 = distance_Eucli(work_pt, stop_work[1]) / SPEED
+                if walk1 + walk2 + min_trav >= opti_time[0]: return opti
+                TC = TC_travel_array[name_to_idx(stop_work[0])]
+                if TC > 0:
+                    time = walk1 + walk2 + TC
+                    if opti_time[0] > time:
+                        opti_time = (time, walk1, walk2, TC, dist, 0)
+                        opti_path = (stop_rsd, stop_work)
+                        opti = (opti_path, opti_time)
+
+        return opti
+
+    # #################################### Dynamic part ################################################################
+    def update(self, changes):
+        """
+        Met a jour la mesure de temps de trajet en fonciton des changement apporter au reseau.
+        :param changes: A dictionnary : {"size": (new_number_of_stop, old_number of stop),
+                                  "added_stop_name" = [added_stop_name1 , ...]
+                                  "change_distance": {org_name : {dest_name : (new_dist, old_dist)}}
+        """
+        for new_stop in changes["added_stop_name"]:
+            self.add_stop(new_stop)
+        # update used structure
+
+        for org_name_ch, dico in changes["change_distance"].items():
+            for dest_name_ch, (new_value, old_value) in dico.items():
+                self.update_travel_time(org_name_ch, dest_name_ch, new_distance=new_value,
+                                                     old_distance= old_value)  # update used structure
+                org_ch_pos = self.stop_list[org_name_ch]
+                dest_ch_pos = self.stop_list[dest_name_ch]
+
+                #todo improve : ne parcourir que le stop concerner et pas tout ceux des commune affectee
+                for rsd_munty in self.reachable_munty_from_stop[org_name_ch]:
+                    for work_munty in self.reachable_munty_from_stop[dest_name_ch]:
+                        travellers = self.traveller_locations[(rsd_munty, work_munty)]
+                        for i in range(len(travellers)):   # find all potentially affected stop
+                            rsd_pt, work_pt, (old_org_stop, old_dest_stop) = travellers[i]
+                            if (old_org_stop, old_dest_stop) == (None, None):
+                                old_unreach = 1
+                                old_time = distance_Eucli(rsd_pt, work_pt)
+                                old_walk1 = old_time/2
+                                old_walk2 = old_time / 2
+                                old_TC = 0
+
+                            else:
+                                old_unreach = 0
+                                old_walk1 = distance_Eucli(rsd_pt, old_org_stop[1]) / SPEED  # walking time
+                                old_walk2 = distance_Eucli(work_pt, old_dest_stop[1]) / SPEED  # walking time
+                                old_TC = self.distance.dist_before_change(old_org_stop[0], old_dest_stop[0])
+                                old_time = old_walk1 + old_TC + old_walk2
+
+                            new_walk1 = distance_Eucli(rsd_pt, org_ch_pos) / SPEED  # walking time
+                            new_walk2 = distance_Eucli(work_pt, dest_ch_pos) / SPEED  # walking time
+                            new_TC = self.distance.dist(org_name_ch, dest_name_ch)
+                            new_time = new_walk1 + new_TC + new_walk2
+
+                            if new_time < old_time:
+                                travellers[i] = rsd_pt, work_pt, (org_name_ch, dest_name_ch)
+                                Result.remove(old_time, old_walk1, old_walk2, old_TC, unreachable=old_unreach)
+                                Result.add(new_time, new_walk1, new_walk2, new_TC, unreachable=0)
+
+    # #################################### Reversible part
+    def save(self):
+        # todo
+        raise Exception("unimplemented")
+
+    def restore(self):
+        # todo
+        raise Exception("unimplemented")
+
+
+class Result:
+    def __init__(self):
+        self.tot_time = 0.
+        self.tot_time2 = 0.  # sum of squared(time)
+        self.tot_walk1 = 0.
+        self.tot_walk2 = 0.
+        self.tot_TC = 0.
+        self.tot_TC_user_only = 0.
+        self.tot_dist = 0.
+        self.iteration = 0
+        self.unreachable = 0
+        self.TC_user = 0.
+        self.pop = 0  # nb resident according to sector pop
+        self.resid = 0  # nb resident  according to travel
+        self.work = 0  # nb workers  according to travel
+
+    def add(self, time, walk1=0., walk2=0., TC=0.0, dist=0., iter=1, unreachable=0):
+        self.unreachable += unreachable
+        self.iteration += iter
+        if unreachable == 0:
+            self.tot_time += time
+            self.tot_time2 += time ** 2
+            self.tot_walk1 += walk1
+            self.tot_walk2 += walk2
+            self.tot_TC += TC
+            self.tot_dist += dist
+            if TC > 0:
+                self.TC_user += 1
+                self.tot_TC_user_only += TC
+
+    def remove(self, time, walk1=0, walk2=0, TC=0, dist=0, iter=1, unreachable=0):
+        self.unreachable -= unreachable
+        self.iteration -= iter
+        if unreachable == 0:
+            self.tot_time -= time
+            self.tot_time2 -= time ** 2
+            self.tot_walk1 -= walk1
+            self.tot_walk2 -= walk2
+            self.tot_TC -= TC
+            self.tot_dist -= dist
+        if TC > 0:
+            self.TC_user -= 1
+            self.tot_TC_user_only -= TC
+
+    def __str__(self):
+        "(mean time {}, var {},mean_dist {}, iteration {})".format(self.tot_time / self.iteration,
+                                                                   self.tot_time2 / self.iteration - 1,
+                                                                   self.tot_dist / self.iteration,
+                                                                   self.iteration)
+
+    def mean(self):
+        n = self.iteration - self.unreachable
+        if n > 0:
+            return self.tot_time / n
+        else:
+            return None
+
+    def walk1(self):
+        n = self.iteration - self.unreachable
+        if n > 0:
+            return self.tot_walk1 / n
+        else:
+            return None
+
+    def walk2(self):
+        n = self.iteration - self.unreachable
+        if n > 0:
+            return self.tot_walk2 / n
+        else:
+            return None
+
+    def TC(self):
+        n = self.iteration - self.unreachable
+        if n > 0:
+            return self.tot_TC / n
+        else:
+            return None
+
+    def TC_user_only(self):
+        n = self.TC_user
+        if n > 0:
+            return self.tot_TC_user_only / n
+        else:
+            return None
+
+    def mean_dist(self):
+        n = self.iteration
+        if n > 0:
+            return self.tot_dist / n
+        else:
+            return None
+
+    def mean_dist_reachable(self):
+        n = self.iteration - self.unreachable
+        if n > 0:
+            return self.tot_dist / n
+        else:
+            return None
+
+    def var(self):
+        n = self.iteration - self.unreachable - 1  # todo check unbiased var
+        if n > 0:
+            return self.tot_time2 / n
+        else:
+            return None
+
+    def prop_unreachable(self):
+        n = self.iteration
+        if n > 0:
+            return self.unreachable / n
+        else:
+            return None
+
+    def prop_TC_users(self):
+        n = self.iteration - self.unreachable
+        if n > 0:
+            return self.TC_user / n
+        else:
+            return None
+

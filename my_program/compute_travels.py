@@ -1,4 +1,6 @@
+import csv
 from my_program.my_utils import *
+import my_program.map as my_map
 
 # Cet class est charger de determiner au mieux les trajet a prendre en compte ainsi que leur poids(nombre d'utilisateur)
 """####################################################################################################################

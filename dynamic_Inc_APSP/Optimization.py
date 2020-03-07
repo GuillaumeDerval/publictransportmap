@@ -1,19 +1,25 @@
-from dynamic_Inc_APSP.Dynamic_Incremental_All_Pair_Shortest_Path import  *
+from dynamic_Inc_APSP.Dynamic_Incremental_All_Pair_Shortest_Path import *
+from my_program.monte_carlo_dynamic import travellers_modelisation
 import math
 import random as rdm
 
 class OneLevelSearch:
 
     @staticmethod
-    def search(graph_path , generate_branch):
+    def search(graph_path, generate_branch):
         APSP = Dynamic_APSP(graph_path)
+        metric = travellers_modelisation(PATH.TRAVEL, APSP.distance, 100)     #todo check if correct
         best = None
         minimum = math.inf
         branch = generate_branch()
         for b_modif in branch:
             APSP.save()
+            metric.save()
+
             b_modif(APSP)
-            value = -1 # Monte_carlo.todo
+            metric.update(APSP.get_changes())
+
+            value = metric.todo  # todo monte_Carlo_dynamic
             if value < minimum:
                 best = b_modif
                 minimum = value
@@ -21,7 +27,7 @@ class OneLevelSearch:
         return best, minimum
 
     @staticmethod
-    def generate_branch():
+    def generate_branch_rdm():
         branch = []
         rdm.seed(12121214)
 
@@ -70,7 +76,7 @@ class OneLevelSearch:
 
 if __name__ == '__main__':
     graph_path = "Test/mini.json"
-    OneLevelSearch.search(graph_path, OneLevelSearch.generate_branch)
+    OneLevelSearch.search(graph_path, OneLevelSearch.generate_branch_rdm)
 
 
 

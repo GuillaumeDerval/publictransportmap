@@ -28,7 +28,6 @@ class Dynamic_APSP:
         self.__change_log = []
         self.__stack_log = []
 
-
     def add_isolated_vertex(self, stop_name: str, time: int):
         if stop_name in self.name_to_idx:
             idx = self.name_to_idx[stop_name]
@@ -92,6 +91,18 @@ class Dynamic_APSP:
         # todo
         raise Exception("unimplemented")
 
+    def dist(self, s_name: str, d_name: str) -> float:
+        """
+        Return the minimal distance between u_name and v_name
+        """
+        return self.distance.dist(s_name, d_name)
+
+    def dist_from(self, s_name : str) -> list:
+        """
+        Return the list of the minimal distance from source  s (id)
+        """
+        return self.distance.dist_from(s_name)
+
     def hard_save_distance(self, out_directory_path=PATH.TRAVEL_TIME):
         self.distance.hard_save(out_directory_path)
 
@@ -130,6 +141,22 @@ class Dynamic_APSP:
                 raise Exception("Unhandeled log")
 
         self.__change_log = self.__stack_log.pop()
+
+    def get_changes(self):
+        """
+        Return the change done from the last save
+        retourne l'ensemble de nouvelle valeur de is_reach, leur stop_name est indique par les cle du dictionnaire
+        (new_value, old_value)
+        :return: A dictionnary : {"size": (new_number_of_stop, old_number of stop),
+                                  "added_stop_name" = [added_stop_name1 , ...]
+                                  "change_distance": {org_name : {dest_name : (new_dist, old_dist)}}
+        """
+        changes = self.distance.get_changes()
+        old_size = changes["size"][1]
+        new_stop_name = self.idx_to_name[old_size:]
+        changes["added_stop_name"] = new_stop_name
+        return changes
+
 
     #################################################################################################################
 
