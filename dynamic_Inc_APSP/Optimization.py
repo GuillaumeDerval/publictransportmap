@@ -9,6 +9,7 @@ class OneLevelSearch:
     def search(graph_path, generate_branch):
         APSP = Dynamic_APSP(graph_path)
         metric = travellers_modelisation(PATH.TRAVEL, APSP.distance, 100)     #todo check if correct
+        print("initialisation done")
         best = None
         minimum = math.inf
         branch = generate_branch()
@@ -19,7 +20,7 @@ class OneLevelSearch:
             b_modif(APSP)
             metric.update(APSP.get_changes())
 
-            value = metric.todo  # todo monte_Carlo_dynamic
+            value = 0 #metric.todo  # todo monte_Carlo_dynamic
             if value < minimum:
                 best = b_modif
                 minimum = value
@@ -75,7 +76,8 @@ class OneLevelSearch:
         return branch
 
 if __name__ == '__main__':
-    graph_path = "Test/mini.json"
+    print("hey")
+    graph_path = "../my_program/data/tiny_data/graph_train_only_charleroi.json"
     OneLevelSearch.search(graph_path, OneLevelSearch.generate_branch_rdm)
 
 

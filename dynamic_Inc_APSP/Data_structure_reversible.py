@@ -68,7 +68,7 @@ class Distance:
         Return the list of the minimal distance from source  s (id)
         """
         s_idx = self.name_to_idx[s_name]
-        return self.distance[s_idx][:self.size]
+        return self.distance[s_idx][:self.size], self.name_to_idx
 
     def dist_before_change(self, s_name: str, d_name: str) -> float:
         """
@@ -91,10 +91,10 @@ class Distance:
             for d_name in self.__backup["change_distance"][s_name]:
                 d_idx = self.name_to_idx[d_name]
                 distance[d_idx] = self.__backup["change_distance"][s_name][d_name]
-            return distance
+            return distance, self.name_to_idx
         else:
             s_idx = self.name_to_idx[s_name]
-            return self.distance[s_idx]
+            return self.distance[s_idx], self.name_to_idx
 
     def __update_size(self):
         while self.size < len(self.idx_to_name):

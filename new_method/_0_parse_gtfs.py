@@ -195,15 +195,16 @@ if __name__ == '__main__':
 
 
     stops = {}
-    print("DE LIJN")
-    stops.update(generate_output_for_gtfs("../gtfs/delijn", "delijn", date))
     print("MIVB")
     stops.update(generate_output_for_gtfs("../gtfs/stib", "stib", date))
     print("TEC")
     stops.update(generate_output_for_gtfs("../gtfs/tec", "tec", date))
+    print("DE LIJN")
+    stops.update(generate_output_for_gtfs("../gtfs/delijn", "delijn", date))
     print("SAVING")
 
     json.dump(stops_train, open("../produce/train_only.json", "w"))
     json.dump(stops, open("../produce/bus_only.json", "w"))
     stops.update(stops_train)
     json.dump(stops, open("../produce/train_bus.json", "w"))
+    print("END")

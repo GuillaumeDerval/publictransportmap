@@ -22,10 +22,13 @@
 
 
 # function of cumulative distribution =  function of repartition
-from utils import WALKING_SPEED
-from shapely.geometry import MultiPolygon, Point
 import random
 import math
+
+
+from utils import WALKING_SPEED
+from shapely.geometry import MultiPolygon, Point
+
 from my_program.my_utils import *
 from my_program.map import my_map
 import my_program.path as PATH
@@ -41,17 +44,17 @@ mapmap = my_map.get_map(path_shape=PATH.SHAPE, path_pop=PATH.POP)
 # ################################# Monte Carlo #########################################################
 class travellers_modelisation:
 
-    def __init__(self, travel_path: str, distance_oracle: Distance, reducing_factor: int, mymap=mapmap):
+    def __init__(self, travel_path: str, distance_oracle: Distance, reducing_factor: int, mymap=mapmap, stop_list_path= PATH.STOP_LIST):
+        self.map = mymap
         # virtual traveller genration
         self.reducing_factor = reducing_factor
         self.traveller_locations = {}   # dico {(munty_rsd, munty_work): (pt_rsd, pt_work,(best_rsd_stop, best_work_stop))}
         self.__generate_virtual_travellers(travel_path)
 
         # stop_munty
-        self.map = mymap
-        self.stop_list = json.load(open(PATH.STOP_LIST, "r"))
+        self.stop_list = json.load(open(stop_list_path, "r"))
         self.reachable_stop_from_munty = {munty: [] for munty in self.map.get_all_munty_refnis()}     # contient tout les stop atteignable depuis une commune
-        self.reachable_munty_from_stop = {pos: [] for pos in self.stop_list}   # contient tout les commune depuis un stop
+        self.reachable_munty_from_stop = {pos[0]: [] for pos in self.stop_list}   # contient tout les commune depuis un stop
         self.__set_reachable_stop_from_munty(self.stop_list)
 
         # access to distance
@@ -65,15 +68,15 @@ class travellers_modelisation:
         self.__estimate_travel_time()
 
         # reversible structure
-        self.__change_log = []
+        self.__change_log = {"added_stop_name" : [], "all_results_save": {}, "travellers": {}}
         self.__stack_log = []  # permet de faire une recherche sur plusieur etage
 
     # ##################################### Virtual traveller generation ###############################################
     def __generate_virtual_travellers(self, travel_path):
-
+        map = self.map
         def get_n_rdm_point(n, munty):
             "pick a rdm point in the shape, the probability of select a point depend on the number of people in the sector"
-            map = self.map
+
             def rdm_point_shape(shape):
                 "pick uniformaly at rdm a point in the shape"
                 assert shape.area > 0
@@ -143,7 +146,8 @@ class travellers_modelisation:
                 iteration += 1
             return iteration
 
-        travel = json.load(open(travel_path))["travel"]
+        with open(travel_path) as file :
+            travel = json.load(file)["travel"]
         assert len(travel) > 0
         travel.sort(key=(lambda x: x["residence"][1]))
 
@@ -166,31 +170,31 @@ class travellers_modelisation:
 
         :param stop_list : a list containg all stop to considere
         :modify: reachable_stop_from_munty : {munty1 : [stop1,stop2,...]} where walking_time(muntyi,stopi) < MAX_WALKING_TIME
-                 reachable_munty_from_stop: {stop1 : [munty1,munty2,...]} where walking_time(muntyi,stopi) < MAX_WALK_TIME
+                 reachable_munty_from_stop: {stop_name1 : [munty1,munty2,...]} where walking_time(muntyi,stopi) < MAX_WALK_TIME
         """
 
         for munty in self.map.get_all_munty_refnis():
             munty_shape = self.map.get_shape_munty(munty)
 
-            for stop in stop_list:
+            for stop in self.stop_list:
                 pos_point = Point(stop[1][0], stop[1][1])
 
                 if munty_shape.contains(pos_point):
                     self.reachable_stop_from_munty[munty].append(stop)  # stop in the municipality
-                    self.reachable_munty_from_stop[stop].append(munty)
+                    self.reachable_munty_from_stop[stop[0]].append(munty)
 
                 elif isinstance(munty_shape, MultiPolygon):      # stop not in the municipality and municipality in several part
                     for poly in munty_shape:
                         dist = poly.exterior.distance(pos_point)
                         if dist < MAX_WALKING_TIME * SPEED:
                             self.reachable_stop_from_munty[munty].append(stop)
-                            self.reachable_munty_from_stop[stop].append(munty)
+                            self.reachable_munty_from_stop[stop[0]].append(munty)
                             break
                 else:        # stop not in the municipality and one block municipality
                     dist = munty_shape.exterior.distance(pos_point)
                     if dist < MAX_WALKING_TIME * SPEED:
                         self.reachable_stop_from_munty[munty].append(stop)
-                        self.reachable_munty_from_stop[stop].append(munty)
+                        self.reachable_munty_from_stop[stop[0]].append(munty)
 
     def get_reachable_stop_from_munty(self, munty):
         """
@@ -282,9 +286,9 @@ class travellers_modelisation:
         min_time = math.inf
         max_time = -1
         for org, _ in self.get_reachable_stop_from_munty(munty_org):
-            TC_travel_array = self.distance.dist_from(org)
+            TC_travel_array, name_to_idx = self.distance.dist_from(org)
             for dest, _ in self.get_reachable_stop_from_munty(munty_dest):
-                time = TC_travel_array[name_to_idx(dest)]
+                time = TC_travel_array[name_to_idx[dest]]
                 if time >= 0:
                     min_time = min(min_time, time)
                     max_time = max(max_time, time)
@@ -297,11 +301,11 @@ class travellers_modelisation:
     # #################################### Computations ################################################################
     def __estimate_travel_time(self):
         for rsd_munty, work_munty in self.traveller_locations.keys():
-            travellers = self.traveller_locations[(rsd_munty, work_munty)]
-            print("travels estimation: ", rsd_munty, work_munty, "iteration :", len(travellers))
+            travellers = list(self.traveller_locations[(rsd_munty, work_munty)])
+            print("travels estimation: from ", rsd_munty, " to ", work_munty, "iteration :", len(travellers))
             res = self.all_results.get(rsd_munty, Result())
             for i in range(len(travellers)):
-                rsd, work =  travellers[i]
+                rsd, work = travellers[i]
                 opti_path, opti_time = self.optimal_travel_time(rsd, rsd_munty, work, work_munty)
                 travellers[i] = (rsd, work, opti_path)
                 (time, walk1, walk2, TC, dist, unreachable) = opti_time
@@ -327,10 +331,10 @@ class travellers_modelisation:
 
         opti_time = (time_without_TC, time_without_TC / 2, time_without_TC / 2, 0, dist, unreachable)
         opti_path = (None, None)
-        opti = (opti_path, opti_time)
 
 
-        if len(stop_list_rsd) == 0 or len(stop_list_work) == 0: return opti_time
+
+        if len(stop_list_rsd) == 0 or len(stop_list_work) == 0: return opti_path, opti_time
 
         stop_list_rsd.sort(key=lambda x: distance_Eucli(x[1], resid_pt))
         stop_list_work.sort(key=lambda x: distance_Eucli(x[1], work_pt))
@@ -340,20 +344,20 @@ class travellers_modelisation:
         for stop_rsd in stop_list_rsd:
             walk1 = distance_Eucli(resid_pt, stop_rsd[1]) / SPEED  # walking time
             if walk1 + min_walk2 + min_trav >= opti_time[0]:
-                return opti
-            TC_travel_array = self.distance.dist_from(stop_rsd[0])
+                return opti_path, opti_time
+            TC_travel_array, name_to_idx = self.distance.dist_from(stop_rsd[0])
             for stop_work in stop_list_work:
                 walk2 = distance_Eucli(work_pt, stop_work[1]) / SPEED
-                if walk1 + walk2 + min_trav >= opti_time[0]: return opti
-                TC = TC_travel_array[name_to_idx(stop_work[0])]
+                if walk1 + walk2 + min_trav >= opti_time[0]: return opti_path, opti_time
+                TC = TC_travel_array[name_to_idx[stop_work[0]]]
                 if TC > 0:
                     time = walk1 + walk2 + TC
                     if opti_time[0] > time:
                         opti_time = (time, walk1, walk2, TC, dist, 0)
                         opti_path = (stop_rsd, stop_work)
-                        opti = (opti_path, opti_time)
 
-        return opti
+
+        return opti_path, opti_time
 
     # #################################### Dynamic part ################################################################
     def update(self, changes):
@@ -365,12 +369,14 @@ class travellers_modelisation:
         """
         for new_stop in changes["added_stop_name"]:
             self.add_stop(new_stop)
-        # update used structure
+            self.__change_log["added_stop_name"].append(new_stop)
+            # update used structure
 
         for org_name_ch, dico in changes["change_distance"].items():
             for dest_name_ch, (new_value, old_value) in dico.items():
                 self.update_travel_time(org_name_ch, dest_name_ch, new_distance=new_value,
-                                                     old_distance= old_value)  # update used structure
+                                                     old_distance=old_value)  # update used structure
+                assert new_value <= old_value or old_value == -1
                 org_ch_pos = self.stop_list[org_name_ch]
                 dest_ch_pos = self.stop_list[dest_name_ch]
 
@@ -400,18 +406,33 @@ class travellers_modelisation:
                             new_time = new_walk1 + new_TC + new_walk2
 
                             if new_time < old_time:
+                                #record old state
+                                if rsd_munty not in self.__change_log["all_results_save"]:
+                                    self.__change_log["travellers"][i] = travellers[i]
+                                    self.__change_log["all_results_save"][rsd_munty]= self.all_results[rsd_munty].copy()
                                 travellers[i] = rsd_pt, work_pt, (org_name_ch, dest_name_ch)
-                                Result.remove(old_time, old_walk1, old_walk2, old_TC, unreachable=old_unreach)
-                                Result.add(new_time, new_walk1, new_walk2, new_TC, unreachable=0)
+                                self.all_results[rsd_munty].remove(old_time, old_walk1, old_walk2, old_TC, unreachable=old_unreach)
+                                self.all_results[rsd_munty].add(new_time, new_walk1, new_walk2, new_TC, unreachable=0)
 
     # #################################### Reversible part
     def save(self):
-        # todo
-        raise Exception("unimplemented")
+        self.__stack_log.append(self.__change_log)
+        self.__change_log = {"added_stop_name": [], "all_results_save": {}, "travellers": {}}
 
     def restore(self):
-        # todo
-        raise Exception("unimplemented")
+        changes = self.__change_log
+        for i in changes["travellers"].keys():
+            self.traveller_locations[i]= changes["travellers"][i]
+
+        for munty in changes["all_results_save"].keys():
+            self.all_results[munty]= changes["all_results_save"][munty]
+
+        for added_stop in changes["added_stop_name"]:
+            self.remove_stop(added_stop)
+
+        self.__change_log = self.__stack_log.pop()
+
+
 
 
 class Result:

@@ -13,29 +13,30 @@ def map_stop(in_path, out_path):
     # obtenir la position de chaque stop avec son nom
     stop_pos = {}
     step = 500
-    for i in range(44500, 45000, step): #len(data_stop.keys())
+    print("target: ",len(data_stop.keys()))
+    for i in range(44500, 47500, step): #len(data_stop.keys())
 
         listkey = list(data_stop.keys())
         for stop in listkey[i: i+step]:
             #stop = data_stop[stop]
             pos = WGS84_to_Lambert((float(data_stop[stop]["lon"]), float(data_stop[stop]["lat"])))
             stop_pos[stop] = pos
-        with open('data/tiny_data/stop_lambert_all.json', 'a') as w:
+        with open('data/stop_lambert_bus.json', 'a') as w:
             json.dump(stop_pos, w),
             stop_pos = {}
             print(i)
-            time.sleep(20)
+            #time.sleep(20)
 
     #stop_Lamb = json.load(open("output/stop_lambert_pos.json", "r"))
 
     #for s in stop_Lamb:
     #    stop_pos[s[0]] = s[1]
 
-    #stop_pos = json.load(open("data/tiny_data/stop_lambert_all.json", "r"))
-    #print(len(stop_pos))
+    stop_pos = json.load(open("data/stop_lambert_bus.json", "r")) #44500
+    print("len ", len(stop_pos))
 
     # Creer lien entre les stop
-
+    """
     for stop in stop_pos.keys():
         # feature_collection.append(elem)
         x,y = stop_pos[stop]
@@ -66,5 +67,6 @@ def map_stop(in_path, out_path):
 
     with open(out_path, 'w') as w:
         dump(out, w)
+    """
 
 map_stop("../produce/bus_only.json",'data/tiny_data/bus_lines.geojson')
