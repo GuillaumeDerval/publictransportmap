@@ -19,7 +19,7 @@ idx_to_name = data["idx_to_name"]
 name_to_idx = {x: i for i, x in enumerate(idx_to_name)}
 graph = {int(x): y for x, y in data["graph"].items()}
 MAX_TIME = data["max_time"]
-used_nodes = data["used_nodes"]
+used_times = data["used_times"]
 data = None
 
 
@@ -28,26 +28,26 @@ data = None
 walking_time = {name_to_idx[x]: [(a, name_to_idx[b]) for a, b in y] for x, y in walking_time.items()}
 
 # Generate graph points
-#used_nodes_next_time = [[-1] * MAX_TIME for x in used_nodes]
-used_nodes_next_time = np.full(shape=(len(used_nodes), MAX_TIME), fill_value=-1, dtype=np.int)
+#used_times_next_time = [[-1] * MAX_TIME for x in used_times]
+used_times_next_time = np.full(shape=(len(used_times), MAX_TIME), fill_value=-1, dtype=np.int)
 print("Array created")
 
 def gen_next_time(idx):
     last_time = -1
-    for x in used_nodes[idx]:
-        used_nodes_next_time[idx][last_time+1:x+1] = x
+    for x in used_times[idx]:
+        used_times_next_time[idx][last_time+1:x+1] = x
         #for y in range(last_time+1, x+1):
-        #    used_nodes_next_time[idx][y] = x
+        #    used_times_next_time[idx][y] = x
         last_time = x
 
 
 def get_node_next_time(idx, t):
     if t >= MAX_TIME:
         return -1
-    return used_nodes_next_time[idx,t]
+    return used_times_next_time[idx,t]
 
 
-for x in range(len(used_nodes)):
+for x in range(len(used_times)):
     gen_next_time(x)
 
 print("Processing done")
@@ -56,11 +56,13 @@ def compute_for_node(idx):  #idx =  stop_id (only sncb)
     todo = [[] for _ in range(0, MAX_TIME)]
 
     distance = {x: np.int(-1) for x in graph} #un noeud  x pour chaque stop_time.
-    for time in used_nodes[idx]:   #time(in 10sec)
+
+    for time in used_times[idx]:   #time(in 10sec)
         distance[idx*MAX_TIME+time] = np.int(0) # distance to reach the source node(idx*MAX_TIME+time) = 0
         todo[time].append(idx*MAX_TIME+time)
 
     min_dist_to_node = np.full((len(idx_to_name),), -1, dtype=np.int)
+    min_dist_to_node[idx] = 0
 
     for cur_time in range(0, MAX_TIME):
         # we use this while loop rather than a for one as new entries may be added during computation
@@ -70,6 +72,7 @@ def compute_for_node(idx):  #idx =  stop_id (only sncb)
             next = todo[cur_time][todo_idx]
             next_node_idx = next // MAX_TIME
             bdist = distance[next]
+            if bdist == -1 : print( "bdist = -1")
 
             #perme dobtenir la distance minimum pour chaque stop (ie. dist min pour tout les temps)
             if min_dist_to_node[next_node_idx] == -1 or min_dist_to_node[next_node_idx] > bdist:

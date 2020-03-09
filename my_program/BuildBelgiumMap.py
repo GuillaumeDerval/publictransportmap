@@ -13,7 +13,7 @@ def map_stop(in_path, out_path):
     # obtenir la position de chaque stop avec son nom
     stop_pos = {}
     step = 500
-    print("target: ",len(data_stop.keys()))
+    print("target: ", len(data_stop.keys()))
     for i in range(44500, 47500, step): #len(data_stop.keys())
 
         listkey = list(data_stop.keys())

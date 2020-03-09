@@ -46,7 +46,7 @@ class travellers_modelisation:
 
     def __init__(self, travel_path: str, distance_oracle: Distance, reducing_factor: int, mymap=mapmap, stop_list_path= PATH.STOP_LIST):
         self.map = mymap
-        # virtual traveller genration
+        # virtual traveller generation
         self.reducing_factor = reducing_factor
         self.traveller_locations = {}   # dico {(munty_rsd, munty_work): (pt_rsd, pt_work,(best_rsd_stop, best_work_stop))}
         self.__generate_virtual_travellers(travel_path)

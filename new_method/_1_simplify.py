@@ -18,7 +18,7 @@ out : ../produce/train_bus_simplified.json
 """
 # inside a group of nodes to be merged, two nodes must be at max 200 meters from each others.
 # why 200? because it's more than 100 and less than 300 ;-)
-MAX_SIMPLIFCATION_RADIUS = 0.2
+MAX_SIMPLIFCATION_RADIUS = 0 #0.2
 
 
 def elect_leader(data, cluster):
@@ -108,7 +108,7 @@ def simplify_time(data):
 
 
 print("LOADING")
-data = json.load(open("../produce/train_bus.json"))
+data = json.load(open("../produce/train_bus_reduced.json"))
 print("SIMPLIFY")
 #data = simplify_noinbound(simplify_clustering(data)) #todo
 data = simplify_time(data)

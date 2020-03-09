@@ -38,22 +38,22 @@ data = [data[x] for x in range(0, len(idx_to_name))]
 #Cree une liste qui  pour chaque stop :
 #     cree un set qui contient tout les temps pour lequel un  TC arrive ou part de ce stop
 print("--- Computing nodes to create")
-used_nodes = [set() for _ in range(0, len(idx_to_name))]
+used_times = [set() for _ in range(0, len(idx_to_name))]
 for source, y in enumerate(data):
     for dest, start, end in y:
-        used_nodes[source].add(start)
-        used_nodes[dest].add(end)
+        used_times[source].add(start)
+        used_times[dest].add(end)
 
-#base_used_nodes = used_nodes
-#used_nodes = [set() for _ in range(0, len(idx_to_name))]
-#for source, times in enumerate(base_used_nodes):
+#base_used_times = used_times
+#used_times = [set() for _ in range(0, len(idx_to_name))]
+#for source, times in enumerate(base_used_times):
 #    for wt, dest in walking_time[source]:
 #        for bt in times:
-#            used_nodes[dest].add(bt+wt)
-#    used_nodes[source] = used_nodes[source].union(base_used_nodes[source])
+#            used_times[dest].add(bt+wt)
+#    used_times[source] = used_times[source].union(base_used_times[source])
 
 print("NB ORIG NODES {}".format(len(data)))
-print("NB GRAPH NODES {}".format(sum([len(y) for y in used_nodes])))
+print("NB GRAPH NODES {}".format(sum([len(y) for y in used_times])))
 
 
 
@@ -66,7 +66,7 @@ def process_nodes(data):
     """
     def process_node(name, content):
         connections = sorted(content, key=lambda x: x[1])  # sort by start time
-        possible_times = sorted(used_nodes[name])
+        possible_times = sorted(used_times[name])
         c_id = 0
 
         for p_id, time in enumerate(possible_times):
@@ -74,12 +74,16 @@ def process_nodes(data):
 
             #arret representant une connection
             while c_id != len(connections) and connections[c_id][1] == time:
-                nei.append((connections[c_id][0] * MAX_TIME + connections[c_id][2]))
+                new_connect = connections[c_id][0] * MAX_TIME + connections[c_id][2]
+                if new_connect not in nei:
+                    nei.append(new_connect)
                 c_id += 1
 
             #arret representant le passage d'un temps à un autre (rester sur place)
             if p_id + 1 != len(possible_times):
-                nei.append((name * MAX_TIME + possible_times[p_id + 1]))
+                new_connect = name * MAX_TIME + possible_times[p_id + 1]
+                if new_connect not in nei:
+                    nei.append(new_connect)
 
             yield ((name * MAX_TIME + time), nei)
 
@@ -124,7 +128,7 @@ print(time.time())
 
 print("--- Saving")
 json.dump({"idx_to_name": idx_to_name, "max_time": MAX_TIME, #"topo": topo,
-           "graph": graph, "used_nodes": [list(sorted(x)) for x in used_nodes]
+           "graph": graph, "used_times": [list(sorted(x)) for x in used_times]
            }, open("../produce/out.json", 'w'))
 
 print("--- Done")
