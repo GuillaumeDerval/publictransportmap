@@ -9,7 +9,7 @@ class my_map:
     belgium_map = None
 
     @classmethod
-    def get_map(cls, path_shape = None, path_pop = None):
+    def get_map(cls, path_shape = None, path_pop = None): 
         if my_map.belgium_map is None:
             #if (my_map.belgium_map.path_shape is not None and my_map.belgium_map.path_shape != path_shape) or (my_map.belgium_map.path_pop is not None  and my_map.belgium_map.path_pop != path_pop):
             my_map.belgium_map = my_map(path_shape, path_pop)
