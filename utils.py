@@ -6,7 +6,7 @@ import numpy as np
 import sklearn.neighbors
 
 WALKING_SPEED = 3.0 #in km/h
-MAX_WALKING_TIME = 30*60 # in seconds
+MAX_WALKING_TIME = 0 #30*60 # in seconds
 MAX_RADIUS = (MAX_WALKING_TIME/3600.0) * WALKING_SPEED / 6367.0
 
 def distance_to_walking_time(dist_km):
