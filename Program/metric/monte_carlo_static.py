@@ -98,8 +98,7 @@ def get_n_rdm_point(n, munty):
 ################################## Compute the optimal time for a given travel ########################
 
 class stop_munty:
-
-    stop_list = json.load(open(path.STOP_LIST, "r"))
+    stop_list = json.load(open(PATH.STOP_POSITION_LAMBERT, "r"))
     __reachable_stop_munty = {}
     __min_max_time = {}  # store min and max time for each couple of munty orgin -> munty dest
 
@@ -166,7 +165,7 @@ class stop_munty:
             min_time = math.inf
             max_time = -1
             for org, _ in cls.get_reachable_stop_munty(munty_org):
-                path = path.TRAVEL_TIME + "{0}.npy".format(org)
+                path = PATH.MINIMAL_TRAVEL_TIME_TC + "{0}.npy".format(org)
                 TC_travel_array = np.load(path)
                 for dest, _ in cls.get_reachable_stop_munty(munty_dest):
                     time = TC_travel_array[name_to_idx(dest)]
@@ -212,7 +211,7 @@ def optimal_travel_time(resid_pt, munty_rsd, work_pt, munty_work):
     for stop_rsd in stop_list_rsd:
         walk1 = distance_Eucli(resid_pt, stop_rsd[1]) / SPEED  # walking time
         if walk1 + min_walk2 + min_trav >= opti_time[0]: return opti_time
-        path = path.TRAVEL_TIME + "{0}.npy".format(stop_rsd[0])
+        path = PATH.MINIMAL_TRAVEL_TIME_TC + "{0}.npy".format(stop_rsd[0])
         TC_travel_array = np.load(path)
         for stop_work in stop_list_work:
             walk2 = distance_Eucli(work_pt, stop_work[1]) / SPEED
@@ -379,10 +378,10 @@ def monte_carlo(travel_path, get_total= False):
 
 
 if __name__ == '__main__':
-    map = my_map.get_map(path_shape = path.SHAPE, path_pop  = path.POP)
+    map = my_map.get_map(path_shape = PATH.MAP_SHAPE, path_pop  = PATH.MAP_POP)
 
     start = time.time()
-    computations = monte_carlo(path.TRAVEL)
+    computations = monte_carlo(PATH.TRAVEL)
     end = time.time()
     print("time : ", end - start)
 

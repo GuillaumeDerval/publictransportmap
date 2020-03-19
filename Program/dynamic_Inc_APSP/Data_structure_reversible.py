@@ -51,6 +51,8 @@ class Distance:
         """
         Return the minimal distance between u_name and v_name
         """
+        if s_name not in self.name_to_idx or d_name not in self.name_to_idx:
+            return -1
         s_idx = self.name_to_idx[s_name]
         d_idx = self.name_to_idx[d_name]
         return self.distance[s_idx][d_idx]
@@ -67,6 +69,7 @@ class Distance:
         """
         Return the list of the minimal distance from source  s (id)
         """
+        assert  s_name in self.name_to_idx
         s_idx = self.name_to_idx[s_name]
         return self.distance[s_idx][:self.size], self.name_to_idx
 

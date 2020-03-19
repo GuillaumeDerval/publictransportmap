@@ -1,5 +1,5 @@
 from Program.dynamic_Inc_APSP.Dynamic_Incremental_All_Pair_Shortest_Path import *
-from Program.metric.monte_carlo_dynamic import travellers_modelisation
+from Program.metric.monte_carlo_dynamic import TravellersModelisation
 import math
 import random as rdm
 from Program.path import PATH
@@ -9,7 +9,7 @@ class OneLevelSearch:
     @staticmethod
     def search(graph_path, generate_branch):
         APSP = Dynamic_APSP(graph_path)
-        metric = travellers_modelisation(PATH.TRAVEL, APSP.distance, 100)     #todo check if correct
+        metric = TravellersModelisation(PATH.TRAVEL, APSP.distance, 100)     #todo check if correct
         print("initialisation done")
         best = None
         minimum = math.inf

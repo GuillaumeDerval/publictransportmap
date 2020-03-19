@@ -2,8 +2,7 @@ from unittest import TestCase
 
 import random as rdm
 
-from Program.dynamic_Inc_APSP.Test.test_my_utils import *
-from Program.path import PATH
+from Test.Test_dynamic_inc_APSP.test_my_utils import *
 
 
 class TestDynamicAPSP(TestCase):

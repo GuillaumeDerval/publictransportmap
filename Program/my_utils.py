@@ -1,6 +1,7 @@
 from math import sqrt
 from pyproj import Proj, transform
 import json
+from Program.path import PATH
 
 
 # Set of use-full function for conversion and distance
@@ -44,10 +45,10 @@ def get_stop_pos__belgian_lambert():
 
 
 # stop id / name convertions
-__idx_to_name = json.loads(open(path.OUT).read())["idx_to_name"]
-my_name_to_idx = {x: i for i, x in enumerate(__idx_to_name)}
+#__idx_to_name = json.loads(open(PATH.GRAPH).read())["idx_to_name"]
+#my_name_to_idx = {x: i for i, x in enumerate(__idx_to_name)}
 
-def name_to_idx(name):
-    return my_name_to_idx[name]
+#def name_to_idx(name):
+#    return my_name_to_idx[name]
 
 

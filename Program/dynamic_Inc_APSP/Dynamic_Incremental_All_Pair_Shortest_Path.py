@@ -25,10 +25,11 @@ class Dynamic_APSP:
         self.distance = Distance(self.name_to_idx, self.idx_to_name, self.max_time, self.used_time, self.path)
 
         # reversible state -> record change
+        self.newStop = []
         self.__change_log = []
         self.__stack_log = []
 
-    def add_isolated_vertex(self, stop_name: str, time: int):
+    def add_isolated_vertex(self, stop_name: str, time: int, position: (float,  float)):
         if stop_name in self.name_to_idx:
             idx = self.name_to_idx[stop_name]
             z = idx * self.max_time + time
@@ -40,6 +41,7 @@ class Dynamic_APSP:
         else:
             idx = len(self.name_to_idx)
             self.idx_to_name.append(stop_name)
+            self.newStop.append((stop_name, position))
             self.name_to_idx[stop_name] = idx
             z = idx * self.max_time + time
             self.used_time.append([time])
@@ -86,7 +88,7 @@ class Dynamic_APSP:
         else:
             self.__APSP_edge(self.path, self.graph, u, v)
 
-    def add_vertex(self, z_stop_id, z_time, z_name, Z_in, Z_out):
+    def add_vertex(self, z_stop_id, z_time, z_name,z_position, Z_in, Z_out):
         self.distance.up_to_date = False
         # todo
         raise Exception("unimplemented")
@@ -119,6 +121,7 @@ class Dynamic_APSP:
         self.graph.save()
         self.path.save()
         self.distance.save()
+        #todo save new positions
 
         self.__stack_log.append(self.__change_log)
         self.__change_log = []
@@ -133,6 +136,7 @@ class Dynamic_APSP:
             if log[0] == "add_name":
                 self.name_to_idx.pop(log[1])
                 self.idx_to_name.pop()
+                self.newStop.pop()
                 self.used_time.pop()
             elif log[0] == "add_time":
                 idx = self.name_to_idx[log[1]]
@@ -148,13 +152,13 @@ class Dynamic_APSP:
         retourne l'ensemble de nouvelle valeur de is_reach, leur stop_name est indique par les cle du dictionnaire
         (new_value, old_value)
         :return: A dictionnary : {"size": (new_number_of_stop, old_number of stop),
-                                  "added_stop_name" = [added_stop_name1 , ...]
+                                  "added_stop_name": [added_stop_name1 , ...]
                                   "change_distance": {org_name : {dest_name : (new_dist, old_dist)}}
         """
         changes = self.distance.get_changes()
         old_size = changes["size"][1]
-        new_stop_name = self.idx_to_name[old_size:]
-        changes["added_stop_name"] = new_stop_name
+        nb_new_stop_name = len(self.idx_to_name[old_size:])
+        changes["added_stop_name"] = self.newStop[-nb_new_stop_name]
         return changes
 
 

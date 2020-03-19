@@ -1,27 +1,25 @@
 from unittest import TestCase
 import json
+from Program.path import PATH
 
-path.TRAVEL_TIME = "data/out/"
-path.OUT = "data/out.json"
+PATH.MINIMAL_TRAVEL_TIME_TC = "data/out/"
+PATH.GRAPH = "data/out.json"
 
 import Program.metric.map as map
-import Program.metric.monte_carlo_opti as mc
-
+import Program.metric.monte_carlo_static as mc
 
 class TestMonte_carlo(TestCase):
 
     def setUp(self):
-        path.TRAVEL_TIME = "data/out/"
-        path.OUT = "data/out.json"
+        #PATH.MINIMAL_TRAVEL_TIME_TC = "data/out/"
+        #PATH.GRAPH = "data/out.json"
 
         mc.map = map.my_map.get_map("data/smallmap.geojson", "data/popsector.csv")
         with open("data/stop_pos.json", "r") as file:
             mc.stop_munty.stop_list = json.load(file)
 
-
         mc.SPEED = 33.334  # m/min  #2km/h
         mc.MAX_WALKING_TIME = 60
-
 
 
     def test_get_n_rdm_point(self):
@@ -104,4 +102,5 @@ class TestMonte_carlo(TestCase):
 
 
     def test_monte_carlo(self):
+        # todo
         self.fail()

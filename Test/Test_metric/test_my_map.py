@@ -1,5 +1,6 @@
 from unittest import TestCase
 from shapely.geometry import shape
+from Program.metric.map import my_map
 
 
 class TestMy_map(TestCase):
@@ -7,15 +8,13 @@ class TestMy_map(TestCase):
     mapp = None
 
     def setUp(self):
-        TestMy_map.mapp = my_map.get_map("data/smallmap.geojson","data/popsector.csv")
+        TestMy_map.mapp = my_map.get_map("data/smallmap.geojson", "data/popsector.csv")
 
     def tearDown(self):
         my_map.belgium_map = None
 
     def test_get_map(self):
         self.assertIsNotNone(TestMy_map.mapp)
-
-
 
     def test_get_shape_sector(self):
         A1 = shape({'type': 'Polygon', 'coordinates':[[[1000., 1000.], [1000., 2000.],[2000., 2000.], [2000., 1000.],[1000., 1000.]]]})
@@ -32,9 +31,8 @@ class TestMy_map(TestCase):
             [[[1000., 3000.], [1000., 7000.], [3000., 7000.], [3000., 3000.], [1000., 3000.]]]})
         self.assertTrue(TestMy_map.mapp.get_shape_munty("C").equals(C))
 
-
-
     def test_get_total_shape(self):
+        # todo
         self.fail()
 
     def test_get_pop_sector(self):
