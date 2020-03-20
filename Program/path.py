@@ -21,7 +21,8 @@ class PATH_BELGIUM:
     STOP_POSITION_LAMBERT = "../../Data_intermediate/stop_lambert_{0}.json".format(transport)
 
     # dynamic APSP
-    GRAPH = "../../Data_intermediate/graph.json"
+    GRAPH_TC = "../../Data_intermediate/graph.json"
+    GRAPH_TC_WALK = "../../Data_intermediate/graph_walk.json"
     MINIMAL_TRAVEL_TIME_TC = "../../Data_produced/minimal_distance/"
 
     # output map
@@ -53,7 +54,8 @@ class PATH_CHARLEROI:
     STOP_POSITION_LAMBERT = "../../Data_intermediate/{0}/stop_lambert_{1}.json".format(localisation,transport)
 
     # dynamic APSP
-    GRAPH = "../../Data_intermediate/{0}/graph_{1}.json".format(localisation, transport)
+    GRAPH_TC = "../../Data_intermediate/{0}/graph_{1}.json".format(localisation, transport)
+    GRAPH_TC_WALK = "../../Data_intermediate/{0}/graph_{1}_walk.json".format(localisation, transport)
     MINIMAL_TRAVEL_TIME_TC = "../../Data_produced/{0}/minimal_distance/".format(localisation)
 
     # output map

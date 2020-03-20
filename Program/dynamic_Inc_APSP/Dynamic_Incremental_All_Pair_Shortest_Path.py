@@ -8,7 +8,7 @@ from Program.path import PATH
 
 
 class Dynamic_APSP:
-    def __init__(self, path=PATH.GRAPH):
+    def __init__(self, path=PATH.GRAPH_TC):
         with open(path) as file:
             out = json.loads(file.read())
         self.graph = Graph(out)
@@ -111,7 +111,7 @@ class Dynamic_APSP:
     def hard_save_is_reachable(self, out_directory_path=PATH.MINIMAL_TRAVEL_TIME_TC):
         self.path.hard_save(out_directory_path)
 
-    def hard_save_graph(self, out_path=PATH.GRAPH):
+    def hard_save_graph(self, out_path=PATH.GRAPH_TC):
         with open(out_path, 'w') as out_file:
             json.dump({"idx_to_name": self.idx_to_name, "max_time": self.max_time,
                        "graph": self.graph.adj_matrix, "used_times": self.used_time
