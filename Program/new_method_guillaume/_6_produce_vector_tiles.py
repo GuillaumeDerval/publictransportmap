@@ -4,7 +4,7 @@ from multiprocessing import Pool
 import os.path
 from Program.path import PATH
 
-data = json.loads(open(PATH.GRAPH).read())
+data = json.loads(open(PATH.GRAPH_TC).read())
 idx_to_name = data["idx_to_name"]
 
 def process_thread(x):

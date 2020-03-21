@@ -5,15 +5,15 @@ import progressbar
 import numpy as np
 import sklearn.neighbors
 
-WALKING_SPEED = 3.0 #in km/h
-MAX_WALKING_TIME = 0 #30*60 # in seconds
-MAX_RADIUS = (MAX_WALKING_TIME/3600.0) * WALKING_SPEED / 6367.0
+#WALKING_SPEED = 3.0 #in km/h
+#MAX_WALKING_TIME = 0 #30*60 # in seconds
+#MAX_RADIUS = (MAX_WALKING_TIME/3600.0) * WALKING_SPEED / 6367.0
 
-def distance_to_walking_time(dist_km):
-    hours = dist_km / WALKING_SPEED
-    minutes = hours*60
-    seconds = minutes*60
-    return round(seconds)
+#def distance_to_walking_time(dist_km):
+#    hours = dist_km / WALKING_SPEED
+#    minutes = hours*60
+#    seconds = minutes*60
+#    return round(seconds)
 
 def haversine(lon1, lat1, lon2, lat2):
     """

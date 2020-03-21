@@ -130,6 +130,6 @@ print(time.time())
 print("--- Saving")
 json.dump({"idx_to_name": idx_to_name, "max_time": MAX_TIME, #"topo": topo,
            "graph": graph, "used_times": [list(sorted(x)) for x in used_times]
-           }, open(PATH.GRAPH, 'w'))
+           }, open(PATH.GRAPH_TC, 'w'))
 
 print("--- Done")

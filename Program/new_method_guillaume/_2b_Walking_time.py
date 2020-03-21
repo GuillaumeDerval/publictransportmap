@@ -1,5 +1,8 @@
 # Lancer _2_compute_walking_time.py before this program
 
+#Sophie
+
+
 # Ce programme à pour but d'ajouter des edge a graph.json
 # Ces nouvelle arret representerons les trajet faisable a pied
 from Program.path import PATH_CHARLEROI as PATH
@@ -19,7 +22,7 @@ graph_walk_tc = graph_tc.copy()
 
 for org_name in walk.keys():
     org_idx = name_to_idx[org_name]
-    org_time =  used_time[org_idx]          # Time are already sorted
+    org_time = used_time[org_idx]          # Time are already sorted
     for walk_time, dest_name in walk[org_name]:
         dest_idx = name_to_idx[dest_name]
         dest_time = used_time[dest_idx]     # Time are already sorted

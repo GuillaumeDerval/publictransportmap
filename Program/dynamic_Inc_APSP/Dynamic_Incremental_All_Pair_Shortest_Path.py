@@ -1,8 +1,11 @@
 from collections import deque
 from Program.dynamic_Inc_APSP.Data_structure_reversible import *
 import json
+import heapq
 #from dynamic_Inc_APSP.Data_structure import *
-from Program.path import PATH
+from Program.path import PATH, WALKING_SPEED
+from Program.metric.map import my_map
+from Program.distance_and_conversion import distance_Eucli
 
 """Ce code est base sur les algorithmes proposé dans l'article  Faster Incremental All-pairs Shortest Paths"""
 
@@ -24,12 +27,14 @@ class Dynamic_APSP:
         self.path = PathPresence(self.graph, self.max_time)
         self.distance = Distance(self.name_to_idx, self.idx_to_name, self.max_time, self.used_time, self.path)
 
+        self.map = my_map.get_map()
+
         # reversible state -> record change
         self.newStop = []
         self.__change_log = []
         self.__stack_log = []
 
-    def add_isolated_vertex(self, stop_name: str, time: int, position: (float,  float)):
+    def __add_isolated_vertex(self, stop_name: str, time: int, position: (float, float)):
         if stop_name in self.name_to_idx:
             idx = self.name_to_idx[stop_name]
             z = idx * self.max_time + time
@@ -54,12 +59,78 @@ class Dynamic_APSP:
 
         return idx
 
-    def add_edge(self, u_stop_name, u_time, v_stop_name, v_time):
+    def add_vertex(self, z_name, z_time, z_position, z_stop_in = [], z_stop_out = []):
+        """
+
+        :param z_name:
+        :param z_time:
+        :param z_position: peut etre None si le stop_time etait deja cree
+        :param z_stop_in:  [(name_in1, time_in1, pos_in),...] pos_in could be None if name_in is already a stop
+        :param z_stop_out: [(name_out1, time_out1, pos_out),...]
+        :return:
+        """
+        
+
+        self.distance.up_to_date = False
+
+        z_idx = self.__add_isolated_vertex(z_name, z_time, z_position)
+        z = z_idx * self.max_time + z_time
+
+        if z_name in self.name_to_idx and z_time in self.used_time[self.name_to_idx[z_name]]:
+            # algo don't work, add edge one after the other
+            for name_in, time_in, pos_in in z_stop_in:
+                self.add_edge(name_in, time_in, z_name, z_time)
+            for name_out, time_out, pos_out in z_stop_out:
+                self.add_edge(z_name, z_time, name_out, time_out)
+
+        else:
+            assert z_position is not None
+
+            # walking : find each node reachable thanks to walk
+            reachable_stop = self.map.get_reachable_stop_pt(z_position)
+            walk_in = []
+            walk_out = []
+            for walk_name, walk_pos in reachable_stop:
+                walk_idx = self.name_to_idx[walk_name]
+                walking_time = distance_Eucli(z_position, walk_pos) / WALKING_SPEED
+
+                i = len(self.used_time[walk_idx])
+                while self.used_time[walk_idx][i] + walking_time > z_time:
+                    i -= 1
+                walk_in.append((walk_name, self.used_time[walk_idx][i], None))
+
+                i = 0
+                while self.used_time[walk_idx][i] < z_time + walking_time:
+                    i += 1
+                walk_out.append((walk_name, self.used_time[walk_idx][i], None))
+
+
+            #add vertex to the graph structure
+            for s_name, s_time, s_pos in z_stop_in:
+                assert s_time <= z_time
+                s_id = self.__add_isolated_vertex(s_name, s_time,s_pos)
+                s = s_id * self.max_time + s_time
+                self.graph.add_edge(s, z)
+
+            for d_name, d_time, d_pos in z_stop_in:
+                assert d_time >= z_time
+                d_id = self.__add_isolated_vertex(d_name, d_time, d_pos)
+                d = d_id * self.max_time + d_time
+                self.graph.add_edge(z, d)
+
+            # conversion name, time, pos -> node
+            z_in = [self.name_to_idx[n] * self.max_time + t for n, t, _ in z_stop_in + walk_in]
+            z_out = [self.name_to_idx[n] * self.max_time + t for n, t, _ in z_stop_out + walk_out]
+
+
+            self.__APSP_vertex(z, z_in, z_out)
+
+    def add_edge(self, u_stop_name, u_time,  v_stop_name, v_time,u_position = None, v_position = None):  #todo tester l'efficacité de separer en plusieur cas
         assert v_time >= u_time
         self.distance.up_to_date = False
 
-        u_id = self.add_isolated_vertex(u_stop_name, u_time)
-        v_id = self.add_isolated_vertex(v_stop_name, v_time)
+        u_id = self.__add_isolated_vertex(u_stop_name, u_time, u_position)
+        v_id = self.__add_isolated_vertex(v_stop_name, v_time, v_position)
         u = u_id * self.max_time + u_time
         v = v_id * self.max_time + v_time
 
@@ -88,10 +159,7 @@ class Dynamic_APSP:
         else:
             self.__APSP_edge(self.path, self.graph, u, v)
 
-    def add_vertex(self, z_stop_id, z_time, z_name,z_position, Z_in, Z_out):
-        self.distance.up_to_date = False
-        # todo
-        raise Exception("unimplemented")
+
 
     def dist(self, s_name: str, d_name: str) -> float:
         """
@@ -265,13 +333,13 @@ class Dynamic_APSP:
             while len(Q) > 0:
                 y = Q.popleft()
                 # update distances for source nodes
-                print(P[y])
+                #print(P[y])
                 for pred in P[y]:
                     for x in S[pred]:
                         if not path.is_path(x, y) and path.is_path(x, u) and path.is_path(v, y):
                             path.set_is_path(x, y, True)
                             if y != v:
-                                if not y in S: S[y] = []
+                                if y not in S: S[y] = []
                                 S[y].append(x)
 
 
@@ -285,37 +353,42 @@ class Dynamic_APSP:
                         if w not in P: P[w] = set()
                         P[w].add(y)
 
-    def __APSP_vertex(self,graph, z, Z_in, Z_out):
-        # todo algo 5
-        raise Exception("unimplemented")
 
+    def __APSP_vertex(self, z, Z_in, Z_out):
+        path: PathPresence = self.path
+        graph: Graph = self.graph
+        z_time = z * self.max_time
 
+        S, P = {}, {}
+        S[z] = []
+        PQ = []     # priority queue
+        heapq.heappush(PQ, (0, z))
+        while len(PQ) > 0:
+            d_xz, x = heapq.heappop(PQ)
+            for q in graph.reversed_adj_matrix[x]:
+                if not path.is_path(q,z) and path.is_path(q ,x):
+                    path.set_is_path(q, z, True)
+                    d_qz = z_time - (q % self.max_time)
+                    heapq.heappush(PQ, (d_qz, q))
+                    S[z].append(q)
 
+        heapq.heappush(PQ, (0, z))
+        while len(PQ) > 0:
+            d_zy, y = heapq.heappop(PQ)
+            if y != z:
+                for pred in P[y]:
+                    for x in S[pred]:
+                        if not path.is_path(x,y) and path.is_path(x,z): # always true : path.is_path(z,y):
+                            path.set_is_path(x,y, True)
+                            if y not in S: S[y] = []
+                            S[z].append(x)
 
-if __name__ == '__main__':
-    print("start")
-    print("creation data structure + graph")
-    APSP = Dynamic_APSP()
-    print("creation is_path + initialisation")
-    APSP.initialisation()
-    print("add vertex")
-    APSP.add_isolated_vertex("d",30)
-    print("add vertex2")
-    APSP.add_isolated_vertex("c", 90)
-    print("add supid edge d30 -> c90")
-    APSP.add_edge("d",30,"c",90)
-    print("add edge b10 -> c90")
-    APSP.add_edge("b", 10, "c", 90)
-    print("add edge e0 -> b10")
-    APSP.add_edge("e", 0, "b", 10)
-    print("add edge b10 -> d30")
-    APSP.add_edge("b", 10, "d", 30)
-    print("finish")
-    #{"idx_to_name": ["a", "b", "c"], "max_time": 100, "graph": {"0": [110,170, 270, 50],"50" : [170,270],"110": [120], "120":[50,170],"170":[],"270":[] }, "used_times": [[10,50],  [110,120,170], [270] ]}
-
-    #{"idx_to_name": ["a", "b", "c","d","e"], "max_time": 100,
-  #"graph": {"0": [110,170, 270, 50],"50" : [170,270],"110": [120,290,330], "120":[50,170],"170":[],"270":[],"290": [],"330":[290],"400":[110] },
-  #"used_times": [[10,50],  [110,120,170], [270,290], [330],[400]]}
+            for w in graph.adj_matrix[y]:
+                if not path.is_path(z, w) and path.is_path(y,w):
+                    d_zw = (w % self.max_time) - z_time
+                    heapq.heappush(d_zw, w)
+                    if w not in P: P[w] = set()
+                    P[w].add(y)
 
 
 

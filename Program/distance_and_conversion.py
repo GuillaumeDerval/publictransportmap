@@ -1,7 +1,7 @@
 from math import sqrt
 from pyproj import Proj, transform
 import json
-from Program.path import PATH
+from Program.path import WALKING_SPEED
 
 
 # Set of use-full function for conversion and distance
@@ -43,6 +43,12 @@ def get_stop_pos__belgian_lambert():
         stop_pos.append((id, pos))
     return stop_pos
 
+
+def distance_to_walking_time(dist_km):
+    hours = dist_km / WALKING_SPEED
+    minutes = hours*60
+    seconds = minutes*60
+    return round(seconds)
 
 # stop id / name convertions
 #__idx_to_name = json.loads(open(PATH.GRAPH).read())["idx_to_name"]

@@ -26,23 +26,21 @@ import random
 import math
 
 
-from utils import WALKING_SPEED
-from shapely.geometry import MultiPolygon, Point
+from shapely.geometry import Point
 
-from Program.my_utils import *
+from Program.distance_and_conversion import *
 from Program.path import PATH
 
 MAX_WALKING_TIME = 60 # in min
 #SPEED = WALKING_SPEED /0.06 #in m/min
-SPEED = 1000/20
+#SPEED = 1000/20
 #mapmap = my_map.get_map(path_shape=PATH.MAP_SHAPE, path_pop=PATH.MAP_POP)
 
 
 # ################################# Monte Carlo #########################################################
 class TravellersModelisation:
 
-    def __init__(self, travel_path: str, distance_oracle, reducing_factor: int, mapmap=None,
-                 stop_list_path=PATH.STOP_POSITION_LAMBERT, my_seed = None):
+    def __init__(self, travel_path: str, distance_oracle, reducing_factor: int, mapmap=None, my_seed = None):
 
         assert reducing_factor > 0
         if mapmap is None:
@@ -58,13 +56,6 @@ class TravellersModelisation:
         self.traveller_locations = {}   # dico {(munty_rsd, munty_work): [(pt_rsd, pt_work,(best_rsd_stop, best_work_stop), best_TC),...]}
         self.__generate_virtual_travellers(travel_path)
 
-        # stop_munty
-        with open(stop_list_path, "r") as file:
-            stop_list = json.load(file)
-            self.stop_position_dico = {name : tuple(pos) for name, pos in stop_list}
-        self.reachable_stop_from_munty = {munty: [] for munty in self.map.get_all_munty_refnis()}     # contient tout les stop atteignable depuis une commune
-        self.reachable_munty_from_stop = {stop_name: [] for stop_name in self.stop_position_dico.keys()}   # contient tout les commune depuis un stop
-        self.__set_reachable_stop_from_munty(self.stop_position_dico.items())
 
         # access to distance
         self.distance = distance_oracle
@@ -171,101 +162,7 @@ class TravellersModelisation:
             work_list = get_n_rdm_point(iters, work_munty)
             self.traveller_locations[(rsd_munty, work_munty)] = list(zip(resid_list, work_list))
 
-    # ##################################### Relation between stop position and municipality ############################
 
-    def __set_reachable_stop_from_munty(self, stop_list):
-        """
-        Compute a list containing every reachable stop in a walking_time < max_walking_time for a given munty
-
-        :param stop_list : a list containg all stop to considere
-        :modify: reachable_stop_from_munty : {munty1 : [stop1,stop2,...]} where walking_time(muntyi,stopi) < MAX_WALKING_TIME
-                 reachable_munty_from_stop: {stop_name1 : [munty1,munty2,...]} where walking_time(muntyi,stopi) < MAX_WALK_TIME
-        """
-
-        for munty in self.map.get_all_munty_refnis():
-            munty_shape = self.map.get_shape_munty(munty)
-
-            for stop in stop_list:
-                pos_point = Point(stop[1][0], stop[1][1])
-
-                if munty_shape.contains(pos_point):
-                    self.reachable_stop_from_munty[munty].append(stop)  # stop in the municipality
-                    if stop[0] in self.reachable_munty_from_stop:
-                        self.reachable_munty_from_stop[stop[0]].append(munty)
-                    else:
-                        self.reachable_munty_from_stop[stop[0]] = [munty]
-
-                elif isinstance(munty_shape, MultiPolygon):      # stop not in the municipality and municipality in several part
-                    for poly in munty_shape:
-                        dist = poly.exterior.distance(pos_point)
-                        if dist < MAX_WALKING_TIME * SPEED:
-                            self.reachable_stop_from_munty[munty].append(stop)
-                            if stop[0] in self.reachable_munty_from_stop:
-                                self.reachable_munty_from_stop[stop[0]].append(munty)
-                            else:
-                                self.reachable_munty_from_stop[stop[0]] = [munty]
-                            break
-                else:        # stop not in the municipality and one block municipality
-                    dist = munty_shape.exterior.distance(pos_point)
-                    if dist < MAX_WALKING_TIME * SPEED:
-                        self.reachable_stop_from_munty[munty].append(stop)
-                        if stop[0] in self.reachable_munty_from_stop:
-                            self.reachable_munty_from_stop[stop[0]].append(munty)
-                        else:
-                            self.reachable_munty_from_stop[stop[0]] = [munty]
-
-    def get_reachable_stop_from_munty(self, munty):
-        """
-        Return a list containing every reachable stop in a walking_time < max_walking_time for a given munty
-
-        :param munty: refnis of the municipality
-        :return: [(stop_id, (coord_x, coord_y))] where distance (munty, stop) < max_walking_time
-        """
-        return self.reachable_stop_from_munty[munty]
-
-    def get_reachable_munty_from_stop(self, stop_name):
-        """
-        Return a list containing every reachable munty in a walking_time < max_walking_time for a given stop
-
-        :param stop_name: name of the stop          ex : TEC2068
-        :return: [refnis_munty1, refnis_munty2, ... ] where distance (munty, stop) < max_walking_time
-        """
-        return self.reachable_stop_from_munty[stop_name]
-
-    def get_reachable_stop_pt(self, point, munty):
-        """
-            Compute a list containing every reachable stop in a walking_time < max_walking_time for a given point
-
-            :param point: (x,y) coordinates of the point
-            :param munty: munnicipality where the point is located
-            :return: [(stop_id, (coord_x, coord_y))] where distance (point, stop) < max_walking_time
-            """
-        stop_list_munty = self.get_reachable_stop_from_munty(munty)
-        reachable_stop = []
-        for stop in stop_list_munty:
-            if distance_Eucli(point, stop[1]) < MAX_WALKING_TIME * SPEED:
-                reachable_stop.append(stop)
-        return reachable_stop
-
-    def add_stop(self, stop_name_pos):
-        """
-        Ajoute un  stop qui n'était pas present dans la liste de stop initiale
-        :param stop_name:
-        """
-
-        if not isinstance(stop_name_pos, list):
-            stop_name_pos = [stop_name_pos]
-        for stop_name , pos in stop_name_pos:
-            self.stop_position_dico[stop_name]= pos
-        self.__set_reachable_stop_from_munty(stop_name_pos)
-
-    def remove_stop(self, stop_name):
-        if not isinstance(stop_name, list):
-            stop_name = [stop_name]
-        for st in stop_name:
-            affected_munty = self.reachable_stop_from_munty.pop(st)
-            for munty in affected_munty:
-                self.reachable_stop_from_munty[munty].remove(st)
 
     # ###################################### Min/Max Time   ############################################################
     # Effectuer de manière parresseuse vu que plein de paire de commune ne seront potentiellement pas consideree
@@ -283,8 +180,8 @@ class TravellersModelisation:
         return self.__min_max_time[munty_org][munty_dest][1]
 
     def update_travel_time(self, stop_name_org, stop_name_dest, new_distance, old_distance):
-        munty_org_list = self.reachable_munty_from_stop.get(stop_name_org,[])
-        munty_dest_list = self.reachable_munty_from_stop.get(stop_name_dest,[])
+        munty_org_list = self.map.reachable_munty_from_stop.get(stop_name_org,[])
+        munty_dest_list = self.map.reachable_munty_from_stop.get(stop_name_dest,[])
 
         for munty_org in munty_org_list:
             for munty_dest in munty_dest_list:
@@ -305,9 +202,9 @@ class TravellersModelisation:
         """
         min_time = math.inf
         max_time = -1
-        for org, _ in self.get_reachable_stop_from_munty(munty_org):
+        for org, _ in self.map.get_reachable_stop_from_munty(munty_org):
             TC_travel_array, name_to_idx = self.distance.dist_from(org)
-            for dest, _ in self.get_reachable_stop_from_munty(munty_dest):
+            for dest, _ in self.map.get_reachable_stop_from_munty(munty_dest):
                 time = TC_travel_array[name_to_idx[dest]]
                 if time >= 0:
                     min_time = min(min_time, time)
@@ -339,8 +236,8 @@ class TravellersModelisation:
             self.all_results[work_munty] = w
 
     def optimal_travel_time(self,resid_pt, munty_rsd, work_pt, munty_work):
-        stop_list_rsd = self.get_reachable_stop_pt(resid_pt, munty_rsd)
-        stop_list_work = self.get_reachable_stop_pt(work_pt, munty_work)
+        stop_list_rsd = self.map.get_reachable_stop_pt(resid_pt, munty_rsd)
+        stop_list_work = self.map.get_reachable_stop_pt(work_pt, munty_work)
 
         dist = distance_Eucli(resid_pt, work_pt)
         time_without_TC = dist / SPEED  # without Tc
@@ -388,7 +285,7 @@ class TravellersModelisation:
                                   "added_stop_name" = [added_stop_name1 , ...]
                                   "change_distance": {org_name : {dest_name : (new_dist, old_dist)}}
         """
-        self.add_stop(changes["added_stop_name"])
+        self.map.add_stop(changes["added_stop_name"])
         for new_stop in changes["added_stop_name"]:
             self.__change_log["added_stop_name"].append(new_stop)
             # update used structure
@@ -398,12 +295,12 @@ class TravellersModelisation:
                 self.update_travel_time(org_name_ch, dest_name_ch, new_distance=new_value,
                                                      old_distance=old_value)  # update used structure
                 assert new_value <= old_value or old_value == -1
-                org_ch_pos = self.stop_position_dico[org_name_ch]
-                dest_ch_pos = self.stop_position_dico[dest_name_ch]
+                org_ch_pos = self.map.stop_position_dico[org_name_ch]
+                dest_ch_pos = self.map.stop_position_dico[dest_name_ch]
 
                 #todo improve : ne parcourir que le stop concerner et pas tout ceux des commune affectee
-                for rsd_munty in self.reachable_munty_from_stop[org_name_ch]:
-                    for work_munty in self.reachable_munty_from_stop[dest_name_ch]:
+                for rsd_munty in self.map.reachable_munty_from_stop[org_name_ch]:
+                    for work_munty in self.map.reachable_munty_from_stop[dest_name_ch]:
                         travellers = self.traveller_locations.get((rsd_munty, work_munty),[])
                         for i in range(len(travellers)):   # find all potentially affected stop
                             rsd_pt, work_pt, (old_org_stop, old_dest_stop), old_TC = travellers[i]
@@ -450,7 +347,7 @@ class TravellersModelisation:
             self.all_results[munty]= changes["all_results_save"][munty]
 
         for added_stop in changes["added_stop_name"]:
-            self.remove_stop(added_stop)
+            self.map.remove_stop(added_stop)
 
         self.__change_log = self.__stack_log.pop()
 

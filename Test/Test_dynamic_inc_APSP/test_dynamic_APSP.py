@@ -20,8 +20,8 @@ class TestDynamicAPSP(TestCase):
     def test_modify_graph(self):
         APSP = Dynamic_APSP("mini.json")
 
-        APSP.add_isolated_vertex("d", 30)
-        APSP.add_isolated_vertex("c", 90)
+        APSP.__add_isolated_vertex("d", 30)
+        APSP.__add_isolated_vertex("c", 90)
         APSP.add_edge("d", 30, "c", 90)
         APSP.add_edge("b", 10, "c", 90)
         APSP.add_edge("e", 0, "b", 10)
@@ -36,15 +36,15 @@ class TestDynamicAPSP(TestCase):
 
     def test_add_isolated_vertex_mini_1(self):
         # add existing vertex
-        path_comp, dist_comp = check_if_correct_modification(lambda APSP: APSP.add_isolated_vertex("b",70))
+        path_comp, dist_comp = check_if_correct_modification(lambda APSP: APSP.__add_isolated_vertex("b", 70))
         self.assertTrue(path_comp)
         self.assertTrue(dist_comp)
 
     def test_add_isolated_vertex_mini_2(self):
         # add vertex with existing label
         def my_change(APSP):
-            APSP.add_isolated_vertex("a", 90)
-            APSP.add_isolated_vertex("c", 10)
+            APSP.__add_isolated_vertex("a", 90)
+            APSP.__add_isolated_vertex("c", 10)
 
         path_comp, dist_comp = check_if_correct_modification(my_change)
         self.assertTrue(path_comp)
@@ -53,8 +53,8 @@ class TestDynamicAPSP(TestCase):
     def test_add_isolated_vertex_mini_3(self):
         # add vertex with new label
         def my_change(APSP):
-            APSP.add_isolated_vertex("d", 15)
-            APSP.add_isolated_vertex("k", 10)
+            APSP.__add_isolated_vertex("d", 15)
+            APSP.__add_isolated_vertex("k", 10)
 
         path_comp, dist_comp = check_if_correct_modification(my_change)
         self.assertTrue(path_comp)
@@ -73,20 +73,20 @@ class TestDynamicAPSP(TestCase):
                     name = APSP.idx_to_name[idx]
                     if len(APSP.used_time[idx]) != 0:
                         time = APSP.used_time[idx][rdm.randint(0, len(APSP.used_time[idx]) - 1)]
-                        APSP.add_isolated_vertex(name, time)
-                        APSP.add_isolated_vertex(name, time)
+                        APSP.__add_isolated_vertex(name, time)
+                        APSP.__add_isolated_vertex(name, time)
                 elif choice == 1:
                     # add vertex with existing label
                     idx = rdm.randint(0, len(APSP.name_to_idx) - 1)
                     name = APSP.idx_to_name[idx]
                     time = rdm.randint(0, APSP.max_time - 1)
-                    APSP.add_isolated_vertex(name, time)
+                    APSP.__add_isolated_vertex(name, time)
                 elif choice == 2:
                     # add vertex with new label
                     name = str(i)
                     i += 1
                     time = rdm.randint(0, APSP.max_time - 1)
-                    APSP.add_isolated_vertex(name, time)
+                    APSP.__add_isolated_vertex(name, time)
 
         path_comp, dist_comp = check_if_correct_modification(my_change)
         self.assertTrue(path_comp)
@@ -106,19 +106,19 @@ class TestDynamicAPSP(TestCase):
                     name = APSP.idx_to_name[idx]
                     if len(APSP.used_time[idx]) != 0 :
                         time = APSP.used_time[idx][rdm.randint(0, len(APSP.used_time[idx]) - 1)]
-                        APSP.add_isolated_vertex(name, time)
+                        APSP.__add_isolated_vertex(name, time)
                 elif choice == 1:
                     # add vertex with existing label
                     idx = rdm.randint(0, len(APSP.name_to_idx) - 1)
                     name = APSP.idx_to_name[idx]
                     time = rdm.randint(0, APSP.max_time - 1)
-                    APSP.add_isolated_vertex(name, time)
+                    APSP.__add_isolated_vertex(name, time)
                 elif choice == 2:
                     # add vertex with new label
                     name = str(i)
                     i += 1
                     time = rdm.randint(0, APSP.max_time - 1)
-                    APSP.add_isolated_vertex(name, time)
+                    APSP.__add_isolated_vertex(name, time)
 
         path_comp, dist_comp = check_if_correct_modification(my_change, "medium.json")
         self.assertTrue(path_comp)

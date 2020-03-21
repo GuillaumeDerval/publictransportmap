@@ -134,7 +134,7 @@ def process(dist_file, out_file, border_shape, idx_to_name, complete_data):
 
 
 bordershape = "../gadm34_BEL_shp/border_blambert.shp"
-data = json.loads(open(PATH.GRAPH).read())
+data = json.loads(open(PATH.GRAPH_TC).read())
 idx_to_name = data["idx_to_name"]
 
 def process_thread(x):

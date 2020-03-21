@@ -12,7 +12,7 @@ out :    PATH.MINIMAL_TRAVEL_TIME_TC
 """
 
 
-data = json.loads(open(PATH.GRAPH).read())
+data = json.loads(open(PATH.GRAPH_TC).read())
 walking_time = json.loads(open(PATH.WALKING).read())
 print("JSON parsed")
 

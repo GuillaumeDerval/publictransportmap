@@ -4,7 +4,9 @@ import progressbar
 import numpy as np
 import sklearn.neighbors
 
-from utils import haversine, distance_to_walking_time, MAX_WALKING_TIME, MAX_RADIUS, decaround
+from utils import haversine, decaround
+from Program.path import MAX_RADIUS
+from Program.distance_and_conversion import distance_to_walking_time
 from Program.path import PATH
 
 """ 
@@ -30,7 +32,7 @@ def compute_stations_walking_time(data):
         for j in result:
             idx2 = idxes[j]
             distance = haversine(data[idx1]["lon"], data[idx1]["lat"], data[idx2]["lon"], data[idx2]["lat"])
-            distance_time = decaround(max(10, distance_to_walking_time(distance)))//10
+            distance_time = decaround(max(10, distance_to_walking_time(distance)))//10  #todo
             out[idx1].append((distance_time, idx2))
             # out[idx2].append((distance_time, idx1)) will be done the other way!
 

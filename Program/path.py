@@ -1,3 +1,10 @@
+
+#Parameters
+MAX_WALKING_TIME = 60 # in min # in seconds  #todo found units
+WALKING_SPEED = 3.0 #in km/h #todo found units
+MAX_RADIUS = (MAX_WALKING_TIME/3600.0) * WALKING_SPEED / 6367.0
+
+
 # This file contains the path for the data
 class PATH_BELGIUM:
 
@@ -67,14 +74,3 @@ class PATH_CHARLEROI:
 class PATH(PATH_CHARLEROI):
     pass
 
-#path all data metric
-'''
-SHAPE = "../../my_program/data/sh_statbel_statistical_sectors.geojson"
-POP = "../../my_program/data/OPEN_DATA_SECTOREN_2011.csv"
-TRAVEL = "../../my_program/out_dir/travel_user.json"
-TRAVEL_TIME = "../../produce/out/"
-STOP_LIST = "../../my_program/out_dir/stop_lambert_pos.json"
-OUT_TIME_MAP = "data/maps/time_map_belgium.geojson"
-OUT_MUNTY_MAP = "data/maps/munty_map_belgium.geojson"
-OUT_STOP_MAP = "data/maps/stop_map_belgium.geojson"
-'''

@@ -3,7 +3,7 @@ import json
 from Program.path import PATH
 
 PATH.MINIMAL_TRAVEL_TIME_TC = "data/out/"
-PATH.GRAPH = "data/out.json"
+PATH.GRAPH_TC = "data/out.json"
 
 import Program.metric.map as map
 import Program.metric.monte_carlo_dynamic as mc
