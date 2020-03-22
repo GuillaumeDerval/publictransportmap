@@ -35,7 +35,7 @@ D1 = {'type': 'feature', 'properties': {'CD_SECTOR': "D1", 'CD_MUNTY_REFNIS' : '
        'geometry': {'type': 'Polygon', 'coordinates':
            [[[5000., 4000.],[7000., 4000.], [7000., 6000.],[5000., 6000.], [5000., 4000.]]]}}
 
-feature_collection = [A1,A2, B1,C1,C2,C3,D1]  # key = refnis
+feature_collection = [A1, A2, B1, C1, C2, C3, D1]  # key = refnis
 
 out = {
         'type': 'FeatureCollection',

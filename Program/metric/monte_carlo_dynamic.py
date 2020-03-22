@@ -29,11 +29,12 @@ import math
 from shapely.geometry import Point
 
 from Program.distance_and_conversion import *
-from Program.path import PATH
+from Program.path import PATH, PARAMETERS
 
-MAX_WALKING_TIME = 60 # in min
+#MAX_WALKING_TIME = 60 # in min
 #SPEED = WALKING_SPEED /0.06 #in m/min
 #SPEED = 1000/20
+#WALKING_SPEED = WALKING_SPEED/0.06
 #mapmap = my_map.get_map(path_shape=PATH.MAP_SHAPE, path_pop=PATH.MAP_POP)
 
 
@@ -236,13 +237,14 @@ class TravellersModelisation:
             self.all_results[work_munty] = w
 
     def optimal_travel_time(self,resid_pt, munty_rsd, work_pt, munty_work):
+        SPEED = PARAMETERS.WALKING_SPEED()
         stop_list_rsd = self.map.get_reachable_stop_pt(resid_pt, munty_rsd)
         stop_list_work = self.map.get_reachable_stop_pt(work_pt, munty_work)
 
         dist = distance_Eucli(resid_pt, work_pt)
         time_without_TC = dist / SPEED  # without Tc
         # opti time : (time, walk1, walk2, TC,dist, unreachable)
-        if time_without_TC > (2 * MAX_WALKING_TIME):
+        if time_without_TC > (2 * PARAMETERS.MAX_WALKING_TIME()):
             unreachable = 1
         else:
             unreachable = 0
@@ -285,6 +287,8 @@ class TravellersModelisation:
                                   "added_stop_name" = [added_stop_name1 , ...]
                                   "change_distance": {org_name : {dest_name : (new_dist, old_dist)}}
         """
+        MAX_WALKING_TIME = PARAMETERS.MAX_WALKING_TIME()
+        SPEED = PARAMETERS.WALKING_SPEED()
         self.map.add_stop(changes["added_stop_name"])
         for new_stop in changes["added_stop_name"]:
             self.__change_log["added_stop_name"].append(new_stop)
@@ -313,7 +317,7 @@ class TravellersModelisation:
 
                             else:
                                 old_unreach = 0
-                                old_walk1 = distance_Eucli(rsd_pt,old_org_stop[1]) / SPEED  # walking time
+                                old_walk1 = distance_Eucli(rsd_pt,old_org_stop[1]) / SPEED # walking time
                                 old_walk2 = distance_Eucli(work_pt, old_dest_stop[1]) / SPEED  # walking time
                                 # old_TC = old_TC
                                 old_time = old_walk1 + old_TC + old_walk2

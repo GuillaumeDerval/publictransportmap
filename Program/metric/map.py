@@ -3,7 +3,7 @@ import csv
 from shapely.geometry import shape, MultiPolygon, Point
 # from shapely.ops import Point
 from Program.distance_and_conversion import *
-from Program.path import PATH, MAX_WALKING_TIME, WALKING_SPEED
+from Program.path import PATH, PARAMETERS
 
 
 class my_map:
@@ -127,7 +127,7 @@ class my_map:
                 elif isinstance(munty_shape,MultiPolygon):  # stop not in the municipality and municipality in several part
                     for poly in munty_shape:
                         dist = poly.exterior.distance(pos_point)
-                        if dist < MAX_WALKING_TIME * WALKING_SPEED:
+                        if dist < PARAMETERS.MAX_WALKING_TIME() * PARAMETERS.WALKING_SPEED():
                             self.reachable_stop_from_munty[munty].append(stop)
                             if stop[0] in self.reachable_munty_from_stop:
                                 self.reachable_munty_from_stop[stop[0]].append(munty)
@@ -136,7 +136,7 @@ class my_map:
                             break
                 else:  # stop not in the municipality and one block municipality
                     dist = munty_shape.exterior.distance(pos_point)
-                    if dist < MAX_WALKING_TIME * WALKING_SPEED:
+                    if dist < PARAMETERS.MAX_WALKING_TIME() * PARAMETERS.WALKING_SPEED():
                         self.reachable_stop_from_munty[munty].append(stop)
                         if stop[0] in self.reachable_munty_from_stop:
                             self.reachable_munty_from_stop[stop[0]].append(munty)
@@ -169,9 +169,7 @@ class my_map:
             :param munty: munnicipality where the point is located
             :return: [(stop_id, (coord_x, coord_y))] where distance (point, stop) < max_walking_time
             """
-        if isinstance(point, tuple):
-            # it is a position
-            point = Point(point[0], point[1])
+
         if munty is None:
             for m in self.get_all_munty_refnis():
                 munty_shape = self.get_shape_munty(m)
@@ -181,7 +179,7 @@ class my_map:
         stop_list_munty = self.get_reachable_stop_from_munty(munty)
         reachable_stop = []
         for stop in stop_list_munty:
-            if distance_Eucli(point, stop[1]) < MAX_WALKING_TIME * WALKING_SPEED:
+            if distance_Eucli(point, stop[1]) < PARAMETERS.MAX_WALKING_TIME() * PARAMETERS.WALKING_SPEED():
                 reachable_stop.append(stop)
         return reachable_stop
 

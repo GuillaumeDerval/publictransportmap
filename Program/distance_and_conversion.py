@@ -1,7 +1,7 @@
 from math import sqrt
 from pyproj import Proj, transform
 import json
-from Program.path import WALKING_SPEED
+from Program.path import PARAMETERS as P
 
 
 # Set of use-full function for conversion and distance
@@ -45,7 +45,7 @@ def get_stop_pos__belgian_lambert():
 
 
 def distance_to_walking_time(dist_km):
-    hours = dist_km / WALKING_SPEED
+    hours = dist_km / P.WALKING_SPEED
     minutes = hours*60
     seconds = minutes*60
     return round(seconds)

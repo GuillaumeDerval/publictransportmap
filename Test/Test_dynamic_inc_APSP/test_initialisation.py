@@ -16,7 +16,6 @@ class TestInitialisationAPSP(TestCase):
         for file_name in os.listdir("data_test/path_expected/"):
             os.remove("data_test/path_expected/" + file_name)
 
-
     def test_save_graph_mini(self):
         APSP = Dynamic_APSP("mini.json")
         APSP.hard_save_graph("data_test/mini_save.json")

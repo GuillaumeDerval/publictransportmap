@@ -4,6 +4,7 @@ from Program.dynamic_Inc_APSP.Dynamic_Incremental_All_Pair_Shortest_Path import 
 import random as rdm
 import shutil
 
+
 class TestInitialisationAPSP(TestCase):
     def setUp(self):
         super().setUp()
@@ -30,7 +31,6 @@ class TestInitialisationAPSP(TestCase):
                 os.remove("data_test/path_expected/" + file_name)
             else:
                 shutil.rmtree("data_test/path_expected/" + file_name)
-
 
     def test_one_level_one_edge(self):
         data_path = "mini.json"
@@ -191,7 +191,7 @@ def generate_random_edge(APSP):
                 time2 = rdm.sample(possible_time, 1).pop()
             else:
                 time2 = rdm.randint(time1, APSP.max_time - 1)
-    print("add edge {} time {} to {} time {}".format(name1, time1, name2, time2))
+    # print("add edge {} time {} to {} time {}".format(name1, time1, name2, time2))
     APSP.add_edge(name1, time1, name2, time2)
 
 

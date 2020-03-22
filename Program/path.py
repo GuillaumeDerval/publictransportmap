@@ -1,8 +1,30 @@
 
 #Parameters
-MAX_WALKING_TIME = 60 # in min # in seconds  #todo found units
-WALKING_SPEED = 3.0 #in km/h #todo found units
-MAX_RADIUS = (MAX_WALKING_TIME/3600.0) * WALKING_SPEED / 6367.0
+class PARAMETERS:
+    __MAX_WALKING_TIME = 60 # in min # in seconds  #todo found units
+    __WALKING_SPEED = 3.0 #in km/h #todo found units
+
+    @staticmethod
+    def MAX_WALKING_TIME():
+        return PARAMETERS.__MAX_WALKING_TIME
+
+    @staticmethod
+    def WALKING_SPEED():
+        return PARAMETERS.__WALKING_SPEED
+
+    @staticmethod
+    def MAX_RADIUS():
+        return (PARAMETERS.__MAX_WALKING_TIME / 3600.0) * PARAMETERS.__WALKING_SPEED / 6367.0
+
+    @staticmethod
+    def set_MAX_WALKING_TIME(value):
+        PARAMETERS.__MAX_WALKING_TIME = value
+
+    @staticmethod
+    def set_WALKING_SPEED(value):
+        PARAMETERS.__WALKING_SPEED = value
+
+
 
 
 # This file contains the path for the data
