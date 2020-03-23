@@ -45,7 +45,7 @@ class TravellersModelisation:
 
         assert reducing_factor > 0
         if mapmap is None:
-            from Program.metric.map import my_map
+            from Program.map import my_map
             mapmap = my_map.get_map(path_shape=PATH.MAP_SHAPE, path_pop=PATH.MAP_POP)
 
         if my_seed is not None:
@@ -69,7 +69,7 @@ class TravellersModelisation:
         self.__estimate_travel_time()
 
         # reversible structure
-        self.__change_log = {"added_stop_name" : [], "all_results_save": {}, "travellers": {}}
+        self.__change_log = {"all_results_save": {}, "travellers": {}}
         self.__stack_log = []  # permet de faire une recherche sur plusieur etage
 
     # ##################################### Virtual traveller generation ###############################################
@@ -284,15 +284,10 @@ class TravellersModelisation:
         """
         Met a jour la mesure de temps de trajet en fonciton des changement apporter au reseau.
         :param changes: A dictionnary : {"size": (new_number_of_stop, old_number of stop),
-                                  "added_stop_name" = [added_stop_name1 , ...]
                                   "change_distance": {org_name : {dest_name : (new_dist, old_dist)}}
         """
         MAX_WALKING_TIME = PARAMETERS.MAX_WALKING_TIME()
         SPEED = PARAMETERS.WALKING_SPEED()
-        self.map.add_stop(changes["added_stop_name"])
-        for new_stop in changes["added_stop_name"]:
-            self.__change_log["added_stop_name"].append(new_stop)
-            # update used structure
 
         for org_name_ch, dico in changes["change_distance"].items():
             for dest_name_ch, (new_value, old_value) in dico.items():
@@ -340,7 +335,7 @@ class TravellersModelisation:
     # #################################### Reversible part
     def save(self):
         self.__stack_log.append(self.__change_log)
-        self.__change_log = {"added_stop_name": [], "all_results_save": {}, "travellers": {}}
+        self.__change_log = {"all_results_save": {}, "travellers": {}}
 
     def restore(self):
         changes = self.__change_log
@@ -349,9 +344,6 @@ class TravellersModelisation:
 
         for munty in changes["all_results_save"].keys():
             self.all_results[munty]= changes["all_results_save"][munty]
-
-        for added_stop in changes["added_stop_name"]:
-            self.map.remove_stop(added_stop)
 
         self.__change_log = self.__stack_log.pop()
 

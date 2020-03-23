@@ -3,15 +3,15 @@ from Program.dynamic_Inc_APSP.Data_structure_reversible import *
 import json
 import heapq
 #from dynamic_Inc_APSP.Data_structure import *
-from Program.path import PATH, WALKING_SPEED
-from Program.metric.map import my_map
+from Program.path import PATH, PARAMETERS
+from Program.map import my_map
 from Program.distance_and_conversion import distance_Eucli
 
 """Ce code est base sur les algorithmes proposé dans l'article  Faster Incremental All-pairs Shortest Paths"""
 
 
 class Dynamic_APSP:
-    def __init__(self, path=PATH.GRAPH_TC):
+    def __init__(self, path=PATH.GRAPH_TC, mapmap = None):
         with open(path) as file:
             out = json.loads(file.read())
         self.graph = Graph(out)
@@ -27,10 +27,10 @@ class Dynamic_APSP:
         self.path = PathPresence(self.graph, self.max_time)
         self.distance = Distance(self.name_to_idx, self.idx_to_name, self.max_time, self.used_time, self.path)
 
-        self.map = my_map.get_map()
+        if mapmap is not None: self.map = mapmap
+        else: self.map = my_map.get_map()
 
         # reversible state -> record change
-        self.newStop = []
         self.__change_log = []
         self.__stack_log = []
 
@@ -44,9 +44,10 @@ class Dynamic_APSP:
                 self.used_time[idx].append(time)
                 self.__change_log.append(("add_time", stop_name, time))
         else:
+            assert position is not None
             idx = len(self.name_to_idx)
             self.idx_to_name.append(stop_name)
-            self.newStop.append((stop_name, position))
+            self.map.add_stop((stop_name, position))
             self.name_to_idx[stop_name] = idx
             z = idx * self.max_time + time
             self.used_time.append([time])
@@ -59,17 +60,16 @@ class Dynamic_APSP:
 
         return idx
 
-    def add_vertex(self, z_name, z_time, z_position, z_stop_in = [], z_stop_out = []):
+    def add_vertex(self, z_name, z_time, z_position, z_stop_in=[], z_stop_out=[]):
         """
 
         :param z_name:
         :param z_time:
         :param z_position: peut etre None si le stop_time etait deja cree
-        :param z_stop_in:  [(name_in1, time_in1, pos_in),...] pos_in could be None if name_in is already a stop
-        :param z_stop_out: [(name_out1, time_out1, pos_out),...]
+        :param z_stop_in:  [(name_in1, time_in1),...] name_in should be a already generated stop
+        :param z_stop_out: [(name_out1, time_out1),...] name_out should be a already generated stop
         :return:
         """
-        
 
         self.distance.up_to_date = False
 
@@ -78,9 +78,9 @@ class Dynamic_APSP:
 
         if z_name in self.name_to_idx and z_time in self.used_time[self.name_to_idx[z_name]]:
             # algo don't work, add edge one after the other
-            for name_in, time_in, pos_in in z_stop_in:
+            for name_in, time_in in z_stop_in:
                 self.add_edge(name_in, time_in, z_name, z_time)
-            for name_out, time_out, pos_out in z_stop_out:
+            for name_out, time_out in z_stop_out:
                 self.add_edge(z_name, z_time, name_out, time_out)
 
         else:
@@ -92,7 +92,7 @@ class Dynamic_APSP:
             walk_out = []
             for walk_name, walk_pos in reachable_stop:
                 walk_idx = self.name_to_idx[walk_name]
-                walking_time = distance_Eucli(z_position, walk_pos) / WALKING_SPEED
+                walking_time = distance_Eucli(z_position, walk_pos) / PARAMETERS.WALKING_SPEED()
 
                 i = len(self.used_time[walk_idx])
                 while self.used_time[walk_idx][i] + walking_time > z_time:
@@ -105,27 +105,26 @@ class Dynamic_APSP:
                 walk_out.append((walk_name, self.used_time[walk_idx][i], None))
 
 
-            #add vertex to the graph structure
-            for s_name, s_time, s_pos in z_stop_in:
+            # add vertex to the graph structure
+            for s_name, s_time in z_stop_in:
                 assert s_time <= z_time
-                s_id = self.__add_isolated_vertex(s_name, s_time,s_pos)
+                s_id = self.__add_isolated_vertex(s_name, s_time,None)
                 s = s_id * self.max_time + s_time
                 self.graph.add_edge(s, z)
 
-            for d_name, d_time, d_pos in z_stop_in:
+            for d_name, d_time in z_stop_in:
                 assert d_time >= z_time
-                d_id = self.__add_isolated_vertex(d_name, d_time, d_pos)
+                d_id = self.__add_isolated_vertex(d_name, d_time, None)
                 d = d_id * self.max_time + d_time
                 self.graph.add_edge(z, d)
 
             # conversion name, time, pos -> node
-            z_in = [self.name_to_idx[n] * self.max_time + t for n, t, _ in z_stop_in + walk_in]
-            z_out = [self.name_to_idx[n] * self.max_time + t for n, t, _ in z_stop_out + walk_out]
-
+            z_in = [self.name_to_idx[n] * self.max_time + t for n, t in z_stop_in + walk_in]
+            z_out = [self.name_to_idx[n] * self.max_time + t for n, t in z_stop_out + walk_out]
 
             self.__APSP_vertex(z, z_in, z_out)
 
-    def add_edge(self, u_stop_name, u_time,  v_stop_name, v_time,u_position = None, v_position = None):  #todo tester l'efficacité de separer en plusieur cas
+    def add_edge(self, u_stop_name, u_time,  v_stop_name, v_time,u_position=None, v_position=None):  #todo tester l'efficacité de separer en plusieur cas
         assert v_time >= u_time
         self.distance.up_to_date = False
 
@@ -159,8 +158,6 @@ class Dynamic_APSP:
         else:
             self.__APSP_edge(self.path, self.graph, u, v)
 
-
-
     def dist(self, s_name: str, d_name: str) -> float:
         """
         Return the minimal distance between u_name and v_name
@@ -189,6 +186,7 @@ class Dynamic_APSP:
         self.graph.save()
         self.path.save()
         self.distance.save()
+        self.map.save()
         #todo save new positions
 
         self.__stack_log.append(self.__change_log)
@@ -198,13 +196,13 @@ class Dynamic_APSP:
         self.graph.restore()
         self.path.restore()
         self.distance.restore()
+        self.map.restore()
 
         self.__change_log.reverse()
         for log in self.__change_log:
             if log[0] == "add_name":
                 self.name_to_idx.pop(log[1])
                 self.idx_to_name.pop()
-                self.newStop.pop()
                 self.used_time.pop()
             elif log[0] == "add_time":
                 idx = self.name_to_idx[log[1]]
@@ -225,8 +223,6 @@ class Dynamic_APSP:
         """
         changes = self.distance.get_changes()
         old_size = changes["size"][1]
-        nb_new_stop_name = len(self.idx_to_name[old_size:])
-        changes["added_stop_name"] = self.newStop[-nb_new_stop_name]
         return changes
 
 

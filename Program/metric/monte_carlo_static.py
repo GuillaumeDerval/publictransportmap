@@ -9,19 +9,21 @@
 # pour chaque secteur la population est repartie uniformement
 
 # function of cumulative distribution =  function of repartition
-from utils import WALKING_SPEED
+from Program.path import PARAMETERS as p
+#from Program.path import PATH
 from shapely.geometry import MultiPolygon, Point
 import random
 import math
-from Program.my_utils import *
-from Program.metric.map import my_map
+from Program.distance_and_conversion import *
+from Program.map import my_map
 import numpy as np
 import time
 
 
 MAX_WALKING_TIME = 60       # in min
-SPEED = WALKING_SPEED /0.06 # in m/min
+SPEED = p.WALKING_SPEED() /0.06 # in m/min
 #SPEED = 15/0.06
+#name_to_idx = json.loads(open(PATH.GRAPH_TC).read())["idx_to_name"]
 
 
 
@@ -168,7 +170,7 @@ class stop_munty:
                 path = PATH.MINIMAL_TRAVEL_TIME_TC + "{0}.npy".format(org)
                 TC_travel_array = np.load(path)
                 for dest, _ in cls.get_reachable_stop_munty(munty_dest):
-                    time = TC_travel_array[name_to_idx(dest)]
+                    time = TC_travel_array[name_to_idx[dest]]
                     if time >= 0:
                         min_time = min(min_time, time)
                         max_time = max(max_time, time)
@@ -216,7 +218,7 @@ def optimal_travel_time(resid_pt, munty_rsd, work_pt, munty_work):
         for stop_work in stop_list_work:
             walk2 = distance_Eucli(work_pt, stop_work[1]) / SPEED
             if walk1 + walk2 + min_trav >= opti_time[0]: return opti_time
-            TC = TC_travel_array[name_to_idx(stop_work[0])]
+            TC = TC_travel_array[name_to_idx[stop_work[0]]]
             if TC > 0:
                 time = walk1 + walk2 + TC
                 if opti_time[0] > time:

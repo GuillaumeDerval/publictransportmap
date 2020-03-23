@@ -1,6 +1,6 @@
 import csv
 from Program.my_utils import *
-import Program.metric.map as my_map
+import Program.map as my_map
 from Program.path import PATH
 
 # Cet class est charger de determiner au mieux les trajet a prendre en compte ainsi que leur poids(nombre d'utilisateur)

@@ -1,7 +1,7 @@
 from unittest import TestCase
 import os
 from Program.dynamic_Inc_APSP.Dynamic_Incremental_All_Pair_Shortest_Path import *
-from Test.Test_dynamic_inc_APSP.test_my_utils import compare_results
+from Test.Test_dynamic_inc_APSP.my_utils import compare_results
 
 
 class TestInitialisationAPSP(TestCase):
@@ -17,18 +17,18 @@ class TestInitialisationAPSP(TestCase):
             os.remove("data_test/path_expected/" + file_name)
 
     def test_save_graph_mini(self):
-        APSP = Dynamic_APSP("mini.json")
+        APSP = Dynamic_APSP("data_test/mini.json")
         APSP.hard_save_graph("data_test/mini_save.json")
-        file1 = open("mini.json")
+        file1 = open("data_test/mini.json")
         file2 = open("data_test/mini_save.json")
         self.assertEqual(json.loads(file1.read()), json.loads(file2.read()))
         file1.close()
         file2.close()
 
     def test_save_graph_medium(self):
-        APSP = Dynamic_APSP("medium.json")
+        APSP = Dynamic_APSP("data_test/medium.json")
         APSP.hard_save_graph("data_test/medium_save.json")
-        file1 = open("medium.json")
+        file1 = open("data_test/medium.json")
         file2 = open("data_test/medium_save.json")
         self.assertEqual(json.loads(file1.read()), json.loads(file2.read()))
         file1.close()
@@ -45,7 +45,7 @@ class TestInitialisationAPSP(TestCase):
         np.save(exp_path + "270.npy", np.array([0, 0, 0, 0, 0, 1], dtype=np.bool).astype(np.bool))
         for file_name in os.listdir(compu_path):
             os.remove(compu_path + file_name)
-        APSP = Dynamic_APSP("mini.json")
+        APSP = Dynamic_APSP("data_test/mini.json")
         for name, array in zip(APSP.path.pos_to_vertex, APSP.path.is_reach):
             path = compu_path + str(name) + ".npy"
             #print(path, array)
@@ -62,13 +62,13 @@ class TestInitialisationAPSP(TestCase):
         # np.save("data_test/dist_mini_expected/d.npy", np.array([-1, -1, -1]).astype(np.int16))
         # np.save("data_test/dist_mini_expected/e.npy", np.array([-1, -1, -1]).astype(np.int16))
 
-        APSP = Dynamic_APSP("mini.json")
+        APSP = Dynamic_APSP("data_test/mini.json")
         APSP.hard_save_distance(compu_path)
         comparisson = compare_results(exp_path, compu_path)
         self.assertTrue(comparisson)
 
     def test_save_distance_medium(self):
-        APSP = Dynamic_APSP("medium.json")
+        APSP = Dynamic_APSP("data_test/medium.json")
         APSP.hard_save_distance("data_test/dist_computed/")
         comparisson = compare_results("data_test/dist_medium_expected/", "data_test/dist_computed/")
         self.assertTrue(comparisson)

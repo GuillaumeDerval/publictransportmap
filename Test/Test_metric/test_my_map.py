@@ -1,9 +1,8 @@
 from unittest import TestCase
 from shapely.geometry import shape
 
-import Program.path as PATH
 from Program.path import PARAMETERS
-from Program.metric.map import my_map
+from Program.map import my_map
 
 
 class TestMy_map(TestCase):
