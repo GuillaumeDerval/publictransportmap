@@ -4,16 +4,17 @@ import math
 import random as rdm
 from Program.path import PATH
 
-class OneLevelSearch:
+class Search:
 
     @staticmethod
-    def search(graph_path, generate_branch):
-        APSP = Dynamic_APSP(graph_path)
-        metric = TravellersModelisation(PATH.TRAVEL, APSP.distance, 100)     #todo check if correct
+    def one_level_search(graph_path, branch_genration_function,  mmap=None, reducing_pop_factor = 100, initial_state = None):
+        APSP = Dynamic_APSP(graph_path, mmap)
+
+        metric = TravellersModelisation(PATH.TRAVEL, APSP.distance, reducing_pop_factor)     #todo check if correct
         print("initialisation done")
         best = None
         minimum = math.inf
-        branch = generate_branch()
+        branch = branch_genration_function(APSP, metric, initial_state)
         for b_modif in branch:
             APSP.save()
             metric.save()
@@ -21,7 +22,7 @@ class OneLevelSearch:
             b_modif(APSP)
             metric.update(APSP.get_changes())
 
-            value = 0 #metric.todo  # todo monte_Carlo_dynamic
+            value = metric.total_results.mean()
             if value < minimum:
                 best = b_modif
                 minimum = value
@@ -29,9 +30,63 @@ class OneLevelSearch:
         return best, minimum
 
     @staticmethod
-    def generate_branch_rdm():
+    def multi_level_search(graph_path, branch_genration_function, mmap=None, reducing_pop_factor = 100, initial_state = None, max_dept = None,metric_on_leaf= False):
+        """
+
+        Note : L'evaluation de la metric ne sera calculee qu'aux feuille.
+                                La valeur optimal ne sera donc elle aussi calculée qu'au feuilles
+
+        :param graph_path:
+        :param branch_generation_function:
+            Fonction(APSP, metric, initial_state) ->  [ f_1(APSP), ...] ou f_i sont de fonctions modifiant le reseau
+                                                                            et renvoyant un nouvel etat
+        :param mmap: carte contenant les stopn
+        :param reducing_pop_factor: lors du calcul de la metric, le nbre habitant virtuel =nbre habitant/reducing factor
+        :param initial_state: Etat (structure au choix) qui sera transfere a branch_generation_function.
+                              %Peut être None, si la branch_generation_function n'utilise pas d'etat
+        :param max_dept: Profondeur maximal pour la recherche
+        :return: (best_modif, minimum value)
+                ou best _modif est une liste des fonction a appliquer pour reobtenir la solution optimal et
+                minimu_value est la valeur optimale
+        """
+        def recursive_search(APSP, metric,branch_generation_function, state=None, max_dept=None, curr_dept=0):
+            if curr_dept < max_dept:
+                branch = branch_genration_function(APSP, metric, state)
+            else:
+                branch = []
+
+            if len(branch) == 0 :
+                metric.update(APSP.get_changes())
+                value = metric.total_results.mean()
+                return [], value
+            else:
+                best_modif = []
+                minimum_value = math.inf
+                for br_modif in branch:
+                    APSP.save()
+                    metric.save()
+
+                    new_state = br_modif(APSP, metric)
+
+                    modif, value = recursive_search(branch_generation_function, new_state, max_dept, curr_dept + 1)
+                    if value < minimum_value:
+                        best_modif= modif.append(br_modif)
+                        minimum_value = value
+
+                    APSP.restore()
+                return best_modif, minimum_value
+
+        APSP = Dynamic_APSP(graph_path, mmap)
+        metric = TravellersModelisation(PATH.TRAVEL, APSP.distance, reducing_pop_factor)
+        best_modif, minimum_value =recursive_search(APSP,metric, branch_genration_function, initial_state,max_dept, 0)
+        return best_modif.reverse(), minimum_value
+
+
+
+    @staticmethod
+    def generate_branch_rdm(APSP, metric, state):
         branch = []
-        rdm.seed(12121214)
+        rdm.seed(1212)
 
         def my_funct(APSP):
             i = 10
@@ -69,7 +124,7 @@ class OneLevelSearch:
                         time2 = rdm.randint(time1, APSP.max_time - 1)
             print("add edge {} time {} to {} time {}".format(name1, time1, name2, time2))
 
-        for _ in range(10):
+        for _ in range(100):
             branch.append(my_funct)
             #branch.append(lambda APSP : APSP.add_edge(name1, time1, name2, time2))
 
@@ -77,15 +132,5 @@ class OneLevelSearch:
         return branch
 
 if __name__ == '__main__':
-    print("hey")
-    graph_path = "../my_program/data/tiny_data/graph_train_only_charleroi.json"
-    OneLevelSearch.search(graph_path, OneLevelSearch.generate_branch_rdm)
-
-
-
-class Search:
-    #todo s'inspiree du cours de constraint programming
-    # je me suis un peu inspiree du cours de constraint programming
-
-    #def search(self, APSP, branching_genrator, limit = None):
-    pass
+    opti, val = Search.one_level_search(PATH.GRAPH_TC_WALK, Search.generate_branch_rdm)
+    print("best value = ", val)
