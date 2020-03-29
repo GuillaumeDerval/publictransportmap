@@ -15,7 +15,7 @@ import random
 import math
 from Program.my_utils import *
 import numpy as np
-import Program.map as mapp
+import Program.General.map as mapp
 import csv
 import Program.path as path
 import time

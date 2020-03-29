@@ -76,3 +76,4 @@ y = np.array([25,40,-1,35,15,0,-1], dtype=np.int)
 np.save("data/out2/S5.npy", y.astype(np.int16))
 y = np.array([-1,30,-1,35,-1,-1,0], dtype=np.int)
 np.save("data/out2/S6.npy", y.astype(np.int16))
+

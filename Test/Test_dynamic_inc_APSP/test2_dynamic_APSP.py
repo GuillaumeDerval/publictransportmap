@@ -193,7 +193,6 @@ class TestDynamicAPSP(TestCase):
     def test_add_edge_rdm_medium(self):
         def my_change(APSP: Dynamic_APSP):
             rdm.seed(654321)
-            i = 10
             for _ in range(50):
                 generate_random_edge(APSP)
 

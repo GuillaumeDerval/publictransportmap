@@ -1,6 +1,7 @@
 import os
 import random as rdm
 from Program.dynamic_Inc_APSP.Dynamic_Incremental_All_Pair_Shortest_Path import *
+from Program.General.map import *
 
 
 def compare_results(path_distance_dir_exp, path_distance_dir_actu):
@@ -24,15 +25,17 @@ def compare_results(path_distance_dir_exp, path_distance_dir_actu):
     return True
 
 def check_if_correct_modification(modification_function,graph_path = "data_test/mini.json", mmap = None):
-    APSP = Dynamic_APSP(graph_path)
-    if mmap is not None : APSP.map: my_map = mmap
+
+    if mmap is None : mmap = my_map(path_shape="data_test/smallmap.geojson",path_pop="data_test/popsector.csv", stop_list_path="data_test/mini_stop_pos.json")
+    APSP = Dynamic_APSP(graph_path, mapmap=mmap)
 
     modification_function(APSP)
     APSP.hard_save_graph("data_test/save.json")
     APSP.hard_save_is_reachable("data_test/path_computed/")
     APSP.hard_save_distance("data_test/dist_computed/")
 
-    Expect = Dynamic_APSP("data_test/save.json")
+
+    Expect = Dynamic_APSP("data_test/save.json") # todo : mette a jour le graph plutot que d'utiliser la sauvegarde et lancer 2b_walk
     Expect.hard_save_is_reachable("data_test/path_expected/")
     Expect.hard_save_distance("data_test/dist_expected/")
     path_comp = compare_results("data_test/path_expected/", "data_test/path_computed/")
@@ -77,6 +80,8 @@ def generate_random_edge(APSP, min_lat=0, max_lat=10, min_lon=0, max_lon=10):
         pos2 = None
     # print("add edge {} time {} to {} time {}".format(name1, time1, name2, time2))
     APSP.add_edge(name1, time1, name2, time2, u_position=pos1, v_position=pos2)
+
+
 
 
 def generate_random_vertex(APSP, mmap, min_lat, max_lat, min_lon, max_lon):

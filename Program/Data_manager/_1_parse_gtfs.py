@@ -42,12 +42,7 @@ def time_str_to_int(time):
     return ((a*60)+b)*60+c
 
 
-date = datetime.date(2019, 12, 2)
-start_time = time_str_to_int("06:00:00")            # "00:00:00"
-end_time = time_str_to_int("10:30:00")             # "25:59:59"
-
-
-def get_service_ids(folder, date):
+def __get_service_ids(folder, date):
     """
     Return a list of the service_ids done at given date
     """
@@ -78,7 +73,7 @@ def get_service_ids(folder, date):
     return out
 
 
-def get_trip_ids(folder, services_id):
+def __get_trip_ids(folder, services_id):
     """
     Return a list of trip_ids done by the TC contained in the serviceId list
     """
@@ -90,7 +85,7 @@ def get_trip_ids(folder, services_id):
                 yield (row["trip_id"], row["route_id"])
 
 
-def get_stops(folder):
+def __get_stops(folder):
     """
     Return  out      : list of  n°stop_id   parent_station      if parent station
                                 n°stop_id   { name , lat ,lon}
@@ -112,7 +107,7 @@ def get_stops(folder):
     return out, resolver
 
 
-def get_trip_contents(folder, trip_ids, stop_id_resolver, start = start_time, end= end_time):
+def __get_trip_contents(folder, trip_ids, stop_id_resolver, start, end):
     """
     return : n°trip_ids    a list of [n°stop_sequence stop_id, arrival_time, departure_time ]
              where  start_time <= departure_time and arrival_time <= end_time
@@ -141,7 +136,7 @@ def get_trip_contents(folder, trip_ids, stop_id_resolver, start = start_time, en
 
 
 
-def generate_output_for_gtfs(folder, prefix, date):
+def generate_output_for_gtfs(folder, prefix, date, start_time, end_time):
     # The output is in the form:
     # {
     #     "id": {
@@ -155,12 +150,12 @@ def generate_output_for_gtfs(folder, prefix, date):
     #         ]
     #     }
     # }
-    service_ids = list(get_service_ids(folder, date))
+    service_ids = list(__get_service_ids(folder, date))
     print("service id,  ", service_ids)
-    trip_ids = list(get_trip_ids(folder, service_ids))
+    trip_ids = list(__get_trip_ids(folder, service_ids))
     print([x[0] for x in trip_ids if x[1] == "X9150-16922"])
-    stops, stop_id_resolver = get_stops(folder)
-    trip_contents = get_trip_contents(folder, [x[0] for x in trip_ids], stop_id_resolver)
+    stops, stop_id_resolver = __get_stops(folder)
+    trip_contents = __get_trip_contents(folder, [x[0] for x in trip_ids], stop_id_resolver, start_time, end_time)
 
 
     #minimal = 1000
@@ -187,6 +182,9 @@ def generate_output_for_gtfs(folder, prefix, date):
 # ################################################## Main ##############################################################
 
 if __name__ == '__main__':
+    date = datetime.date(2019, 12, 2)
+    start_time = time_str_to_int("06:00:00")  # "00:00:00"
+    end_time = time_str_to_int("10:30:00")  # "25:59:59"
 
     # produce the json format for each kind of transport in belgium
     print("SNCB")

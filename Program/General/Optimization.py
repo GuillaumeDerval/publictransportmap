@@ -82,6 +82,53 @@ class Search:
         return best_modif.reverse(), minimum_value
 
 
+class BranchGeneration:
+
+    @staticmethod
+    def generate_random_edge(APSP, metric, state):
+        """
+        :param APSP:
+        :param metric:
+        :param state: (min_lat, max_lat, min_lon, max_lon)
+        :return:
+        """
+        (min_lat, max_lat, min_lon, max_lon) = state
+        is_new_name1 = rdm.randint(0, 3)
+        if is_new_name1 == 0:
+            name1 = str(rdm.random())  # on pourrait avoir 2 fois le meme nom mais c'est improbable + pas grave
+            time1 = rdm.randint(0, APSP.max_time - 1)
+            pos1 = (rdm.random() * (max_lat - min_lat) + min_lat, rdm.random() * (max_lon - min_lon) + min_lon)
+        else:
+            name1 = rdm.sample(APSP.idx_to_name, 1).pop()
+            pos1 = None
+            is_new_time = rdm.randint(0, 3)
+            if is_new_time == 0 or len(APSP.used_time[APSP.name_to_idx[name1]]) == 0:
+                time1 = rdm.randint(0, APSP.max_time - 1)
+            else:
+                time1 = rdm.sample(APSP.used_time[APSP.name_to_idx[name1]], 1).pop()
+
+        is_new_name2 = rdm.randint(0, 3)
+        if is_new_name2 == 0:
+            name2 = str(rdm.random())
+            time2 = rdm.randint(time1, APSP.max_time - 1)
+            pos2 = (rdm.random() * (max_lat - min_lat) + min_lat, rdm.random() * (max_lon - min_lon) + min_lon)
+        else:
+            name2 = rdm.sample(APSP.idx_to_name, 1).pop()
+            is_new_time = rdm.randint(0, 3)
+            if is_new_time == 0:
+                time2 = rdm.randint(time1, APSP.max_time - 1)
+            else:
+                possible_time = []
+                for t in APSP.used_time[APSP.name_to_idx[name2]]:
+                    if t >= time1:
+                        possible_time.append(t)
+                if len(possible_time) > 0:
+                    time2 = rdm.sample(possible_time, 1).pop()
+                else:
+                    time2 = rdm.randint(time1, APSP.max_time - 1)
+            pos2 = None
+        # print("add edge {} time {} to {} time {}".format(name1, time1, name2, time2))
+        APSP.add_edge(name1, time1, name2, time2, u_position=pos1, v_position=pos2)
 
     @staticmethod
     def generate_branch_rdm(APSP, metric, state):
@@ -132,5 +179,5 @@ class Search:
         return branch
 
 if __name__ == '__main__':
-    opti, val = Search.one_level_search(PATH.GRAPH_TC_WALK, Search.generate_branch_rdm)
+    opti, val = Search.one_level_search(PATH.GRAPH_TC_WALK,BranchGeneration.generate_branch_rdm)
     print("best value = ", val)

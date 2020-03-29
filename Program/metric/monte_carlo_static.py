@@ -15,7 +15,7 @@ from shapely.geometry import MultiPolygon, Point
 import random
 import math
 from Program.distance_and_conversion import *
-from Program.map import my_map
+from Program.General.map import my_map
 import numpy as np
 import time
 

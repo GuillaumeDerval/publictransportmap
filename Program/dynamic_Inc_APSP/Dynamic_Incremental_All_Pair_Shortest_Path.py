@@ -4,7 +4,7 @@ import json
 import heapq
 #from dynamic_Inc_APSP.Data_structure import *
 from Program.path import PATH, PARAMETERS
-from Program.map import my_map
+from Program.General.map import my_map
 from Program.distance_and_conversion import distance_Eucli
 
 """Ce code est base sur les algorithmes proposé dans l'article  Faster Incremental All-pairs Shortest Paths"""
@@ -47,7 +47,7 @@ class Dynamic_APSP:
             assert position is not None
             idx = len(self.name_to_idx)
             self.idx_to_name.append(stop_name)
-            self.map.add_stop((stop_name, position))
+            self.map.add_stop(stop_name, position)
             self.name_to_idx[stop_name] = idx
             z = idx * self.max_time + time
             self.used_time.append([time])
@@ -73,18 +73,22 @@ class Dynamic_APSP:
 
         self.distance.up_to_date = False
 
-        z_idx = self.__add_isolated_vertex(z_name, z_time, z_position)
-        z = z_idx * self.max_time + z_time
-
         if z_name in self.name_to_idx and z_time in self.used_time[self.name_to_idx[z_name]]:
             # algo don't work, add edge one after the other
+            z_idx = self.name_to_idx[z_name]
             for name_in, time_in in z_stop_in:
                 self.add_edge(name_in, time_in, z_name, z_time)
             for name_out, time_out in z_stop_out:
                 self.add_edge(z_name, z_time, name_out, time_out)
 
         else:
-            assert z_position is not None
+            if z_name in self.name_to_idx:
+                z_position = self.map.get_stop(z_name)[1]
+            else :
+                assert z_position is not None
+
+            z_idx = self.__add_isolated_vertex(z_name, z_time, z_position)
+            z = z_idx * self.max_time + z_time
 
             # walking : find each node reachable thanks to walk
             reachable_stop = self.map.get_reachable_stop_pt(z_position)
@@ -94,15 +98,17 @@ class Dynamic_APSP:
                 walk_idx = self.name_to_idx[walk_name]
                 walking_time = distance_Eucli(z_position, walk_pos) / PARAMETERS.WALKING_SPEED()
 
-                i = len(self.used_time[walk_idx])
-                while self.used_time[walk_idx][i] + walking_time > z_time:
+                i = len(self.used_time[walk_idx]) - 1
+                while i > 0 and self.used_time[walk_idx][i] + walking_time > z_time:
                     i -= 1
-                walk_in.append((walk_name, self.used_time[walk_idx][i], None))
+                if i > 0:
+                    walk_in.append((walk_name, self.used_time[walk_idx][i]))
 
                 i = 0
-                while self.used_time[walk_idx][i] < z_time + walking_time:
+                while i < len(self.used_time[walk_idx]) and self.used_time[walk_idx][i] < z_time + walking_time:
                     i += 1
-                walk_out.append((walk_name, self.used_time[walk_idx][i], None))
+                if i < len(self.used_time[walk_idx]):
+                    walk_out.append((walk_name, self.used_time[walk_idx][i]))
 
 
             # add vertex to the graph structure
@@ -123,13 +129,15 @@ class Dynamic_APSP:
             z_out = [self.name_to_idx[n] * self.max_time + t for n, t in z_stop_out + walk_out]
 
             self.__APSP_vertex(z, z_in, z_out)
+        return z_idx
 
-    def add_edge(self, u_stop_name, u_time,  v_stop_name, v_time,u_position=None, v_position=None):  #todo tester l'efficacité de separer en plusieur cas
+    def add_edge(self, u_stop_name, u_time,  v_stop_name, v_time, u_position=None, v_position=None):  #todo tester l'efficacité de separer en plusieur cas
         assert v_time >= u_time
         self.distance.up_to_date = False
 
-        u_id = self.__add_isolated_vertex(u_stop_name, u_time, u_position)
-        v_id = self.__add_isolated_vertex(v_stop_name, v_time, v_position)
+
+        u_id = self.add_vertex(u_stop_name, u_time, u_position)
+        v_id = self.add_vertex(v_stop_name, v_time, v_position)
         u = u_id * self.max_time + u_time
         v = v_id * self.max_time + v_time
 

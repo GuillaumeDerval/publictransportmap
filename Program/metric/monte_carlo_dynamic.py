@@ -45,7 +45,7 @@ class TravellersModelisation:
 
         assert reducing_factor > 0
         if mapmap is None:
-            from Program.map import my_map
+            from Program.General.map import my_map
             mapmap = my_map.get_map(path_shape=PATH.MAP_SHAPE, path_pop=PATH.MAP_POP)
 
         if my_seed is not None:
@@ -66,6 +66,7 @@ class TravellersModelisation:
 
         # computation
         self.all_results = {}           # contains result for each munty
+        self.total_results = Result()   # Result for the country
         self.__estimate_travel_time()
 
         # reversible structure
@@ -228,6 +229,7 @@ class TravellersModelisation:
                 (time, walk1, walk2, TC, dist, unreachable) = opti_time
                 travellers[i] = (rsd, work, opti_path, TC)
                 res.add(time, walk1, walk2, TC, dist, 1, unreachable)
+                self.total_results.add(time, walk1, walk2, TC, dist, 1, unreachable)
 
             self.traveller_locations[(rsd_munty, work_munty)] = travellers
             self.all_results[rsd_munty] = res
@@ -328,9 +330,13 @@ class TravellersModelisation:
                                 if rsd_munty not in self.__change_log["all_results_save"]:
                                     self.__change_log["travellers"][i] = travellers[i]
                                     self.__change_log["all_results_save"][rsd_munty]= self.all_results[rsd_munty].__copy__()
+                                if "total_result" not in self.__change_log:
+                                    self.__change_log["total_result"] = self.total_results.__copy__()
                                 travellers[i] = rsd_pt, work_pt, ((org_name_ch,org_ch_pos), (dest_name_ch,dest_ch_pos)),new_TC
                                 self.all_results[rsd_munty].remove(old_time, old_walk1, old_walk2, old_TC, unreachable=old_unreach)
                                 self.all_results[rsd_munty].add(new_time, new_walk1, new_walk2, new_TC, unreachable=0)
+                                self.total_results.remove(old_time, old_walk1, old_walk2, old_TC, unreachable=old_unreach)
+                                self.total_results.add(new_time, new_walk1, new_walk2, new_TC, unreachable=0)
 
     # #################################### Reversible part
     def save(self):
@@ -345,8 +351,10 @@ class TravellersModelisation:
         for munty in changes["all_results_save"].keys():
             self.all_results[munty]= changes["all_results_save"][munty]
 
-        self.__change_log = self.__stack_log.pop()
+        if "total_result" in self.__change_log:
+            self.total_results = self.__change_log["total_result"]
 
+        self.__change_log = self.__stack_log.pop()
 
 
 
@@ -362,9 +370,9 @@ class Result:
         self.iteration = 0
         self.unreachable = 0
         self.TC_user = 0.
-        self.pop = 0  # nb resident according to sector pop
-        self.resid = 0  # nb resident  according to travel
-        self.work = 0  # nb workers  according to travel
+        #self.pop = 0  # nb resident according to sector pop
+        #self.resid = 0  # nb resident  according to travel
+        #self.work = 0  # nb workers  according to travel
 
     def __copy__(self):
         new = Result
@@ -378,9 +386,9 @@ class Result:
         new.iteration = self.iteration
         new.unreachable = self.unreachable
         new.TC_user = self.TC_user
-        new.pop = self.pop  # nb resident according to sector pop
-        new.resid = self.resid  # nb resident  according to travel
-        new.work = self.work  # nb workers  according to travel
+        #new.pop = self.pop  # nb resident according to sector pop
+        #new.resid = self.resid  # nb resident  according to travel
+        #new.work = self.work  # nb workers  according to travel
         return new
 
     def __eq__(self, other):

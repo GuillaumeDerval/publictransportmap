@@ -138,12 +138,13 @@ class my_map:
                     if dist < PARAMETERS.MAX_WALKING_TIME() * PARAMETERS.WALKING_SPEED():
                         self.reachable_stop_from_munty[munty].append(stop)
                         self.reachable_munty_from_stop[stop[0]].add(munty)
+
     def get_reachable_stop_from_munty(self, munty):
         """
         Return a list containing every reachable stop in a walking_time < max_walking_time for a given munty
 
         :param munty: refnis of the municipality
-        :return: [(stop_id, (coord_x, coord_y))] where distance (munty, stop) < max_walking_time
+        :return: [(stop_name, (coord_x, coord_y))] where distance (munty, stop) < max_walking_time
         """
         return self.reachable_stop_from_munty[munty]
 
@@ -156,36 +157,45 @@ class my_map:
         """
         return self.reachable_stop_from_munty[stop_name]
 
-    def get_reachable_stop_pt(self, point, munty = None):
+    def get_reachable_stop_pt(self, pos, munty = None):
         """
             Compute a list containing every reachable stop in a walking_time < max_walking_time for a given point
 
-            :param point: (x,y) coordinates of the point
+            :param pos: (x,y) coordinates of the point
             :param munty: munnicipality where the point is located
-            :return: [(stop_id, (coord_x, coord_y))] where distance (point, stop) < max_walking_time
+            :return: [(stop_name, (coord_x, coord_y))] where distance (point, stop) < max_walking_time
             """
-
+        point = Point(pos[0], pos[1])
         if munty is None:
             for m in self.get_all_munty_refnis():
                 munty_shape = self.get_shape_munty(m)
                 if munty_shape.contains(point):
                     munty = m
 
-        stop_list_munty = self.get_reachable_stop_from_munty(munty)
+        if munty is None:
+            stop_list_munty = self.stop_position_dico.items() # cas ou le stop est hors de la carte
+        else:
+            stop_list_munty = self.get_reachable_stop_from_munty(munty)
         reachable_stop = []
         for stop in stop_list_munty:
-            if distance_Eucli(point, stop[1]) < PARAMETERS.MAX_WALKING_TIME() * PARAMETERS.WALKING_SPEED():
+            if distance_Eucli(pos, stop[1]) < PARAMETERS.MAX_WALKING_TIME() * PARAMETERS.WALKING_SPEED():
                 reachable_stop.append(stop)
         return reachable_stop
 
-    def add_stop(self, stop_name_pos):
+    def get_stop(self, stop_name):
+        """
+
+            :return: (stop_name, (coord_x, coord_y))
+        """
+        return stop_name,self.stop_position_dico[stop_name]
+
+    def add_stop(self, stop_name, pos):
         """
         Ajoute un  stop qui n'était pas present dans la liste de stop initiale
         :param stop_name_pos:
         """
 
-        assert isinstance(stop_name_pos, tuple)
-        stop_name, pos = stop_name_pos
+        stop_name_pos = stop_name, pos
 
         self.stop_position_dico[stop_name] = pos
         self.reachable_munty_from_stop[stop_name] = set()

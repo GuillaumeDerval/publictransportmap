@@ -6,7 +6,7 @@ from Program.path import PATH, PARAMETERS
 PATH.MINIMAL_TRAVEL_TIME_TC = "data/out/"
 PATH.GRAPH_TC = "data/out.json"
 
-import Program.map as map
+import Program.General.map as map
 import Program.metric.monte_carlo_dynamic as mc
 
 

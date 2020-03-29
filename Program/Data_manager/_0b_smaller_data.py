@@ -1,5 +1,5 @@
 import json
-import Program.map as my_map
+import Program.General.map as my_map
 from shapely.geometry import Point
 
 
