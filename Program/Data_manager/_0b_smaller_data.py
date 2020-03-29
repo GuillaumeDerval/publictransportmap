@@ -27,7 +27,7 @@ def valid_stop_munty_list(data,munty_list):
     position_lamber = json.load(open("../my_program/data/stop_lambert_all.json", "r"))
     map = my_map.my_map.get_map(path_shape=path.SHAPE, path_pop=path.POP)
     for munty in munty_list:
-        munty_shape = map.get_shape_munty(munty)
+        munty_shape = map.get_shape_refnis(munty)
 
         for name in data.keys():
             pos = position_lamber[name]

@@ -34,7 +34,7 @@ def munty_shape_map(map, out_path, munty_list):
     feature_collection = []
     for refnis in munty_list:
         name = refnis
-        shape = map.get_shape_munty(refnis)
+        shape = map.get_shape_refnis(refnis)
         dico = {'type': 'feature',
                       'properties': {'Name': name},
                       'geometry': mapping(shape)
@@ -79,7 +79,7 @@ def travel_time_shape_map(out_path):
     feature_collection = []
     for refnis in munty_list:
         name = refnis
-        shape = map.get_shape_munty(refnis)
+        shape = map.get_shape_refnis(refnis)
         if refnis not in time:
             dico = {'type': 'feature',
                         'properties': {'name': name, "time": None , "var": None,
@@ -87,7 +87,7 @@ def travel_time_shape_map(out_path):
                                     "walk" : None,"TC" : None,
                                     "distance": None, "prop_TC_users": None,
                                     "unreachable": None,"iteration": None,
-                                    "pop" : map.get_pop_munty(name), "resid": None, "work": None},
+                                    "pop" : map.get_pop_refnis(name), "resid": None, "work": None},
                         'geometry': mapping(shape)
                         }
         else:

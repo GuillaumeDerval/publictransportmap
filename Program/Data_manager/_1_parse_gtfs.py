@@ -179,29 +179,3 @@ def generate_output_for_gtfs(folder, prefix, date, start_time, end_time):
     return stops
 
 
-# ################################################## Main ##############################################################
-
-if __name__ == '__main__':
-    date = datetime.date(2019, 12, 2)
-    start_time = time_str_to_int("06:00:00")  # "00:00:00"
-    end_time = time_str_to_int("10:30:00")  # "25:59:59"
-
-    # produce the json format for each kind of transport in belgium
-    print("SNCB")
-    stops_train = generate_output_for_gtfs("../gtfs/sncb_old", "sncb", date)
-
-
-    stops = {}
-    print("MIVB")
-    stops.update(generate_output_for_gtfs("../gtfs/stib", "stib", date))
-    print("TEC")
-    stops.update(generate_output_for_gtfs("../gtfs/tec", "tec", date))
-    print("DE LIJN")
-    stops.update(generate_output_for_gtfs("../gtfs/delijn", "delijn", date))
-    print("SAVING")
-
-    json.dump(stops_train, open(PATH.TRAIN_ONLY, "w"))
-    json.dump(stops, open(PATH.BUS_ONLY, "w"))
-    stops.update(stops_train)
-    json.dump(stops, open(PATH.TRAIN_BUS, "w"))
-    print("END")

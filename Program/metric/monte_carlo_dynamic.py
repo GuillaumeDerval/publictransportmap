@@ -94,7 +94,7 @@ class TravellersModelisation:
 
             def get_n_rdm_sector(n, sect_ids):
                 sect_pop = [int(map.get_pop_sector(id)) for id in sect_ids]
-                tot_pop = map.get_pop_munty(munty)
+                tot_pop = map.get_pop_refnis(munty)
 
                 sect_cumul_pop = [sect_pop[0] / tot_pop]
                 for i in range(1, len(sect_pop)):

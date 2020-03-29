@@ -1,9 +1,10 @@
 import csv
 import json
+import os
 # import geojson
 from geojson import dump
-from Program.Data_manager.main import PATH_BELGIUM, PATH
-import Program.General.map as my_map
+from Program.Data_manager.path_data import PATH_BELGIUM, PATH
+from Program.General.map import my_map
 from shapely.geometry import Point
 
 
@@ -45,37 +46,47 @@ def reduce_map(refnis_list):
     with open(PATH.MAP_SHAPE, 'w') as w:
         dump(out, w)
 
-def reduce_stop(parsed_gtfs_path,refnis_list):
+def reduce_stop(parsed_gtfs_path,refnis_list, transport, param):
     """
     Renvoie une liste contenant les stop valide
     C'est à dire le stop positionné dans une commune de munty_list
     Necessite map
     """
-    # todo improve
+    # todo improve pour avoir tout les stop atteingnable et pas uniquement ceux au sein de l'arrondissement
 
     # Trouver la liste des stop_name valable
     with open(parsed_gtfs_path) as file:
         parsed_gtfs = json.load(file)
 
-    valid = []
-    position_lamber = json.load(open("../my_program/data/stop_lambert_all.json", "r"))
-    map = my_map.my_map.get_map(path_shape=PATH.MAP_SHAPE, path_pop=PATH.MAP_POP)
+    with open(PATH.STOP_POSITION_LAMBERT, "w") as out:
+        json.dump({}, out)
+
+    reduced_stop = {}
+    position_lamber = json.load(open(PATH_BELGIUM.STOP_POSITION_LAMBERT[transport], "r"))
+    mmap = my_map.get_map(param, path_shape=PATH.MAP_SHAPE, path_pop=PATH.MAP_POP, stop_list_path=PATH.STOP_POSITION_LAMBERT)
     for refnis in refnis_list:
-        munty_shape = map.get_shape_refnis(refnis)
+        munty_shape = mmap.get_shape_refnis(refnis)
 
         for name in parsed_gtfs.keys():
             pos = position_lamber[name]
             pos_point = Point(pos[0], pos[1])
 
             if munty_shape.contains(pos_point):
-                valid.append(name)
-    return valid
+                reduced_stop[name] = position_lamber[name]
+    my_map.belgium_map = None
+    os.remove(PATH.STOP_POSITION_LAMBERT)
+    with open(PATH.STOP_POSITION_LAMBERT, "w") as out:
+        json.dump(reduced_stop, out)
+
 
 # Reduire les donné au stop valables
-def reduce_parsed_gtfs(parsed_gtfs_path, stop_list, out):
+def reduce_parsed_gtfs(parsed_gtfs_path, out):
     """
     Creer et renvoie un nouveau set de donnee plus petit ne contenant que les stop de valid_stop_list
     """
+    with open(PATH.STOP_POSITION_LAMBERT) as file:
+        stop_list = json.load(file)
+
     with open(parsed_gtfs_path) as file:
         parsed_gtfs = json.load(file)
     reduced_data = {}

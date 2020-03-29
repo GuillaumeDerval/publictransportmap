@@ -96,7 +96,7 @@ def get_reachable_stop(stop_list, munty, max_walking_time):
     if my_map.belgium_map is None : map = my_map()
     else: map = my_map.belgium_map
 
-    munty_shape = map.get_shape_munty(munty)
+    munty_shape = map.get_shape_refnis(munty)
     print(munty_shape.type)
 
     for stop in stop_list:

@@ -101,7 +101,7 @@ def get_reachable_stop_munty( munty, stop_list):
     """
     reachable_stop = []
 
-    munty_shape = map.get_shape_munty(munty)
+    munty_shape = map.get_shape_refnis(munty)
 
     for stop in stop_list:
         pos_point = Point(stop[1][0], stop[1][1])

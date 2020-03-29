@@ -6,7 +6,8 @@ import progressbar
 import numpy as np
 import sklearn.neighbors
 
-from utils import haversine, distance_to_walking_time, MAX_WALKING_TIME, MAX_RADIUS, mean_latlon, decaround
+from utils import decaround
+#from utils import haversine, distance_to_walking_time, MAX_WALKING_TIME, MAX_RADIUS, mean_latlon, decaround
 from Program.path import PATH
 
 """
@@ -48,7 +49,7 @@ def simplify_noinbound(data):
     #
     # print("removed unreachable {}".format(n_removed))
     # return data
-
+"""
 def simplify_clustering(data):
     idxes = list(data.keys())
 
@@ -99,12 +100,12 @@ def simplify_clustering(data):
 
     print("NB NEW NODES {}".format(len(leaders)))
     return leaders
-
+"""
 
 def simplify_time(data):
     # everything is in seconds. Let us use 10's of seconds
     for x in data:
-        data[x]["nei"] = [(a, decaround(b)//10,decaround(c)//10) for a, b, c in data[x]["nei"]]
+        data[x]["nei"] = [(a, decaround(b)//60,decaround(c)//60) for a, b, c in data[x]["nei"]]
     return data
 
 

@@ -46,7 +46,7 @@ def get_n_rdm_point(n, munty):
 
     def get_n_rdm_sector(n, sect_ids):
         sect_pop = [int(map.get_pop_sector(id)) for id in sect_ids]
-        tot_pop = map.get_pop_munty(munty)
+        tot_pop = map.get_pop_refnis(munty)
 
         sect_cumul_pop = [sect_pop[0] / tot_pop]
         for i in range(1, len(sect_pop)):
@@ -120,7 +120,7 @@ class stop_munty:
         if reachable_stop is None:
             reachable_stop = []
 
-            munty_shape = map.get_shape_munty(munty)
+            munty_shape = map.get_shape_refnis(munty)
 
             for stop in cls.stop_list:
                 pos_point = Point(stop[1][0], stop[1][1])
@@ -356,7 +356,7 @@ def monte_carlo(travel_path, get_total= False):
         res = all_results.get(rsd_munty, result())
         n = int(trav["n"])
         res.resid += n
-        res.pop = my_map.get_map().get_pop_munty(rsd_munty)
+        res.pop = my_map.get_map().get_pop_refnis(rsd_munty)
 
         # compute monte carlo for iter travel
         iters = __iter_by_pop(n, REDUCING_FACTOR)

@@ -3,7 +3,7 @@ import csv
 from shapely.geometry import shape, MultiPolygon, Point
 # from shapely.ops import Point
 from Program.distance_and_conversion import *
-from Program.path import PATH, PARAMETERS
+from Program.Data_manager.path_data import PATH
 
 
 
@@ -11,17 +11,19 @@ class my_map:
     belgium_map = None
 
     @classmethod
-    def get_map(cls, path_shape=PATH.MAP_SHAPE, path_pop=PATH.MAP_POP, stop_list_path=PATH.STOP_POSITION_LAMBERT):
+    def get_map(cls,PARAMETER, path_shape=PATH.MAP_SHAPE, path_pop=PATH.MAP_POP, stop_list_path=PATH.STOP_POSITION_LAMBERT):
         if my_map.belgium_map is None:
             #if (my_map.belgium_map.path_shape is not None and my_map.belgium_map.path_shape != path_shape) or (my_map.belgium_map.path_pop is not None  and my_map.belgium_map.path_pop != path_pop):
-            my_map.belgium_map = my_map(path_shape, path_pop, stop_list_path)
+            my_map.belgium_map = my_map(PARAMETER, path_shape, path_pop, stop_list_path)
         return my_map.belgium_map
 
-    def __init__(self, path_shape=PATH.MAP_SHAPE, path_pop=PATH.MAP_POP, stop_list_path=PATH.STOP_POSITION_LAMBERT):
+    def __init__(self,PARAMETER, path_shape=PATH.MAP_SHAPE, path_pop=PATH.MAP_POP, stop_list_path=PATH.STOP_POSITION_LAMBERT):
         self.__sector_map = {}
         self.__munty_map = {}
         self.path_shape = path_shape
         self.path_pop = path_pop
+        self.param = PARAMETER
+
 
         self.__set_sector()
         self.__set_shape_munty()
@@ -91,14 +93,14 @@ class my_map:
     def get_shape_sector(self, sector_id):
         return self.__sector_map[sector_id]["shape"]
 
-    def get_shape_munty(self, refnis):
+    def get_shape_refnis(self, refnis):
         return self.__munty_map[refnis]["shape"]
 
     #population
     def get_pop_sector(self, sector_id):
         return self.__sector_map[sector_id]["pop"]
 
-    def get_pop_munty(self, refnis):
+    def get_pop_refnis(self, refnis):
         return self.__munty_map[refnis]["pop"]
 
     def get_sector_ids(self, refnis_munty):
@@ -116,7 +118,7 @@ class my_map:
         """
 
         for munty in self.get_all_munty_refnis():
-            munty_shape = self.get_shape_munty(munty)
+            munty_shape = self.get_shape_refnis(munty)
 
             for stop in stop_list:
                 pos_point = Point(stop[1][0], stop[1][1])
@@ -129,13 +131,13 @@ class my_map:
                 elif isinstance(munty_shape,MultiPolygon):  # stop not in the municipality and municipality in several part
                     for poly in munty_shape:
                         dist = poly.exterior.distance(pos_point)
-                        if dist < PARAMETERS.MAX_WALKING_TIME() * PARAMETERS.WALKING_SPEED():
+                        if dist < self.param.MAX_WALKING_TIME() * self.param.WALKING_SPEED():
                             self.reachable_stop_from_munty[munty].append(stop)
                             self.reachable_munty_from_stop[stop[0]].add(munty)
                             break
                 else:  # stop not in the municipality and one block municipality
                     dist = munty_shape.exterior.distance(pos_point)
-                    if dist < PARAMETERS.MAX_WALKING_TIME() * PARAMETERS.WALKING_SPEED():
+                    if dist < self.param.MAX_WALKING_TIME() * self.param.WALKING_SPEED():
                         self.reachable_stop_from_munty[munty].append(stop)
                         self.reachable_munty_from_stop[stop[0]].add(munty)
 
@@ -168,7 +170,7 @@ class my_map:
         point = Point(pos[0], pos[1])
         if munty is None:
             for m in self.get_all_munty_refnis():
-                munty_shape = self.get_shape_munty(m)
+                munty_shape = self.get_shape_refnis(m)
                 if munty_shape.contains(point):
                     munty = m
 
@@ -178,7 +180,7 @@ class my_map:
             stop_list_munty = self.get_reachable_stop_from_munty(munty)
         reachable_stop = []
         for stop in stop_list_munty:
-            if distance_Eucli(pos, stop[1]) < PARAMETERS.MAX_WALKING_TIME() * PARAMETERS.WALKING_SPEED():
+            if distance_Eucli(pos, stop[1]) < self.param.MAX_WALKING_TIME() * self.param.WALKING_SPEED():
                 reachable_stop.append(stop)
         return reachable_stop
 

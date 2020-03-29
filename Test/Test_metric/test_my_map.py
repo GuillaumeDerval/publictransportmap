@@ -1,7 +1,6 @@
 from unittest import TestCase
 from shapely.geometry import shape
 
-from Program.path import PARAMETERS
 from Program.General.map import my_map
 
 
@@ -28,13 +27,13 @@ class TestMy_map(TestCase):
     def test_get_shape_munty(self):
         A = shape({'type': 'Polygon', 'coordinates': [
             [[0., 0.], [0., 3000.], [3000., 3000.], [3000., 0.], [0., 0.]]]})
-        self.assertTrue(TestMy_map.mapp.get_shape_munty("A").equals(A))
+        self.assertTrue(TestMy_map.mapp.get_shape_refnis("A").equals(A))
         B = shape({'type': 'Polygon', 'coordinates':
            [[[3000., 0.],[3000., 2000.], [5000., 2000.],[5000., 0.], [3000., 0.]]]})
-        self.assertTrue(TestMy_map.mapp.get_shape_munty("B").equals(B))
+        self.assertTrue(TestMy_map.mapp.get_shape_refnis("B").equals(B))
         C = shape({'type': 'Polygon', 'coordinates':
             [[[1000., 3000.], [1000., 7000.], [3000., 7000.], [3000., 3000.], [1000., 3000.]]]})
-        self.assertTrue(TestMy_map.mapp.get_shape_munty("C").equals(C))
+        self.assertTrue(TestMy_map.mapp.get_shape_refnis("C").equals(C))
 
     def test_get_total_shape(self):
         # todo
@@ -47,9 +46,9 @@ class TestMy_map(TestCase):
         self.assertEqual(TestMy_map.mapp.get_pop_sector("C3"), 10)
 
     def test_get_pop_munty(self):
-        self.assertEqual(TestMy_map.mapp.get_pop_munty("A"), 28)
-        self.assertEqual(TestMy_map.mapp.get_pop_munty("B"), 100)
-        self.assertEqual(TestMy_map.mapp.get_pop_munty("C"), 80)
+        self.assertEqual(TestMy_map.mapp.get_pop_refnis("A"), 28)
+        self.assertEqual(TestMy_map.mapp.get_pop_refnis("B"), 100)
+        self.assertEqual(TestMy_map.mapp.get_pop_refnis("C"), 80)
 
     def test_get_sector_ids(self):
         for id in ["C1","C2","C3"]:

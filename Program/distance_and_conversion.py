@@ -1,12 +1,9 @@
 from math import sqrt
 from pyproj import Proj, transform
 import json
-from Program.path import PARAMETERS as P
 
 
 # Set of use-full function for conversion and distance
-
-
 def WGS84_to_Lambert(point):
     """ IN: point : (longitude, latitude)
         OUT: (x,y) in Belgian lambert
@@ -43,12 +40,6 @@ def get_stop_pos__belgian_lambert():
         stop_pos.append((id, pos))
     return stop_pos
 
-
-def distance_to_walking_time(dist_km):
-    hours = dist_km / P.WALKING_SPEED
-    minutes = hours*60
-    seconds = minutes*60
-    return round(seconds)
 
 # stop id / name convertions
 #__idx_to_name = json.loads(open(PATH.GRAPH).read())["idx_to_name"]
