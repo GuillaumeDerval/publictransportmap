@@ -9,8 +9,8 @@
 # pour chaque secteur la population est repartie uniformement
 
 # function of cumulative distribution =  function of repartition
-from Program.path import PARAMETERS as p
-#from Program.path import PATH
+from Program.Data_manager.main import Parameters as p
+from Program.Data_manager.path_data import PATH
 from shapely.geometry import MultiPolygon, Point
 import random
 import math
@@ -18,14 +18,6 @@ from Program.distance_and_conversion import *
 from Program.General.map import my_map
 import numpy as np
 import time
-
-
-MAX_WALKING_TIME = 60       # in min
-SPEED = p.WALKING_SPEED() /0.06 # in m/min
-#SPEED = 15/0.06
-#name_to_idx = json.loads(open(PATH.GRAPH_TC).read())["idx_to_name"]
-
-
 
 def get_n_rdm_point(n, munty):
     "pick a rdm point in the shape, the probability of select a point depend on the number of people in the sector"

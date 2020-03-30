@@ -10,7 +10,7 @@ class Search:
     def one_level_search(graph_path, branch_genration_function,  mmap=None, reducing_pop_factor = 100, initial_state = None):
         APSP = Dynamic_APSP(graph_path, mmap)
 
-        metric = TravellersModelisation(PATH.TRAVEL, APSP.distance, reducing_pop_factor)     #todo check if correct
+        metric = TravellersModelisation(param, APSP.distance, reducing_pop_factor)     #todo check if correct
         print("initialisation done")
         best = None
         minimum = math.inf

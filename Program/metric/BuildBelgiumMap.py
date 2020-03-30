@@ -1,4 +1,4 @@
-from Program.my_utils import WGS84_to_Lambert
+from Program.distance_and_conversion import WGS84_to_Lambert
 import json
 from Program.path import PATH_BELGIUM
 

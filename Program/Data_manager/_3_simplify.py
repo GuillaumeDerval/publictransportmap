@@ -6,7 +6,6 @@ import progressbar
 import numpy as np
 import sklearn.neighbors
 
-from utils import decaround
 #from utils import haversine, distance_to_walking_time, MAX_WALKING_TIME, MAX_RADIUS, mean_latlon, decaround
 from Program.path import PATH
 
@@ -102,10 +101,16 @@ def simplify_clustering(data):
     return leaders
 """
 
+
+
 def simplify_time(data):
-    # everything is in seconds. Let us use 10's of seconds
+    # everything is in seconds. Let us use minutes
+
+    def hexacontaround(x):
+        return int(round(x / 60) * 60)
+
     for x in data:
-        data[x]["nei"] = [(a, decaround(b)//60,decaround(c)//60) for a, b, c in data[x]["nei"]]
+        data[x]["nei"] = [(a, hexacontaround(b)//60, hexacontaround(c)//60) for a, b, c in data[x]["nei"]]
     return data
 
 

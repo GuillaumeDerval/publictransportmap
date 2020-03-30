@@ -10,8 +10,8 @@ from Program.Data_manager._3_simplify import simplify_time
 from Program.Data_manager._3b_compute_travels import extract_travel
 
 # produce graph
-# from Program.Data_manager._4_walking_time import *
-# from Program.Data_manager._5_produce_extended_graph import *
+from Program.Data_manager._4_produce_extended_graph import produce_exthended_graph
+from Program.Data_manager._5_walking_time import *
 
 # Parameters
 class Parameters:
@@ -19,8 +19,9 @@ class Parameters:
         self.data_path = data_path
         self.__arrondissement = arrondisement
         self.__transport = transport
-        self.__MAX_WALKING_TIME = max_walking_time  # in min # in seconds  #todo found units
-        self.__WALKING_SPEED = walking_speed  # in km/h #todo found units
+        self.__MAX_WALKING_TIME = max_walking_time  # in min
+        self.__WALKING_SPEED = walking_speed  # m/min
+
         # self.__date = date
         # self.__start_time = start_time                        # from "00:00:00" to "25:59:59"
         # self.__end_time = end_time                          # from "00:00:00" to "25:59:59"
@@ -100,31 +101,22 @@ class DataManager:
         print("END: Belgium parse gtfs")
 
     @staticmethod
-    def reduce_data(data_path, locations, location_name, transport, max_walking_time, walking_speed):
+    def reduce_data(data_path, locations, location_name, transport):
         """
-
+        Les donnes sont reduites afin de ne considerer que les commune situe dans les arrondissement donne par locations
+        Les stop et trajet considere ne seront que ceux ce situant dans ces communes
         :param data_path:
         :param locations: list of arrodisement
+        :param locations: Nom utiliser pour representer la localisation choisie
         :param transport: train_only, bus_only, train_bus
-        :param max_walking_time: min
-        :param walking_speed: km/h
-        :return:
         """
         assert transport in ["train_only", "bus_only", "train_bus"]
-        assert walking_speed >= 0
-        assert  max_walking_time >= 0
 
         DataManager.root = data_path
         PATH_BELGIUM.set_up(data_path)
         PATH.set_up(data_path, location_name, transport)
 
-        parameter = Parameters(data_path, locations, transport, max_walking_time, walking_speed)
-
-
-        with (open(PATH.CONFIG,"w")) as conf:
-            config = {"locations": locations, "location_name": location_name, "transport": transport,
-                      "max_walking_time": max_walking_time, "walking_speed": walking_speed}
-            json.dump(config,conf)
+        parameter = Parameters(data_path, locations, transport, 0,0)
 
 
 
@@ -142,54 +134,55 @@ class DataManager:
             reduce_stop(PATH_BELGIUM.TRAIN_BUS, refnis_list,"train_bus", parameter )
             reduce_parsed_gtfs(PATH_BELGIUM.TRAIN_BUS, out=PATH.TRANSPORT)
 
-        return parameter
 
     @staticmethod
-    def produce_data(data_path, location_name, transport):
+    def produce_data(data_path, location_name, transport,  max_walking_time, walking_speed):
+        """
+
+        :param data_path:
+        :param location_name:
+        :param transport: train_only, bus_only, train_bus
+        :param max_walking_time: min
+        :param walking_speed: received in km/h and converted in m/min
+        :return:
+        """
+        assert walking_speed >= 0
+        assert max_walking_time >= 0
+        walking_speed = walking_speed * 1000 / 60
+
+        PATH.set_up(data_path, location_name, transport)
         with (open(PATH.CONFIG, "w")) as conf:
-            config = json.load(conf)
+            config = {"locations": location_name, "location_name": location_name, "transport": transport,
+                      "max_walking_time": max_walking_time, "walking_speed": walking_speed}
+            json.dump(config, conf)
 
         with open(PATH.TRANSPORT, "r") as tr:
             with open(PATH.SIMPLIFIED, "w") as s:
-                json.dump(simplify_time(json.load(tr)),s)   #set time in min instead of seconds
+                json.dump(simplify_time(json.load(tr)),s)   # set time in min instead of seconds
 
         extract_travel(PATH.RSD_WORK, PATH.TRAVEL)   # 3b
 
-        # todo produce exthended graph 5
+        produce_exthended_graph(MAX_TIME=28 * 60)   # 28 car certaine donnees depasse 24h pour des raisons pratiques
 
-        walking_time = config["max_walking_time"]
-        if walking_time > 0:
-            #todo walking time 4
-            pass
+        parameter = Parameters(data_path, location_name, transport, max_walking_time, walking_speed)
+        if max_walking_time > 0:
+            compute_stations_walking_time(param=parameter)
+            compute_walking_edges()
 
+        return parameter
 
 
 
 
     @staticmethod
     def load_data(data_path, location_name, transport):
-        """
 
-        :param data_path:
-        :param arrondisement:
-        :return:
-        """
-        #todo
-        pass
-
-    @staticmethod
-    def update_walk_parameters(data_path, arrondisement, max_walking_time, walking_speed):
-        """
-
-        :param data_path:
-        :param arrondisement:
-        :param max_walking_time:
-        :param walking_speed:
-        :return:
-        """
-        #todo
-        pass
-
+        PATH.set_up(data_path, location_name, transport)
+        with (open(PATH.CONFIG, "r")) as conf:
+            config = json.load(conf)
+        param = Parameters(data_path=data_path, arrondisement=location_name, transport=transport,
+                           max_walking_time=config["max_walking_time"], walking_speed=config["walking_speed"])
+        return param
 
 
 if __name__ == '__main__':

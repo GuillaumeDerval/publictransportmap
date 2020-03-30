@@ -96,6 +96,3 @@ def test_pareto():
     p.print()
     p.add(5, 4)
     p.print()
-
-def decaround(x):
-    return int(round(x / 10)*10)

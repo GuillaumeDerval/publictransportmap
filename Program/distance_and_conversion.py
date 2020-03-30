@@ -41,11 +41,3 @@ def get_stop_pos__belgian_lambert():
     return stop_pos
 
 
-# stop id / name convertions
-#__idx_to_name = json.loads(open(PATH.GRAPH).read())["idx_to_name"]
-#my_name_to_idx = {x: i for i, x in enumerate(__idx_to_name)}
-
-#def name_to_idx(name):
-#    return my_name_to_idx[name]
-
-

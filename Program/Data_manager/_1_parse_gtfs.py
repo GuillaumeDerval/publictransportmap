@@ -1,8 +1,5 @@
 import csv
-import datetime
-import json
 import os
-from Program.path import PATH
 
 """####################################################################################################################
 Convert the data with format GTFS into a json with the form :
@@ -29,7 +26,7 @@ in  : PATH.GTFS
     Localisation of data :  put respectively the GTFS sncb,stib,tec, delijn 
                         in the folder ../gtfs/sncb, ../gtfs/stib, ../gtfs/tec, ../gtfs/delijn
 
-out :    PATH.BUS_ONLY,  PATH.TRAIN_ONLY,  PATH.TRAIN_BUS,  PATH.TRANSPORT
+out :    PATH_BELGIUM.BUS_ONLY,  PATH_BELGIUM.TRAIN_ONLY,  PATH_BELGIUM.TRAIN_BUS
 #######################################################################################################################                                               
 """
 

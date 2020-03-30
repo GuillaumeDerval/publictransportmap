@@ -29,7 +29,8 @@ import math
 from shapely.geometry import Point
 
 from Program.distance_and_conversion import *
-from Program.path import PATH, PARAMETERS
+from Program.Data_manager.path_data import PATH
+from Program.Data_manager.main import Parameters
 
 #MAX_WALKING_TIME = 60 # in min
 #SPEED = WALKING_SPEED /0.06 #in m/min
@@ -41,22 +42,26 @@ from Program.path import PATH, PARAMETERS
 # ################################# Monte Carlo #########################################################
 class TravellersModelisation:
 
-    def __init__(self, travel_path: str, distance_oracle, reducing_factor: int, mapmap=None, my_seed = None):
+    def __init__(self,param:Parameters, distance_oracle, reducing_factor: int, travel_path: str = PATH.TRAVEL,
+                 mapmap=None, my_seed = None):
 
         assert reducing_factor > 0
         if mapmap is None:
             from Program.General.map import my_map
-            mapmap = my_map.get_map(path_shape=PATH.MAP_SHAPE, path_pop=PATH.MAP_POP)
+            mapmap = my_map.get_map(param, path_shape=PATH.MAP_SHAPE, path_pop=PATH.MAP_POP,
+                                    stop_list_path=PATH.STOP_POSITION_LAMBERT)
 
         if my_seed is not None:
             random.seed(my_seed)
 
         self.map = mapmap
+        self.speed = param.WALKING_SPEED()
+        self.max_walk_time = param.MAX_WALKING_TIME()
         # virtual traveller generation
         self.reducing_factor = reducing_factor
-        self.traveller_locations = {}   # dico {(munty_rsd, munty_work): [(pt_rsd, pt_work,(best_rsd_stop, best_work_stop), best_TC),...]}
+        # travel_loc :  dico {(munty_rsd, munty_work): [(pt_rsd, pt_work,(best_rsd_stop, best_work_stop), best_TC),...]}
+        self.traveller_locations = {}
         self.__generate_virtual_travellers(travel_path)
-
 
         # access to distance
         self.distance = distance_oracle
@@ -77,10 +82,10 @@ class TravellersModelisation:
     def __generate_virtual_travellers(self, travel_path):
         map = self.map
         def get_n_rdm_point(n, munty):
-            "pick a rdm point in the shape, the probability of select a point depend on the number of people in the sector"
+            """pick a rdm point in the shape, the probability of select a point depend on the number of people in the sector"""
 
             def rdm_point_shape(shape):
-                "pick uniformaly at rdm a point in the shape"
+                """pick uniformaly at rdm a point in the shape"""
                 assert shape.area > 0
 
                 minx, miny, maxx, maxy = shape.bounds
@@ -239,14 +244,13 @@ class TravellersModelisation:
             self.all_results[work_munty] = w
 
     def optimal_travel_time(self,resid_pt, munty_rsd, work_pt, munty_work):
-        SPEED = PARAMETERS.WALKING_SPEED()
         stop_list_rsd = self.map.get_reachable_stop_pt(resid_pt, munty_rsd)
         stop_list_work = self.map.get_reachable_stop_pt(work_pt, munty_work)
 
         dist = distance_Eucli(resid_pt, work_pt)
-        time_without_TC = dist / SPEED  # without Tc
+        time_without_TC = dist / self.speed  # without Tc
         # opti time : (time, walk1, walk2, TC,dist, unreachable)
-        if time_without_TC > (2 * PARAMETERS.MAX_WALKING_TIME()):
+        if time_without_TC > (2 * self.max_walk_time):
             unreachable = 1
         else:
             unreachable = 0
@@ -260,16 +264,16 @@ class TravellersModelisation:
 
         stop_list_rsd.sort(key=lambda x: distance_Eucli(x[1], resid_pt))
         stop_list_work.sort(key=lambda x: distance_Eucli(x[1], work_pt))
-        min_walk2 = distance_Eucli(stop_list_work[0][1], work_pt) / SPEED
+        min_walk2 = distance_Eucli(stop_list_work[0][1], work_pt) / self.speed
         min_trav = self.get_min_time(munty_rsd, munty_work)
 
         for stop_rsd in stop_list_rsd:
-            walk1 = distance_Eucli(resid_pt, stop_rsd[1]) / SPEED  # walking time
+            walk1 = distance_Eucli(resid_pt, stop_rsd[1]) / self.speed  # walking time
             if walk1 + min_walk2 + min_trav >= opti_time[0]:
                 return opti_path, opti_time
             TC_travel_array, name_to_idx = self.distance.dist_from(stop_rsd[0])
             for stop_work in stop_list_work:
-                walk2 = distance_Eucli(work_pt, stop_work[1]) / SPEED
+                walk2 = distance_Eucli(work_pt, stop_work[1]) / self.speed
                 if walk1 + walk2 + min_trav >= opti_time[0]: break
                 TC = TC_travel_array[name_to_idx[stop_work[0]]]
                 if TC > 0:
@@ -288,8 +292,6 @@ class TravellersModelisation:
         :param changes: A dictionnary : {"size": (new_number_of_stop, old_number of stop),
                                   "change_distance": {org_name : {dest_name : (new_dist, old_dist)}}
         """
-        MAX_WALKING_TIME = PARAMETERS.MAX_WALKING_TIME()
-        SPEED = PARAMETERS.WALKING_SPEED()
 
         for org_name_ch, dico in changes["change_distance"].items():
             for dest_name_ch, (new_value, old_value) in dico.items():
@@ -307,25 +309,25 @@ class TravellersModelisation:
                             rsd_pt, work_pt, (old_org_stop, old_dest_stop), old_TC = travellers[i]
                             if (old_org_stop, old_dest_stop) == (None, None):
                                 old_unreach = 1
-                                old_time = distance_Eucli(rsd_pt, work_pt)/SPEED
+                                old_time = distance_Eucli(rsd_pt, work_pt)/self.speed
                                 old_walk1 = old_time/2
                                 old_walk2 = old_time / 2
                                 old_TC = 0
 
                             else:
                                 old_unreach = 0
-                                old_walk1 = distance_Eucli(rsd_pt,old_org_stop[1]) / SPEED # walking time
-                                old_walk2 = distance_Eucli(work_pt, old_dest_stop[1]) / SPEED  # walking time
+                                old_walk1 = distance_Eucli(rsd_pt,old_org_stop[1]) / self.speed # walking time
+                                old_walk2 = distance_Eucli(work_pt, old_dest_stop[1]) / self.speed  # walking time
                                 # old_TC = old_TC
                                 old_time = old_walk1 + old_TC + old_walk2
 
-                            new_walk1 = distance_Eucli(rsd_pt, org_ch_pos) / SPEED  # walking time
-                            new_walk2 = distance_Eucli(work_pt, dest_ch_pos) / SPEED  # walking time
+                            new_walk1 = distance_Eucli(rsd_pt, org_ch_pos) / self.speed  # walking time
+                            new_walk2 = distance_Eucli(work_pt, dest_ch_pos) / self.speed  # walking time
                             new_TC = self.distance.dist(org_name_ch, dest_name_ch)
                             assert new_TC >= 0
                             new_time = new_walk1 + new_TC + new_walk2
 
-                            if new_time < old_time and new_walk1 < MAX_WALKING_TIME and new_walk2 < MAX_WALKING_TIME:
+                            if new_time < old_time and new_walk1 < self.max_walk_time and new_walk2 < self.max_walk_time:
                                 #record old state
                                 if rsd_munty not in self.__change_log["all_results_save"]:
                                     self.__change_log["travellers"][i] = travellers[i]
