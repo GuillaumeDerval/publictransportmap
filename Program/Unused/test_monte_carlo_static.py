@@ -6,7 +6,7 @@ PATH.MINIMAL_TRAVEL_TIME_TC = "data/out/"
 PATH.GRAPH_TC = "data/out.json"
 
 import Program.General.map as map
-import Program.metric.monte_carlo_static as mc
+import Program.Unused.monte_carlo_static as mc
 
 class TestMonte_carlo(TestCase):
 

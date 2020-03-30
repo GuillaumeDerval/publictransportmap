@@ -4,7 +4,7 @@ from shapely.geometry import shape, mapping, LineString
 #import geojson
 from geojson import dump
 import numpy as np
-
+#todo mettre dans le bon dossiers
 
 # map creation : geojson
 A1 = {'type': 'feature', 'properties': {'CD_SECTOR': "A1", 'CD_MUNTY_REFNIS' : 'A'},

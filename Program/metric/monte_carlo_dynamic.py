@@ -29,7 +29,7 @@ import math
 from shapely.geometry import Point
 
 from Program.distance_and_conversion import *
-from Program.Data_manager.path_data import PATH
+from Program.Data_manager.path import PATH
 from Program.Data_manager.main import Parameters
 
 #MAX_WALKING_TIME = 60 # in min
@@ -48,8 +48,7 @@ class TravellersModelisation:
         assert reducing_factor > 0
         if mapmap is None:
             from Program.General.map import my_map
-            mapmap = my_map.get_map(param, path_shape=PATH.MAP_SHAPE, path_pop=PATH.MAP_POP,
-                                    stop_list_path=PATH.STOP_POSITION_LAMBERT)
+            mapmap = my_map.get_map(param)
 
         if my_seed is not None:
             random.seed(my_seed)

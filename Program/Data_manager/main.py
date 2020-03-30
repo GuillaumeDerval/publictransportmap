@@ -1,5 +1,6 @@
 import os
 import datetime
+import json
 
 from Program.Data_manager.path import make_data_structure, PATH_BELGIUM, PATH
 
@@ -10,7 +11,7 @@ from Program.Data_manager._3b_compute_travels import extract_travel
 
 # produce graph
 from Program.Data_manager._4_produce_extended_graph import produce_exthended_graph
-from Program.Data_manager._5_walking_time import *
+from Program.Data_manager._5_walking_time import compute_stations_walking_time, compute_walking_edges
 
 # Parameters
 class Parameters:
@@ -120,9 +121,12 @@ class DataManager:
 
 
         #reduce data
+        print("reduce Census")
         refnis_list = reduce_rsd_work(locations)
+        print("reduce map")
         reduce_map(refnis_list)
 
+        print("reduce stop")
         if transport == "train_only":
             reduce_stop(PATH_BELGIUM.TRAIN_ONLY, refnis_list, "train_only", parameter)
             reduce_parsed_gtfs(PATH_BELGIUM.TRAIN_ONLY, out=PATH.TRANSPORT)
@@ -171,8 +175,6 @@ class DataManager:
         return parameter
 
 
-
-
     @staticmethod
     def load_data(data_path, location_name, transport):
 
@@ -181,6 +183,7 @@ class DataManager:
             config = json.load(conf)
         param = Parameters(data_path=data_path, arrondisement=location_name, transport=transport,
                            max_walking_time=config["max_walking_time"], walking_speed=config["walking_speed"])
+        print(PATH.MAP_SHAPE)
         return param
 
 
@@ -190,5 +193,3 @@ if __name__ == '__main__':
     #DataManager.produce_data_belgium(data_path)
     DataManager.reduce_data(data_path, "Arrondissement de Malines","Malines", "train_only")
     DataManager.produce_data(data_path,"Malines", "train_only", 15, 5)
-    #"Arrondissement de Charleroi"
-    pass

@@ -6,10 +6,9 @@ import sklearn.neighbors
 
 from utils import haversine
 from Program.Data_manager.path import PATH
-from Program.Data_manager.main import Parameters
 
 
-def compute_stations_walking_time(param : Parameters):
+def compute_stations_walking_time(param):
     """
         For each paire of station located at less than MAX_RADIUS, add an edge between the 2 stations.
         the time of this edge correspond to a straight ahead walk between the stations
