@@ -1,7 +1,7 @@
 import json
 
 #from utils import haversine, distance_to_walking_time, MAX_WALKING_TIME, MAX_RADIUS, mean_latlon, decaround
-from Program.Unused.path import PATH
+from Program.Data_manager.path import PATH
 
 """
 Simplifie the time step : departure_time and arrival_time are now given by step of 10 seconds 
@@ -99,20 +99,9 @@ def simplify_clustering(data):
 
 def simplify_time(data):
     # everything is in seconds. Let us use minutes
-
     def hexacontaround(x):
         return int(round(x / 60) * 60)
 
     for x in data:
         data[x]["nei"] = [(a, hexacontaround(b)//60, hexacontaround(c)//60) for a, b, c in data[x]["nei"]]
     return data
-
-
-print("LOADING")
-data = json.load(open(PATH.TRANSPORT))
-print("SIMPLIFY")
-#data = simplify_noinbound(simplify_clustering(data)) #todo
-data = simplify_time(data)
-print("SAVING")
-json.dump(data, open(PATH.SIMPLIFIED, "w"))
-print("END")

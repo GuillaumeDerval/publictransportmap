@@ -1,8 +1,7 @@
 import os
 import datetime
-import json
 
-from Program.Data_manager.path_data import make_data_structure, PATH_BELGIUM, PATH
+from Program.Data_manager.path import make_data_structure, PATH_BELGIUM, PATH
 
 from Program.Data_manager._1_parse_gtfs import time_str_to_int, generate_output_for_gtfs
 from Program.Data_manager._2_reduce_data import reduce_rsd_work, reduce_map, reduce_stop, reduce_parsed_gtfs
@@ -158,7 +157,7 @@ class DataManager:
 
         with open(PATH.TRANSPORT, "r") as tr:
             with open(PATH.SIMPLIFIED, "w") as s:
-                json.dump(simplify_time(json.load(tr)),s)   # set time in min instead of seconds
+                json.dump(simplify_time(json.load(tr)), s)   # set time in min instead of seconds
 
         extract_travel(PATH.RSD_WORK, PATH.TRAVEL)   # 3b
 
@@ -189,7 +188,7 @@ if __name__ == '__main__':
     data_path = "/Users/DimiS/Documents/Gotta_go_fast/Project/Data"
     #make_data_structure(data_path)
     #DataManager.produce_data_belgium(data_path)
-    DataManager.reduce_data(data_path, "Arrondissement de Malines","Malines", "train_only", 15, 5)
-    DataManager.produce_data(data_path,"Malines", "train_only")
+    DataManager.reduce_data(data_path, "Arrondissement de Malines","Malines", "train_only")
+    DataManager.produce_data(data_path,"Malines", "train_only", 15, 5)
     #"Arrondissement de Charleroi"
     pass

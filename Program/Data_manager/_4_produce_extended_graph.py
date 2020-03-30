@@ -1,6 +1,6 @@
 import json
 import time
-from Program.Data_manager.path_data import PATH
+from Program.Data_manager.path import PATH
 # from collections import deque
 
 

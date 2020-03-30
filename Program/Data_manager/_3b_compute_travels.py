@@ -1,6 +1,5 @@
 import csv
-from Program.my_utils import *
-from Program.Unused.path import PATH
+from Program.Data_manager.path import PATH
 import json
 
 # Cet class est charger de determiner au mieux les trajet a prendre en compte ainsi que leur poids(nombre d'utilisateur)

@@ -1,11 +1,12 @@
 import csv
 import json
 import os
-# import geojson
 from geojson import dump
-from Program.Data_manager.path_data import PATH_BELGIUM, PATH
-from Program.General.map import my_map
 from shapely.geometry import Point
+
+from Program.Data_manager.path import PATH_BELGIUM, PATH
+from Program.General.map import my_map
+
 
 
 def reduce_rsd_work(locations_list):

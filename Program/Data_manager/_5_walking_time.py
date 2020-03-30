@@ -5,7 +5,7 @@ import numpy as np
 import sklearn.neighbors
 
 from utils import haversine
-from Program.Data_manager.path_data import PATH
+from Program.Data_manager.path import PATH
 from Program.Data_manager.main import Parameters
 
 
