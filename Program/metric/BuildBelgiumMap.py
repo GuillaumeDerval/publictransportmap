@@ -1,6 +1,6 @@
 from Program.distance_and_conversion import WGS84_to_Lambert
 import json
-from Program.path import PATH_BELGIUM
+from Program.Unused.path import PATH_BELGIUM
 
 # mix a map with the stop positions
 def map_stop(in_path, out_path):

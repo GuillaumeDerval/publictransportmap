@@ -7,7 +7,7 @@ import numpy as np
 
 from utils import WALKING_SPEED
 from multiprocessing import Pool
-from Program.path import PATH
+from Program.Unused.path import PATH
 
 def process(dist_file, out_file, border_shape, idx_to_name, complete_data):
     tmpdir = tempfile.mkdtemp()

@@ -1,7 +1,7 @@
 from unittest import TestCase
 import json
 import numpy as np
-from Program.path import PATH, PARAMETERS
+from Program.Unused.path import PATH, PARAMETERS
 
 PATH.MINIMAL_TRAVEL_TIME_TC = "data/out/"
 PATH.GRAPH_TC = "data/out.json"

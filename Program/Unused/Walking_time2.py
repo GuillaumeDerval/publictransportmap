@@ -5,7 +5,7 @@
 
 # Ce programme à pour but d'ajouter des edge a graph.json
 # Ces nouvelle arret representerons les trajet faisable a pied
-from Program.path import PATH_CHARLEROI as PATH
+from Program.Unused.path import PATH_CHARLEROI as PATH
 import json
 
 with open(PATH.WALKING) as walk_file:

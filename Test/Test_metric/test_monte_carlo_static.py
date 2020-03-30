@@ -1,6 +1,6 @@
 from unittest import TestCase
 import json
-from Program.path import PATH
+from Program.Unused.path import PATH
 
 PATH.MINIMAL_TRAVEL_TIME_TC = "data/out/"
 PATH.GRAPH_TC = "data/out.json"

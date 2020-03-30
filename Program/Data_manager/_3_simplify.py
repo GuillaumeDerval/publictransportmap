@@ -1,13 +1,7 @@
 import json
-import math
-from collections import deque
-
-import progressbar
-import numpy as np
-import sklearn.neighbors
 
 #from utils import haversine, distance_to_walking_time, MAX_WALKING_TIME, MAX_RADIUS, mean_latlon, decaround
-from Program.path import PATH
+from Program.Unused.path import PATH
 
 """
 Simplifie the time step : departure_time and arrival_time are now given by step of 10 seconds 

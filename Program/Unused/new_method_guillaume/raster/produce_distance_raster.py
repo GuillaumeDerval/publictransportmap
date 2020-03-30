@@ -1,6 +1,6 @@
 import rasterio
 
-from Program.new_method_guillaume.raster.cython.fast_resolver import resolve
+from Program.Unused.new_method_guillaume.raster import resolve
 
 import orjson
 import numpy as np

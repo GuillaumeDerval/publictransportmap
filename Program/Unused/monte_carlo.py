@@ -17,7 +17,7 @@ from Program.my_utils import *
 import numpy as np
 import Program.General.map as mapp
 import csv
-import Program.path as path
+import Program.Unused.path as path
 import time
 
 population_by_sector_2011_path = "data/OPEN_DATA_SECTOREN_2011.csv"

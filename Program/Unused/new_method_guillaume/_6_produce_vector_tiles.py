@@ -2,7 +2,7 @@ import json
 import subprocess
 from multiprocessing import Pool
 import os.path
-from Program.path import PATH
+from Program.Unused.path import PATH
 
 data = json.loads(open(PATH.GRAPH_TC).read())
 idx_to_name = data["idx_to_name"]
