@@ -96,7 +96,6 @@ def simplify_clustering(data):
 """
 
 
-
 def simplify_time(data):
     # everything is in seconds. Let us use minutes
     def hexacontaround(x):

@@ -4,12 +4,11 @@ import os
 from geojson import dump
 from shapely.geometry import Point
 
-from Program.Data_manager.path import PATH_BELGIUM, PATH
 from Program.General.map import my_map
 
 
 
-def reduce_rsd_work(locations_list):
+def reduce_rsd_work(PATH_BELGIUM,PATH,locations_list):
     with open(PATH_BELGIUM.RSD_WORK, newline='') as csvfile:
         reader = csv.DictReader(csvfile, delimiter='|')
         with open(PATH.RSD_WORK, mode='w') as out:
@@ -30,7 +29,7 @@ def reduce_rsd_work(locations_list):
 
 
 # geojson
-def reduce_map(refnis_list):
+def reduce_map(PATH_BELGIUM, PATH, refnis_list):
     with open(PATH_BELGIUM.MAP_SHAPE) as f:
 
         features = json.load(f)["features"]
@@ -47,7 +46,7 @@ def reduce_map(refnis_list):
     with open(PATH.MAP_SHAPE, 'w') as w:
         dump(out, w)
 
-def reduce_stop(parsed_gtfs_path,refnis_list, transport, param):
+def reduce_stop(PATH_BELGIUM, PATH, parsed_gtfs_path,refnis_list, transport, param):
     """
     Renvoie une liste contenant les stop valide
     C'est à dire le stop positionné dans une commune de munty_list
@@ -64,7 +63,7 @@ def reduce_stop(parsed_gtfs_path,refnis_list, transport, param):
 
     reduced_stop = {}
     position_lamber = json.load(open(PATH_BELGIUM.STOP_POSITION_LAMBERT[transport], "r"))
-    mmap = my_map.get_map(param, path_shape=PATH.MAP_SHAPE, path_pop=PATH.MAP_POP, stop_list_path=PATH.STOP_POSITION_LAMBERT)
+    mmap = my_map.get_map(param)
     for refnis in refnis_list:
         munty_shape = mmap.get_shape_refnis(refnis)
 
@@ -81,7 +80,7 @@ def reduce_stop(parsed_gtfs_path,refnis_list, transport, param):
 
 
 # Reduire les donné au stop valables
-def reduce_parsed_gtfs(parsed_gtfs_path, out):
+def reduce_parsed_gtfs(PATH, parsed_gtfs_path, out):
     """
     Creer et renvoie un nouveau set de donnee plus petit ne contenant que les stop de valid_stop_list
     """

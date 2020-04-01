@@ -39,7 +39,7 @@ class TestInitialisationAPSP(TestCase):
         mmap = my_map.get_map(path_shape="./../Test_metric/data/smallmap.geojson",
                               path_pop="./../Test_metric/data/popsector.csv",
                               stop_list_path="data_test/mini_stop_pos.json")
-        APSP = Dynamic_APSP(data_path, mapmap=mmap)
+        APSP = Dynamic_APSP(data_path, mmap=mmap)
 
         rdm.seed(1216)
         branch = []
@@ -171,7 +171,7 @@ class TestInitialisationAPSP(TestCase):
         mmap = my_map.get_map(path_shape="./../Test_metric/data/smallmap.geojson",
                               path_pop="./../Test_metric/data/popsector.csv",
                               stop_list_path="data_test/mini_stop_pos.json")
-        APSP = Dynamic_APSP(data_path, mapmap=mmap)
+        APSP = Dynamic_APSP(data_path, mmap=mmap)
 
         rdm.seed(1216)
         branch = []
@@ -188,7 +188,7 @@ class TestInitialisationAPSP(TestCase):
         mmap = my_map.get_map(path_shape="./../Test_metric/data/smallmap.geojson",
                               path_pop="./../Test_metric/data/popsector.csv",
                               stop_list_path="data_test/mini_stop_pos.json")
-        APSP = Dynamic_APSP(data_path, mapmap=mmap)
+        APSP = Dynamic_APSP(data_path, mmap=mmap)
 
         rdm.seed(1212)
 
@@ -211,7 +211,7 @@ class TestInitialisationAPSP(TestCase):
         mmap = my_map.get_map(path_shape="./../Test_metric/data/smallmap.geojson",
                               path_pop="./../Test_metric/data/popsector.csv",
                               stop_list_path="data_test/mini_stop_pos.json")
-        APSP = Dynamic_APSP(data_path, mapmap=mmap)
+        APSP = Dynamic_APSP(data_path, mmap=mmap)
         rdm.seed(1212)
 
         def multi_vertex(APSP):
@@ -247,7 +247,7 @@ class TestInitialisationAPSP(TestCase):
         mmap = my_map.get_map(path_shape="./../Test_metric/data/smallmap.geojson",
                               path_pop="./../Test_metric/data/popsector.csv",
                               stop_list_path="data_test/mini_stop_pos.json")
-        APSP = Dynamic_APSP(data_path, mapmap=mmap)
+        APSP = Dynamic_APSP(data_path, mmap=mmap)
         rdm.seed(123456)
 
         branch = []
@@ -269,7 +269,7 @@ class TestInitialisationAPSP(TestCase):
         mmap = my_map.get_map(path_shape="./../Test_metric/data/smallmap.geojson",
                               path_pop="./../Test_metric/data/popsector.csv",
                               stop_list_path="data_test/mini_stop_pos.json")
-        APSP = Dynamic_APSP(data_path, mapmap=mmap)
+        APSP = Dynamic_APSP(data_path, mmap=mmap)
         rdm.seed(1212)
 
         def multi_edge(APSP):

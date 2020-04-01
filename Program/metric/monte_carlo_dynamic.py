@@ -29,23 +29,18 @@ import math
 from shapely.geometry import Point
 
 from Program.distance_and_conversion import *
-from Program.Data_manager.path import PATH
-from Program.Data_manager.main import Parameters
-
-#MAX_WALKING_TIME = 60 # in min
-#SPEED = WALKING_SPEED /0.06 #in m/min
-#SPEED = 1000/20
-#WALKING_SPEED = WALKING_SPEED/0.06
-#mapmap = my_map.get_map(path_shape=PATH.MAP_SHAPE, path_pop=PATH.MAP_POP)
+from Program.Data_manager.path import Parameters
 
 
 # ################################# Monte Carlo #########################################################
 class TravellersModelisation:
 
-    def __init__(self,param:Parameters, distance_oracle, reducing_factor: int, travel_path: str = PATH.TRAVEL,
+    def __init__(self,param:Parameters, distance_oracle, reducing_factor: int, travel_path: str = None,
                  mapmap=None, my_seed = None):
 
         assert reducing_factor > 0
+        if travel_path is None: travel_path = param.PATH.TRAVEL
+
         if mapmap is None:
             from Program.General.map import my_map
             mapmap = my_map.get_map(param)

@@ -3,7 +3,6 @@ import csv
 from shapely.geometry import shape, MultiPolygon, Point
 # from shapely.ops import Point
 from Program.distance_and_conversion import *
-from Program.Data_manager.path import PATH
 
 
 
@@ -11,21 +10,20 @@ class my_map:
     belgium_map = None
 
     @classmethod
-    def get_map(cls,PARAMETER, path_shape=PATH.MAP_SHAPE, path_pop=PATH.MAP_POP, path_stop_list=PATH.STOP_POSITION_LAMBERT):
+    def get_map(cls, param, path_shape=None, path_pop=None, path_stop_list=None):
         if my_map.belgium_map is None:
-            #if (my_map.belgium_map.path_shape is not None and my_map.belgium_map.path_shape != path_shape) or (my_map.belgium_map.path_pop is not None  and my_map.belgium_map.path_pop != path_pop):
-            if path_shape is None : path_shape = PATH.MAP_SHAPE
-            if path_pop is None: path_pop = PATH.MAP_POP
-            if path_stop_list is None: path_stop_list = PATH.STOP_POSITION_LAMBERT
-            my_map.belgium_map = my_map(PARAMETER, path_shape, path_pop, path_stop_list)
+            if path_shape is None : path_shape = param.PATH.MAP_SHAPE
+            if path_pop is None: path_pop = param.PATH.MAP_POP
+            if path_stop_list is None: path_stop_list = param.PATH.STOP_POSITION_LAMBERT
+            my_map.belgium_map = my_map(param, path_shape, path_pop, path_stop_list)
         return my_map.belgium_map
 
-    def __init__(self,PARAMETER, path_shape, path_pop, stop_list_path):
+    def __init__(self,param, path_shape, path_pop, stop_list_path):
         self.__sector_map = {}
         self.__munty_map = {}
         self.path_shape = path_shape
         self.path_pop = path_pop
-        self.param = PARAMETER
+        self.param = param
 
 
         self.__set_sector()

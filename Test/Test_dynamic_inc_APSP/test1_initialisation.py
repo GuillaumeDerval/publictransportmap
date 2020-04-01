@@ -1,5 +1,6 @@
 from unittest import TestCase
 import os
+from Program.Data_manager.main import DataManager
 from Program.dynamic_Inc_APSP.Dynamic_Incremental_All_Pair_Shortest_Path import *
 from Test.Test_dynamic_inc_APSP.my_utils import compare_results
 
@@ -7,17 +8,23 @@ from Test.Test_dynamic_inc_APSP.my_utils import compare_results
 class TestInitialisationAPSP(TestCase):
     def setUp(self):
         super().setUp()
-        for file_name in os.listdir("data_test/dist_computed/"):
-            os.remove("data_test/dist_computed/" + file_name)
-        for file_name in os.listdir("data_test/dist_expected/"):
-            os.remove("data_test/dist_expected/" + file_name)
-        for file_name in os.listdir("data_test/path_computed/"):
-            os.remove("data_test/path_computed/" + file_name)
-        for file_name in os.listdir("data_test/path_expected/"):
-            os.remove("data_test/path_expected/" + file_name)
+
+        self.param_small = DataManager.load_data("./../Data_test","small1", "train_only")
+        self.param_medium = None # TODO
+
+        for file_name in os.listdir("./../Data_test/produced/minimal_distance/dist_computed/"):
+            os.remove("./../Data_test/produced/minimal_distance/dist_computed/" + file_name)
+        for file_name in os.listdir("./../Data_test/produced/minimal_distance/dist_expected/"):
+            os.remove("./../Data_test/produced/minimal_distance/dist_expected/" + file_name)
+        for file_name in os.listdir("./../Data_test/produced/minimal_distance/path_computed/"):
+            os.remove("./../Data_test/produced/minimal_distance/path_computed/" + file_name)
+        for file_name in os.listdir("./../Data_test/produced/minimal_distance/path_expected/"):
+            os.remove("./../Data_test/produced/minimal_distance/path_expected/" + file_name)
+
+
 
     def test_save_graph_mini(self):
-        APSP = Dynamic_APSP("data_test/mini.json")
+        APSP = Dynamic_APSP(self.param_small)
         APSP.hard_save_graph("data_test/mini_save.json")
         file1 = open("data_test/mini.json")
         file2 = open("data_test/mini_save.json")
@@ -26,7 +33,7 @@ class TestInitialisationAPSP(TestCase):
         file2.close()
 
     def test_save_graph_medium(self):
-        APSP = Dynamic_APSP("data_test/medium.json")
+        APSP = Dynamic_APSP(self.param_medium)
         APSP.hard_save_graph("data_test/medium_save.json")
         file1 = open("data_test/medium.json")
         file2 = open("data_test/medium_save.json")
@@ -45,7 +52,7 @@ class TestInitialisationAPSP(TestCase):
         np.save(exp_path + "270.npy", np.array([0, 0, 0, 0, 0, 1], dtype=np.bool).astype(np.bool))
         for file_name in os.listdir(compu_path):
             os.remove(compu_path + file_name)
-        APSP = Dynamic_APSP("data_test/mini.json")
+        APSP = Dynamic_APSP(self.param_small)
         for name, array in zip(APSP.path.pos_to_vertex, APSP.path.is_reach):
             path = compu_path + str(name) + ".npy"
             #print(path, array)
@@ -62,13 +69,13 @@ class TestInitialisationAPSP(TestCase):
         # np.save("data_test/dist_mini_expected/d.npy", np.array([-1, -1, -1]).astype(np.int16))
         # np.save("data_test/dist_mini_expected/e.npy", np.array([-1, -1, -1]).astype(np.int16))
 
-        APSP = Dynamic_APSP("data_test/mini.json")
+        APSP = Dynamic_APSP(self.param_small)
         APSP.hard_save_distance(compu_path)
         comparisson = compare_results(exp_path, compu_path)
         self.assertTrue(comparisson)
 
     def test_save_distance_medium(self):
-        APSP = Dynamic_APSP("data_test/medium.json")
+        APSP = Dynamic_APSP(self.param_medium)
         APSP.hard_save_distance("data_test/dist_computed/")
         comparisson = compare_results("data_test/dist_medium_expected/", "data_test/dist_computed/")
         self.assertTrue(comparisson)

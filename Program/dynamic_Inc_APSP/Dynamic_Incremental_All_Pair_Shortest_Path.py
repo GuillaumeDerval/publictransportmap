@@ -3,7 +3,7 @@ from Program.dynamic_Inc_APSP.Data_structure_reversible import *
 import json
 import heapq
 #from dynamic_Inc_APSP.Data_structure import *
-from Program.Unused.path import PATH, PARAMETERS
+from Program.Data_manager.path import Parameters
 from Program.General.map import my_map
 from Program.distance_and_conversion import distance_Eucli
 
@@ -11,24 +11,27 @@ from Program.distance_and_conversion import distance_Eucli
 
 
 class Dynamic_APSP:
-    def __init__(self, path=PATH.GRAPH_TC, mapmap = None):
+    def __init__(self, param:Parameters, path=None, mmap=None):
+        if path is None:
+            path = param.PATH.GRAPH_TC_WALK
         with open(path) as file:
             out = json.loads(file.read())
+        self.param = param
         self.graph = Graph(out)
         self.idx_to_name = out["idx_to_name"]
         self.name_to_idx = {x: i for i, x in enumerate(self.idx_to_name)}
         self.max_time = out["max_time"]
         self.used_time = out["used_times"]
         assert len(self.used_time) == len(self.idx_to_name) == len(self.name_to_idx)
-        #sort used_time by time
+        # sort used_time by time
         for used in self.used_time:
             used.sort()
 
         self.path = PathPresence(self.graph, self.max_time)
         self.distance = Distance(self.name_to_idx, self.idx_to_name, self.max_time, self.used_time, self.path)
 
-        if mapmap is not None: self.map = mapmap
-        else: self.map = my_map.get_map()
+        if mmap is not None: self.map = mmap
+        else: self.map = my_map.get_map(param)
 
         # reversible state -> record change
         self.__change_log = []
@@ -96,7 +99,7 @@ class Dynamic_APSP:
             walk_out = []
             for walk_name, walk_pos in reachable_stop:
                 walk_idx = self.name_to_idx[walk_name]
-                walking_time = distance_Eucli(z_position, walk_pos) / PARAMETERS.WALKING_SPEED()
+                walking_time = distance_Eucli(z_position, walk_pos) / self.param.WALKING_SPEED()
 
                 i = len(self.used_time[walk_idx]) - 1
                 while i > 0 and self.used_time[walk_idx][i] + walking_time > z_time:
@@ -178,13 +181,16 @@ class Dynamic_APSP:
         """
         return self.distance.dist_from(s_name)
 
-    def hard_save_distance(self, out_directory_path=PATH.MINIMAL_TRAVEL_TIME_TC):
+    def hard_save_distance(self, out_directory_path=None):
+        if out_directory_path is None: out_directory_path=self.param.PATH.MINIMAL_TRAVEL_TIME_TC
         self.distance.hard_save(out_directory_path)
 
-    def hard_save_is_reachable(self, out_directory_path=PATH.MINIMAL_TRAVEL_TIME_TC):
+    def hard_save_is_reachable(self, out_directory_path=None):
+        if out_directory_path is None: out_directory_path = self.param.PATH.MINIMAL_TRAVEL_TIME_TC
         self.path.hard_save(out_directory_path)
 
-    def hard_save_graph(self, out_path=PATH.GRAPH_TC):
+    def hard_save_graph(self, out_path=None):
+        if out_path is None: out_path = self.param.GRAPH_TC_WALKING
         with open(out_path, 'w') as out_file:
             json.dump({"idx_to_name": self.idx_to_name, "max_time": self.max_time,
                        "graph": self.graph.adj_matrix, "used_times": self.used_time

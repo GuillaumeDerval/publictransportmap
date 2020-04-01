@@ -1,6 +1,6 @@
 from geojson import dump
 from shapely.geometry import mapping, Point
-import Program.metric.monte_carlo_opti as MC
+import Program.metric.monte_carlo_dynamic as MC
 import json
 import time
 from Program.Unused.path import PATH

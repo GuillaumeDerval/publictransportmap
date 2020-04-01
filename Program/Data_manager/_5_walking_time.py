@@ -5,7 +5,6 @@ import numpy as np
 import sklearn.neighbors
 
 from utils import haversine
-from Program.Data_manager.path import PATH
 
 
 def compute_stations_walking_time(param):
@@ -16,8 +15,8 @@ def compute_stations_walking_time(param):
         in  : PATH.SIMPLIFIED
         out : PATH.WALKING
     """
-    data = json.load(open(PATH.SIMPLIFIED))
-    MAX_RADIUS = param.MAX_RADIUS()
+    data = json.load(open(param.PATH.SIMPLIFIED))
+    max_radius = param.MAX_RADIUS()
 
     def distance_to_walking_time(dist_km):
         minutes = (dist_km * 1000) / param.WALKING_SPEED()
@@ -37,7 +36,7 @@ def compute_stations_walking_time(param):
     for i in bar(range(0, len(idxes))):
         idx1 = idxes[i]
 
-        result = tree.query_radius([latlon[i]], r=MAX_RADIUS)[0]
+        result = tree.query_radius([latlon[i]], r=max_radius)[0]
         for j in result:
             idx2 = idxes[j]
             distance = haversine(data[idx1]["lon"], data[idx1]["lat"], data[idx2]["lon"], data[idx2]["lat"])
@@ -46,10 +45,7 @@ def compute_stations_walking_time(param):
             # out[idx2].append((distance_time, idx1)) will be done the other way!
 
     out = {x: sorted(y)[0:50] for x, y in out.items()}
-    json.dump(out, open(PATH.WALKING, "w"))
-
-
-
+    json.dump(out, open(param.PATH.WALKING, "w"))
 
 
 # Lancer _2_compute_walking_time.py before this program
@@ -57,13 +53,13 @@ def compute_stations_walking_time(param):
 # Sophie
 
 
-def compute_walking_edges():
+def compute_walking_edges(path):
     # Ce programme à pour but d'ajouter des edge a graph.json
     # Ces nouvelle arret representerons les trajet faisable a pied
-    with open(PATH.WALKING) as walk_file:
+    with open(path.WALKING) as walk_file:
         walk = json.load(walk_file)
 
-    with open(PATH.GRAPH_TC) as graph_file:
+    with open(path.GRAPH_TC) as graph_file:
         graph_tc = json.load(graph_file)
 
     idx_to_name = graph_tc["idx_to_name"]
@@ -84,5 +80,5 @@ def compute_walking_edges():
                     i += 1
                 graph_walk_tc["graph"][str(org_idx*max_time + o_time)].append(dest_idx*max_time + dest_time[i])
 
-    with open(PATH.GRAPH_TC_WALK,"w") as out:
+    with open(path.GRAPH_TC_WALK, "w") as out:
         json.dump(graph_walk_tc, out)

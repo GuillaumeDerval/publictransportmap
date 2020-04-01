@@ -2,7 +2,6 @@ from unittest import TestCase
 import json
 import numpy as np
 from Program.Data_manager.main import DataManager
-from Program.Data_manager.path import PATH
 import Program.General.map as map
 import Program.metric.monte_carlo_dynamic as mc
 
@@ -37,17 +36,18 @@ class TestMonteCarlo(TestCase):
 
     def setUp(self):
         self.param = DataManager.load_data("./../Data_test", "small1", "train_only")
+        self.param.PATH.MINIMAL_TRAVEL_TIME_TC = "./../Data_test/produced/minimal_distance/small1_mc"
         # Speed :33.334 m/min =  2km/h # Max_time : 60 min
 
-        with open(PATH.GRAPH_TC) as file:
+        with open(self.param.PATH.GRAPH_TC) as file:
             graph = json.loads(file.read())
             self.idx_to_name = graph["idx_to_name"]
 
-        self.distance_oracle = DistanceOracle("./../Data_test/produced/minimal_distance/small1_train_only/", self.idx_to_name)
+        self.distance_oracle = DistanceOracle("./../Data_test/produced/minimal_distance/small1_mc/", self.idx_to_name)
         self.reducing_factor = 1
         self.mapmap = map.my_map.get_map(self.param, path_pop="./../Data_test/intermediate/small1_train_only/popsector.csv")
         self.travel_model = mc.TravellersModelisation(param=self.param,
-                                                      travel_path=PATH.TRAVEL,
+                                                      travel_path=self.param.PATH.TRAVEL,
                                                       distance_oracle=self.distance_oracle,
                                                       reducing_factor=self.reducing_factor,
                                                       mapmap=self.mapmap)
@@ -110,9 +110,9 @@ class TestMonteCarlo(TestCase):
     def test_small_inc_dynamic(self):
         for seed in range(300, 315):
             updated_model = mc.TravellersModelisation(self.param,
-                                                      travel_path=PATH.TRAVEL,
-                                                      distance_oracle=DistanceOracle("./../Data_test/produced/minimal_distance/small2_train_only/", self.idx_to_name+ ["S6"],
-                                                                                      "./../Data_test/produced/minimal_distance/small1_train_only/",
+                                                      travel_path=self.param.PATH.TRAVEL,
+                                                      distance_oracle=DistanceOracle("./../Data_test/produced/minimal_distance/small2_mc/", self.idx_to_name+ ["S6"],
+                                                                                      "./../Data_test/produced/minimal_distance/small1_mc/",
                                                                                       self.idx_to_name),
                                                       reducing_factor=self.reducing_factor,
                                                       mapmap=self.mapmap,
@@ -129,8 +129,8 @@ class TestMonteCarlo(TestCase):
 
 
             expected_model = mc.TravellersModelisation(self.param,
-                                                       travel_path=PATH.TRAVEL,
-                                                       distance_oracle=DistanceOracle("./../Data_test/produced/minimal_distance/small2_train_only/", self.idx_to_name + ["S6"]),
+                                                       travel_path=self.param.PATH.TRAVEL,
+                                                       distance_oracle=DistanceOracle("./../Data_test/produced/minimal_distance/small2_mc/", self.idx_to_name + ["S6"]),
                                                        reducing_factor=self.reducing_factor,
                                                        mapmap=self.mapmap,
                                                        my_seed=seed)

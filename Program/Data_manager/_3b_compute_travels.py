@@ -52,7 +52,3 @@ def extract_travel(in_path, out_path):
     cities = list(dict.fromkeys(cities))
     out = {"cities": cities, "travel":  travel}
     json.dump(out, open(out_path, "w"))
-
-
-if __name__ == '__main__':
-    extract_travel(PATH.RSD_WORK, PATH.TRAVEL)

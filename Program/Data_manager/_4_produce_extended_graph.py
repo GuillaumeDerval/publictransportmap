@@ -1,6 +1,5 @@
 import json
 import time
-from Program.Data_manager.path import PATH
 # from collections import deque
 
 
@@ -12,7 +11,7 @@ from Program.Data_manager.path import PATH
     in  : PATH.SIMPLIFIED
     out : PATH.GRAPH
 """
-def produce_exthended_graph(MAX_TIME):
+def produce_exthended_graph(PATH, MAX_TIME):
 
 
     print("--- Loading data")

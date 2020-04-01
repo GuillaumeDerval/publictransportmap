@@ -2,7 +2,7 @@ import os
 import datetime
 import json
 
-from Program.Data_manager.path import make_data_structure, PATH_BELGIUM, PATH
+from Program.Data_manager.path import Parameters, make_data_structure, PATH_BELGIUM, PATH
 
 from Program.Data_manager._1_parse_gtfs import time_str_to_int, generate_output_for_gtfs
 from Program.Data_manager._2_reduce_data import reduce_rsd_work, reduce_map, reduce_stop, reduce_parsed_gtfs
@@ -13,36 +13,6 @@ from Program.Data_manager._3b_compute_travels import extract_travel
 from Program.Data_manager._4_produce_extended_graph import produce_exthended_graph
 from Program.Data_manager._5_walking_time import compute_stations_walking_time, compute_walking_edges
 
-# Parameters
-class Parameters:
-    def __init__(self, data_path, arrondisement, transport, max_walking_time, walking_speed):
-        self.data_path = data_path
-        self.__arrondissement = arrondisement
-        self.__transport = transport
-        self.__MAX_WALKING_TIME = max_walking_time  # in min
-        self.__WALKING_SPEED = walking_speed  # m/min
-
-        # self.__date = date
-        # self.__start_time = start_time                        # from "00:00:00" to "25:59:59"
-        # self.__end_time = end_time                          # from "00:00:00" to "25:59:59"
-
-    def ARRODNISEMENT(self):
-        return self.ARRODNISEMENT()
-
-    def MAX_WALKING_TIME(self):
-        return self.__MAX_WALKING_TIME
-
-    def WALKING_SPEED(self):
-        return self.__WALKING_SPEED
-
-    def MAX_RADIUS(self):
-        return (self.__MAX_WALKING_TIME / 3600.0) * self.__WALKING_SPEED / 6367.0  # todo check
-
-    def distance_to_walking_time(self, dist_km):
-        hours = dist_km / self.__WALKING_SPEED
-        minutes = hours * 60
-        seconds = minutes * 60
-        return round(seconds)
 
 class DataManager:
     root = None
@@ -63,14 +33,14 @@ class DataManager:
         assert start_time <= end_time
 
         DataManager.root = data_path
-        PATH_BELGIUM.set_up(data_path)
+        path_Belgium = PATH_BELGIUM(data_path)
 
         if not os.path.exists(DataManager.root + "/" + DataManager.initial):
             print("You need to run make_data_structure first")
             raise Exception
 
-        print(PATH_BELGIUM.GTFS)
-        if not os.path.exists(PATH_BELGIUM.GTFS):
+        print(path_Belgium.GTFS)
+        if not os.path.exists(path_Belgium.GTFS):
             print("You need to download gtfs data and put it in the gtfs folder")
             raise Exception
 
@@ -79,29 +49,29 @@ class DataManager:
         # parse gtfs
         # produce the json format for each kind of transport in belgium
         stops_train = {}
-        if not os.path.exists(PATH_BELGIUM.TRAIN_ONLY) or  not os.path.exists(PATH_BELGIUM.TRAIN_BUS):
+        if not os.path.exists(path_Belgium.TRAIN_ONLY) or  not os.path.exists(path_Belgium.TRAIN_BUS):
             for tc in DataManager.tc["train_only"]:
                 print(tc.upper())
-                stops_train.update(generate_output_for_gtfs(PATH_BELGIUM.GTFS+ "/" + tc, tc, date, start_time, end_time))
+                stops_train.update(generate_output_for_gtfs(path_Belgium.GTFS+ "/" + tc, tc, date, start_time, end_time))
 
-            json.dump(stops_train, open(PATH_BELGIUM.TRAIN_ONLY, "w"))
+            json.dump(stops_train, open(path_Belgium.TRAIN_ONLY, "w"))
 
         stops = {}
-        if not os.path.exists(PATH_BELGIUM.BUS_ONLY) or not os.path.exists(PATH_BELGIUM.TRAIN_BUS):
+        if not os.path.exists(path_Belgium.BUS_ONLY) or not os.path.exists(path_Belgium.TRAIN_BUS):
             for tc in DataManager.tc["bus_only"]:
                 print(tc.upper())
-                stops.update(generate_output_for_gtfs(PATH_BELGIUM.GTFS+ "/" + tc, tc, date, start_time, end_time))
+                stops.update(generate_output_for_gtfs(path_Belgium.GTFS+ "/" + tc, tc, date, start_time, end_time))
 
-            json.dump(stops, open(PATH_BELGIUM.BUS_ONLY, "w"))
+            json.dump(stops, open(path_Belgium.BUS_ONLY, "w"))
 
-        if not os.path.exists(PATH_BELGIUM.TRAIN_BUS):
+        if not os.path.exists(path_Belgium.TRAIN_BUS):
             stops.update(stops_train)
-            json.dump(stops, open(PATH_BELGIUM.TRAIN_BUS, "w"))
+            json.dump(stops, open(path_Belgium.TRAIN_BUS, "w"))
 
         print("END: Belgium parse gtfs")
 
     @staticmethod
-    def reduce_data(data_path, locations, location_name, transport):
+    def reduce_data(data_path, locations, location_name, transport, data_path_Belgium=None):
         """
         Les donnes sont reduites afin de ne considerer que les commune situe dans les arrondissement donne par locations
         Les stop et trajet considere ne seront que ceux ce situant dans ces communes
@@ -112,30 +82,38 @@ class DataManager:
         """
         assert transport in ["train_only", "bus_only", "train_bus"]
 
-        DataManager.root = data_path
-        PATH_BELGIUM.set_up(data_path)
-        PATH.set_up(data_path, location_name, transport)
+        if data_path_Belgium is None : data_path_Belgium = data_path
 
-        parameter = Parameters(data_path, locations, transport, 0,0)
+        DataManager.root = data_path
+        path_Belgium = PATH_BELGIUM(data_path_Belgium)
+        path = PATH(data_path, location_name, transport, root_super=data_path_Belgium)
+        with (open(path.CONFIG, "w")) as conf:
+            config = {"locations": location_name, "location_name": location_name, "transport": transport,
+                      "max_walking_time": 0, "walking_speed": 0}
+            json.dump(config, conf)
+
+        parameter = Parameters(path)
 
 
 
         #reduce data
         print("reduce Census")
-        refnis_list = reduce_rsd_work(locations)
+        refnis_list = reduce_rsd_work(path_Belgium, path, locations)
         print("reduce map")
-        reduce_map(refnis_list)
+        reduce_map(path_Belgium, path, refnis_list)
 
         print("reduce stop")
         if transport == "train_only":
-            reduce_stop(PATH_BELGIUM.TRAIN_ONLY, refnis_list, "train_only", parameter)
-            reduce_parsed_gtfs(PATH_BELGIUM.TRAIN_ONLY, out=PATH.TRANSPORT)
+            reduce_stop(path_Belgium, path, path_Belgium.TRAIN_ONLY, refnis_list, "train_only", parameter)
+            reduce_parsed_gtfs(path, path_Belgium.TRAIN_ONLY, out=path.TRANSPORT)
         elif transport == "bus_only":
-            reduce_stop(PATH_BELGIUM.BUS_ONLY, refnis_list,"bus_only", parameter)
-            reduce_parsed_gtfs(PATH_BELGIUM.BUS_ONLY, out=PATH.TRANSPORT)
+            reduce_stop(path_Belgium, path, path_Belgium.BUS_ONLY, refnis_list,"bus_only", parameter)
+            reduce_parsed_gtfs(path, path_Belgium.BUS_ONLY, out=path.TRANSPORT)
         elif transport == "train_bus":
-            reduce_stop(PATH_BELGIUM.TRAIN_BUS, refnis_list,"train_bus", parameter )
-            reduce_parsed_gtfs(PATH_BELGIUM.TRAIN_BUS, out=PATH.TRANSPORT)
+            reduce_stop(path_Belgium, path, path_Belgium.TRAIN_BUS, refnis_list,"train_bus", parameter)
+            reduce_parsed_gtfs(path, path_Belgium.TRAIN_BUS, out=path.TRANSPORT)
+
+        os.remove(path.CONFIG)
 
 
     @staticmethod
@@ -153,37 +131,32 @@ class DataManager:
         assert max_walking_time >= 0
         walking_speed = walking_speed * 1000 / 60
 
-        PATH.set_up(data_path, location_name, transport)
-        with (open(PATH.CONFIG, "w")) as conf:
+        path = PATH(data_path, location_name, transport)
+        with (open(path.CONFIG, "w")) as conf:
             config = {"locations": location_name, "location_name": location_name, "transport": transport,
                       "max_walking_time": max_walking_time, "walking_speed": walking_speed}
             json.dump(config, conf)
 
-        with open(PATH.TRANSPORT, "r") as tr:
-            with open(PATH.SIMPLIFIED, "w") as s:
+        with open(path.TRANSPORT, "r") as tr:
+            with open(path.SIMPLIFIED, "w") as s:
                 json.dump(simplify_time(json.load(tr)), s)   # set time in min instead of seconds
 
-        extract_travel(PATH.RSD_WORK, PATH.TRAVEL)   # 3b
+        extract_travel(path.RSD_WORK, path.TRAVEL)   # 3b
 
-        produce_exthended_graph(MAX_TIME=28 * 60)   # 28 car certaine donnees depasse 24h pour des raisons pratiques
+        produce_exthended_graph(PATH=path, MAX_TIME=28 * 60)   # 28 car certaine donnees depasse 24h pour des raisons pratiques
 
-        parameter = Parameters(data_path, location_name, transport, max_walking_time, walking_speed)
+        parameter = Parameters(path)
         if max_walking_time > 0:
             compute_stations_walking_time(param=parameter)
-            compute_walking_edges()
+            compute_walking_edges(path=path)
 
         return parameter
 
 
     @staticmethod
     def load_data(data_path, location_name, transport):
-
-        PATH.set_up(data_path, location_name, transport)
-        with (open(PATH.CONFIG, "r")) as conf:
-            config = json.load(conf)
-        param = Parameters(data_path=data_path, arrondisement=location_name, transport=transport,
-                           max_walking_time=config["max_walking_time"], walking_speed=config["walking_speed"])
-        print(PATH.MAP_SHAPE)
+        path = PATH(data_path, location_name, transport)
+        param = Parameters(path)
         return param
 
 

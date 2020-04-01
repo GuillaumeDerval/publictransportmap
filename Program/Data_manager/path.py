@@ -1,7 +1,7 @@
 import os
+import json
 
 
-root = None
 initial = "initial"
 intermediate = "intermediate"
 produced = "produced"
@@ -40,78 +40,103 @@ def make_data_structure(data_path):
 
 
 class PATH_BELGIUM:
-    # new method
-    GTFS, BUS_ONLY, TRAIN_ONLY, TRAIN_BUS = None, None, None, None
-    MAP_SHAPE, MAP_POP, RSD_WORK, STOP_POSITION_LAMBERT = None, None, None, None
-    OUT_BELGIUM_MAP, OUT_TRAIN_LINES_MAP, OUT_BUS_LINES_MAP = None, None, None
 
-    @staticmethod
-    def set_up(data_path):
-        root = data_path
+    def __init__(self, root):
+        self.root_main = root
         # new method
-        PATH_BELGIUM.GTFS = root + "/" + initial + "/gtfs/"
-        PATH_BELGIUM.BUS_ONLY = root + "/" + intermediate + "/bus_only.json"
-        PATH_BELGIUM.TRAIN_ONLY = root + "/" + intermediate + "/train_only.json"
-        PATH_BELGIUM.TRAIN_BUS = root + "/" + intermediate + "/train_bus.json"
+        self.GTFS = root + "/" + initial + "/gtfs/"
+        self.BUS_ONLY = root + "/" + intermediate + "/bus_only.json"
+        self.TRAIN_ONLY = root + "/" + intermediate + "/train_only.json"
+        self.TRAIN_BUS = root + "/" + intermediate + "/train_bus.json"
 
         # metric
-        PATH_BELGIUM.MAP_SHAPE = root + "/" + initial + "/sh_statbel_statistical_sectors.geojson"
-        PATH_BELGIUM.MAP_POP = root + "/" + initial + "/OPEN_DATA_SECTOREN_2011.csv"
-        PATH_BELGIUM.RSD_WORK = root + "/" + initial + "/TU_CENSUS_2011_COMMUTERS_MUNTY.txt"
-        PATH_BELGIUM.STOP_POSITION_LAMBERT = {  "train_only" : root + "/" + intermediate + "/stop_lambert_train_only.json",
-                                                "bus_only": root + "/" + intermediate + "/stop_lambert_bus_only.json",
-                                                "train_bus": root + "/" + intermediate + "/stop_lambert_train_bus.json"}
+        self.MAP_SHAPE = root + "/" + initial + "/sh_statbel_statistical_sectors.geojson"
+        self.MAP_POP = root + "/" + initial + "/OPEN_DATA_SECTOREN_2011.csv"
+        self.RSD_WORK = root + "/" + initial + "/TU_CENSUS_2011_COMMUTERS_MUNTY.txt"
+        self.STOP_POSITION_LAMBERT = {"train_only": root + "/" + intermediate + "/stop_lambert_train_only.json",
+                                      "bus_only": root + "/" + intermediate + "/stop_lambert_bus_only.json",
+                                      "train_bus": root + "/" + intermediate + "/stop_lambert_train_bus.json"}
 
         # output map
-        PATH_BELGIUM.OUT_BELGIUM_MAP = root + "/" + produced + "/maps/Belgium.geojson"
-        PATH_BELGIUM.OUT_TRAIN_LINES_MAP = root + "/" + produced + "/maps/train_lines_belgium.geojson"
-        PATH_BELGIUM.OUT_BUS_LINES_MAP = root + "/" + produced + "/maps/bus_lines_belgium.geojson"
+        self.OUT_BELGIUM_MAP = root + "/" + produced + "/maps/Belgium.geojson"
+        self.OUT_TRAIN_LINES_MAP = root + "/" + produced + "/maps/train_lines_belgium.geojson"
+        self.OUT_BUS_LINES_MAP = root + "/" + produced + "/maps/bus_lines_belgium.geojson"
 
 
-class PATH:
-    CONFIG = None
-    # new method
-    TRANSPORT, SIMPLIFIED, WALKING = None, None, None
+class PATH(PATH_BELGIUM):
 
-    # metric
-    MAP_SHAPE, MAP_POP, RSD_WORK, TRAVEL, STOP_POSITION_LAMBERT = None, None, None, None, None
+    def __init__(self, root, location_name, transport, root_super=None):
+        if root_super is None:
+            super(PATH, self).__init__(root)
+        else:
+            super(PATH, self).__init__(root_super)
 
-    # dynamic APSP
-    GRAPH_TC, GRAPH_TC_WALK, MINIMAL_TRAVEL_TIME_TC = None, None, None
-
-    # output map
-    OUT_TIME_MAP, OUT_MUNTY_MAP, OUT_STOP_MAP = None, None, None
-
-    @staticmethod
-    def set_up(data_path, localisation_name, transport):
-        root = data_path
-
-        path = root + "/" + intermediate + "/" + localisation_name + "_" + transport
+        path = root + "/" + intermediate + "/" + location_name + "_" + transport
         if not os.path.exists(path):
             os.makedirs(path)
 
-        PATH.CONFIG = "{0}/{1}/{2}_{3}/config.json".format(root, intermediate, localisation_name, transport)
+        self.root = root
+        self.location_name = location_name
+        self.transport = transport
+
+        self.CONFIG = "{0}/{1}/{2}_{3}/config.json".format(root, intermediate, location_name, transport)
 
         # new method
-        PATH.TRANSPORT = "{0}/{1}/{2}_{3}/transport.json".format(root, intermediate, localisation_name, transport)
-        PATH.SIMPLIFIED = "{0}/{1}/{2}_{3}/simplified.json".format(root, intermediate, localisation_name, transport)
-        PATH.WALKING = "{0}/{1}/{2}_{3}/distance_walking.json".format(root, intermediate, localisation_name, transport)
+        self.TRANSPORT = "{0}/{1}/{2}_{3}/transport.json".format(root, intermediate, location_name, transport)
+        self.SIMPLIFIED = "{0}/{1}/{2}_{3}/simplified.json".format(root, intermediate, location_name, transport)
+        self.WALKING = "{0}/{1}/{2}_{3}/distance_walking.json".format(root, intermediate, location_name, transport)
 
         # metric
-        PATH.MAP_SHAPE = "{0}/{1}/{2}_{3}/map.geojson".format(root, intermediate, localisation_name, transport)
-        PATH.MAP_POP = PATH_BELGIUM.MAP_POP
-        PATH.RSD_WORK = "{0}/{1}/{2}_{3}/CENSUS_2011.txt".format(root, intermediate, localisation_name, transport)
-        PATH.TRAVEL = "{0}/{1}/{2}_{3}/travel_user.json".format(root, intermediate, localisation_name,transport)
-        PATH.STOP_POSITION_LAMBERT = "{0}/{1}/{2}_{3}/stop_lambert.json".format(root, intermediate, localisation_name, transport)
+        self.MAP_SHAPE = "{0}/{1}/{2}_{3}/map.geojson".format(root, intermediate, location_name, transport)
+        self.RSD_WORK = "{0}/{1}/{2}_{3}/CENSUS_2011.txt".format(root, intermediate, location_name, transport)
+        self.TRAVEL = "{0}/{1}/{2}_{3}/travel_user.json".format(root, intermediate, location_name, transport)
+        self.STOP_POSITION_LAMBERT = "{0}/{1}/{2}_{3}/stop_lambert.json".format(root, intermediate, location_name, transport)
 
         # dynamic APSP
-        PATH.GRAPH_TC = "{0}/{1}/{2}_{3}/graph.json".format(root, intermediate, localisation_name, transport)
-        PATH.GRAPH_TC_WALK = "{0}/{1}/{2}_{3}/graph_walk.json".format(root, intermediate, localisation_name, transport)
-        PATH.MINIMAL_TRAVEL_TIME_TC = "{0}/{1}/minimal_distance/{2}_{3}".format(root, produced, localisation_name, transport)
+        self.GRAPH_TC = "{0}/{1}/{2}_{3}/graph.json".format(root, intermediate, location_name, transport)
+        self.GRAPH_TC_WALK = "{0}/{1}/{2}_{3}/graph_walk.json".format(root, intermediate, location_name, transport)
+        self.MINIMAL_TRAVEL_TIME_TC = "{0}/{1}/minimal_distance/{2}_{3}".format(root, produced, location_name, transport)
 
         # output map
-        PATH.OUT_TIME_MAP = "{0}/{1}/time_map_{2}_{3}.geojson".format(root, produced, localisation_name, transport)
-        PATH.OUT_MUNTY_MAP = "{0}/{1}/maps/munty_map_{2}_{3}.geojson".format(root, produced, localisation_name, transport)
-        PATH.OUT_STOP_MAP = "{0}/{1}/maps/stop_map_{2}_{3}.geojson".format(root, produced, localisation_name, transport)
+        self.OUT_TIME_MAP = "{0}/{1}/time_map_{2}_{3}.geojson".format(root, produced, location_name, transport)
+        self.OUT_MUNTY_MAP = "{0}/{1}/maps/munty_map_{2}_{3}.geojson".format(root, produced, location_name, transport)
+        self.OUT_STOP_MAP = "{0}/{1}/maps/stop_map_{2}_{3}.geojson".format(root, produced, location_name, transport)
 
 
+
+# Parameters
+class Parameters:
+    def __init__(self,path: PATH):
+        with (open(path.CONFIG, "r")) as conf:
+            config = json.load(conf)
+        self.PATH : PATH = path
+        self.data_path = path.root
+        self.__location_name = path.location_name
+        self.__transport = path.transport
+        self.__MAX_WALKING_TIME = config["max_walking_time"] # in min
+        self.__WALKING_SPEED = config["walking_speed"]  # m/min
+
+
+        # self.__date = date
+        # self.__start_time = start_time                        # from "00:00:00" to "25:59:59"
+        # self.__end_time = end_time                          # from "00:00:00" to "25:59:59"
+    def transport(self):
+        return self.__transport
+
+    def location_name(self):
+        return self.__location_name()
+
+    def MAX_WALKING_TIME(self):
+        return self.__MAX_WALKING_TIME
+
+    def WALKING_SPEED(self):
+        return self.__WALKING_SPEED
+
+    def MAX_RADIUS(self):
+        return (self.__MAX_WALKING_TIME / 3600.0) * self.__WALKING_SPEED / 6367.0  # todo check
+
+    def distance_to_walking_time(self, dist_km):
+        hours = dist_km / self.__WALKING_SPEED
+        minutes = hours * 60
+        seconds = minutes * 60
+        return round(seconds)

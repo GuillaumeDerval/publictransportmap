@@ -27,7 +27,7 @@ def compare_results(path_distance_dir_exp, path_distance_dir_actu):
 def check_if_correct_modification(modification_function,graph_path = "data_test/mini.json", mmap = None):
 
     if mmap is None : mmap = my_map(path_shape="data_test/smallmap.geojson",path_pop="data_test/popsector.csv", stop_list_path="data_test/mini_stop_pos.json")
-    APSP = Dynamic_APSP(graph_path, mapmap=mmap)
+    APSP = Dynamic_APSP(graph_path, mmap=mmap)
 
     modification_function(APSP)
     APSP.hard_save_graph("data_test/save.json")
