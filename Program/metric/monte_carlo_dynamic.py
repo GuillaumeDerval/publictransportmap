@@ -73,6 +73,7 @@ class TravellersModelisation:
         self.__stack_log = []  # permet de faire une recherche sur plusieur etage
 
     # ##################################### Virtual traveller generation ###############################################
+
     def __generate_virtual_travellers(self, travel_path):
         map = self.map
         def get_n_rdm_point(n, munty):

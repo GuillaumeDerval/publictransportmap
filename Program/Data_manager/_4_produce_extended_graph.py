@@ -14,8 +14,9 @@ import time
 def produce_exthended_graph(PATH, MAX_TIME):
 
 
-    print("--- Loading data")
-    data = json.load(open(PATH.SIMPLIFIED))
+    #print("--- Loading data")
+    with open(PATH.SIMPLIFIED,"r") as s:
+        data = json.load(s)
 
     #A chaque nom de stop associe un nombre et vice-versa
     idx_to_name = list(data.keys())
@@ -36,7 +37,7 @@ def produce_exthended_graph(PATH, MAX_TIME):
 
     #Cree une liste qui  pour chaque stop :
     #     cree un set qui contient tout les temps pour lequel un  TC arrive ou part de ce stop
-    print("--- Computing nodes to create")
+    #print("--- Computing nodes to create")
     used_times = [set() for _ in range(0, len(idx_to_name))]
     for source, y in enumerate(data):
         for dest, start, end in y:
@@ -51,8 +52,8 @@ def produce_exthended_graph(PATH, MAX_TIME):
     #            used_times[dest].add(bt+wt)
     #    used_times[source] = used_times[source].union(base_used_times[source])
 
-    print("NB ORIG NODES {}".format(len(data)))
-    print("NB GRAPH NODES {}".format(sum([len(y) for y in used_times])))
+    #print("NB ORIG NODES {}".format(len(data)))
+    #print("NB GRAPH NODES {}".format(sum([len(y) for y in used_times])))
 
 
 
@@ -94,10 +95,10 @@ def produce_exthended_graph(PATH, MAX_TIME):
 
 
 
-    print("--- Computing graph")
-    print(time.time())
+    #print("--- Computing graph")
+    #print(time.time())
     graph = process_nodes(data)
-    print(time.time())
+    #print(time.time())
 
     # print("--- Computing toposort")
     #
@@ -125,9 +126,10 @@ def produce_exthended_graph(PATH, MAX_TIME):
     # topo = toposort()
     # print(time.time())
 
-    print("--- Saving")
-    json.dump({"idx_to_name": idx_to_name, "max_time": MAX_TIME, #"topo": topo,
-               "graph": graph, "used_times": [list(sorted(x)) for x in used_times]
-               }, open(PATH.GRAPH_TC, 'w'))
+    #print("--- Saving")
+    with open(PATH.GRAPH_TC, 'w') as out_file:
+        json.dump({"idx_to_name": idx_to_name, "max_time": MAX_TIME, #"topo": topo,
+                    "graph": graph, "used_times": [list(sorted(x)) for x in used_times]
+                    }, out_file)
 
-    print("--- Done")
+    #print("--- Done")

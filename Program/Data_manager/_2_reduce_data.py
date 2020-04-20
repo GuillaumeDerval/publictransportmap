@@ -46,6 +46,19 @@ def reduce_map(PATH_BELGIUM, PATH, refnis_list):
     with open(PATH.MAP_SHAPE, 'w') as w:
         dump(out, w)
 
+def reduce_pop_sector(PATH_BELGIUM, PATH,refnis_list):
+    with open(PATH_BELGIUM.MAP_POP,"r") as in_file:
+        with open(PATH.MAP_POP,"w") as out_file:
+            reader = csv.DictReader(in_file, delimiter=';')
+            writer = csv.DictWriter(out_file, fieldnames=reader.fieldnames, delimiter=';')
+            writer.writeheader()
+            for row in reader:
+                refnis = str(row["\ufeffCD_REFNIS"])
+                if refnis in refnis_list:
+                    writer.writerow(row)
+
+
+
 def reduce_stop(PATH_BELGIUM, PATH, parsed_gtfs_path,refnis_list, transport, param):
     """
     Renvoie une liste contenant les stop valide

@@ -103,7 +103,14 @@ def artifical_travel_time():
     np.save(path2 + "/S6.npy", y.astype(np.int16))
 
 #TODO other files
+# small1, 2
+small_map()
+artifical_travel_time()
 
 #medium
-DataManager.reduce_data("./Data_test","Arrondissement de Dixmude", "medium","train_only", "./../Data")
-DataManager.produce_data("./Data_test","medium","train_only", 15, 5)
+#DataManager.reduce_data("./Data_test","Arrondissement de Philippeville", "APSP_medium","train_bus", "./../Data")
+DataManager.produce_data("./Data_test", "APSP_medium", "train_bus", 15, 5)
+
+#Expect
+DataManager.produce_data("./Data_test", "APSP_mini_exp", "train_only", 0, 0, MAX_TIME=100)
+DataManager.produce_data("./Data_test", "APSP_medium_exp", "train_bus", 15, 5)

@@ -32,7 +32,7 @@ class my_map:
         # stop_munty
         with open(stop_list_path, "r") as file:
             stop_list = json.load(file)
-            self.stop_position_dico = {name: tuple(pos) for name, pos in stop_list}
+            self.stop_position_dico = stop_list#{name: tuple(pos) for name, pos in stop_list}
         self.reachable_stop_from_munty = {munty: [] for munty in
                                           self.get_all_munty_refnis()}  # contient tout les stop atteignable depuis une commune
         self.reachable_munty_from_stop = {stop_name: set() for stop_name in

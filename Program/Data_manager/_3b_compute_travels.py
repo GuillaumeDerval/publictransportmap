@@ -51,4 +51,5 @@ def extract_travel(in_path, out_path):
     cities = [t["residence"] for t in travel]
     cities = list(dict.fromkeys(cities))
     out = {"cities": cities, "travel":  travel}
-    json.dump(out, open(out_path, "w"))
+    with open(out_path, "w") as o:
+        json.dump(out, o)

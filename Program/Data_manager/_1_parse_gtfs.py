@@ -4,13 +4,13 @@ import os
 """####################################################################################################################
 Convert the data with format GTFS into a json with the form :
 {
-        "id_train": {
-             name: "name of the stop",
+        "stop_name": {
+             name: "complete name of the stop",
              lat: 0.0
              lon: 0.0
              nei: [
-                 ["id_dest_1", departure_time_1, arrival_time_1],
-                 ["id_dest_2", departure_time_2, arrival_time_2],
+                 ["name_dest_1", departure_time_1, arrival_time_1],
+                 ["name_dest_2", departure_time_2, arrival_time_2],
                  ...
              ]
          }
@@ -141,7 +141,7 @@ def generate_output_for_gtfs(folder, prefix, date, start_time, end_time):
     #         lat: 0.0
     #         lon: 0.0
     #         nei: [
-    #             ["id_dest_1", departure_time_1, arrival_time_1},
+    #             ["id_dest_1", departure_time_1, arrival_time_1},  (time in seconds)
     #             ["id_dest_2", departure_time_2, arrival_time_2},
     #             ...
     #         ]

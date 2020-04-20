@@ -63,15 +63,17 @@ class PATH_BELGIUM:
         self.OUT_BUS_LINES_MAP = root + "/" + produced + "/maps/bus_lines_belgium.geojson"
 
 
-class PATH(PATH_BELGIUM):
+class PATH:
 
-    def __init__(self, root, location_name, transport, root_super=None):
-        if root_super is None:
-            super(PATH, self).__init__(root)
-        else:
-            super(PATH, self).__init__(root_super)
+    def __init__(self, root, location_name, transport):
 
         path = root + "/" + intermediate + "/" + location_name + "_" + transport
+        if not os.path.exists(path):
+            os.makedirs(path)
+        path = root + "/" + produced + "/is_path/" + location_name + "_" + transport
+        if not os.path.exists(path):
+            os.makedirs(path)
+        path = root + "/" + produced + "/minimal_distance/" + location_name + "_" + transport
         if not os.path.exists(path):
             os.makedirs(path)
 
@@ -88,6 +90,7 @@ class PATH(PATH_BELGIUM):
 
         # metric
         self.MAP_SHAPE = "{0}/{1}/{2}_{3}/map.geojson".format(root, intermediate, location_name, transport)
+        self.MAP_POP = "{0}/{1}/{2}_{3}/pop_sector.csv".format(root, intermediate, location_name, transport)
         self.RSD_WORK = "{0}/{1}/{2}_{3}/CENSUS_2011.txt".format(root, intermediate, location_name, transport)
         self.TRAVEL = "{0}/{1}/{2}_{3}/travel_user.json".format(root, intermediate, location_name, transport)
         self.STOP_POSITION_LAMBERT = "{0}/{1}/{2}_{3}/stop_lambert.json".format(root, intermediate, location_name, transport)
@@ -95,7 +98,8 @@ class PATH(PATH_BELGIUM):
         # dynamic APSP
         self.GRAPH_TC = "{0}/{1}/{2}_{3}/graph.json".format(root, intermediate, location_name, transport)
         self.GRAPH_TC_WALK = "{0}/{1}/{2}_{3}/graph_walk.json".format(root, intermediate, location_name, transport)
-        self.MINIMAL_TRAVEL_TIME_TC = "{0}/{1}/minimal_distance/{2}_{3}".format(root, produced, location_name, transport)
+        self.IS_PATH = "{0}/{1}/is_path/{2}_{3}/".format(root, produced, location_name, transport)
+        self.MINIMAL_TRAVEL_TIME_TC = "{0}/{1}/minimal_distance/{2}_{3}/".format(root, produced, location_name, transport)
 
         # output map
         self.OUT_TIME_MAP = "{0}/{1}/time_map_{2}_{3}.geojson".format(root, produced, location_name, transport)
@@ -103,18 +107,18 @@ class PATH(PATH_BELGIUM):
         self.OUT_STOP_MAP = "{0}/{1}/maps/stop_map_{2}_{3}.geojson".format(root, produced, location_name, transport)
 
 
-
 # Parameters
 class Parameters:
     def __init__(self,path: PATH):
         with (open(path.CONFIG, "r")) as conf:
             config = json.load(conf)
-        self.PATH : PATH = path
+        self.PATH: PATH = path
         self.data_path = path.root
         self.__location_name = path.location_name
         self.__transport = path.transport
         self.__MAX_WALKING_TIME = config["max_walking_time"] # in min
         self.__WALKING_SPEED = config["walking_speed"]  # m/min
+        self.__max_time = config["max_time"]  # min
 
 
         # self.__date = date
@@ -124,13 +128,16 @@ class Parameters:
         return self.__transport
 
     def location_name(self):
-        return self.__location_name()
+        return self.__location_name
 
     def MAX_WALKING_TIME(self):
         return self.__MAX_WALKING_TIME
 
     def WALKING_SPEED(self):
         return self.__WALKING_SPEED
+
+    def WALKING_SPEED_KM_H(self):
+        return self.__WALKING_SPEED*60/1000
 
     def MAX_RADIUS(self):
         return (self.__MAX_WALKING_TIME / 3600.0) * self.__WALKING_SPEED / 6367.0  # todo check
@@ -140,3 +147,6 @@ class Parameters:
         minutes = hours * 60
         seconds = minutes * 60
         return round(seconds)
+
+    def MAX_TIME(self):
+        return self.__max_time

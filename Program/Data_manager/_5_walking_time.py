@@ -15,7 +15,8 @@ def compute_stations_walking_time(param):
         in  : PATH.SIMPLIFIED
         out : PATH.WALKING
     """
-    data = json.load(open(param.PATH.SIMPLIFIED))
+    with open(param.PATH.SIMPLIFIED) as s:
+        data = json.load(s)
     max_radius = param.MAX_RADIUS()
 
     def distance_to_walking_time(dist_km):
@@ -32,8 +33,9 @@ def compute_stations_walking_time(param):
 
     out = {x: [] for x in idxes}
 
-    bar = progressbar.ProgressBar()
-    for i in bar(range(0, len(idxes))):
+    #bar = progressbar.ProgressBar()
+    #for i in bar(range(0, len(idxes))):
+    for i in range(0, len(idxes)) :
         idx1 = idxes[i]
 
         result = tree.query_radius([latlon[i]], r=max_radius)[0]
@@ -41,11 +43,13 @@ def compute_stations_walking_time(param):
             idx2 = idxes[j]
             distance = haversine(data[idx1]["lon"], data[idx1]["lat"], data[idx2]["lon"], data[idx2]["lat"])
             distance_time = hexacontaround(max(0, distance_to_walking_time(distance)))
+            #distance_time = max(0, math.ceil(distance_to_walking_time(distance)))
             out[idx1].append((distance_time, idx2))
             # out[idx2].append((distance_time, idx1)) will be done the other way!
 
     out = {x: sorted(y)[0:50] for x, y in out.items()}
-    json.dump(out, open(param.PATH.WALKING, "w"))
+    with open(param.PATH.WALKING, "w") as walk_file:
+        json.dump(out, walk_file)
 
 
 # Lancer _2_compute_walking_time.py before this program
@@ -72,13 +76,15 @@ def compute_walking_edges(path):
         org_idx = name_to_idx[org_name]
         org_time = used_time[org_idx]          # Time are already sorted
         for walk_time, dest_name in walk[org_name]:
-            dest_idx = name_to_idx[dest_name]
-            dest_time = used_time[dest_idx]     # Time are already sorted
-            for o_time in org_time:
-                i = 0
-                while dest_time[i] < o_time + walk_time:
-                    i += 1
-                graph_walk_tc["graph"][str(org_idx*max_time + o_time)].append(dest_idx*max_time + dest_time[i])
+            if dest_name != org_name:
+                dest_idx = name_to_idx[dest_name]
+                dest_time = used_time[dest_idx]     # Time are already sorted
+                for o_time in org_time:
+                    i = 0
+                    while i < len(dest_time) and dest_time[i] < o_time + walk_time:
+                        i += 1
+                    if i < len(dest_time):
+                        graph_walk_tc["graph"][str(org_idx*max_time + o_time)].append(dest_idx*max_time + dest_time[i])
 
     with open(path.GRAPH_TC_WALK, "w") as out:
         json.dump(graph_walk_tc, out)

@@ -1,9 +1,11 @@
 from Program.distance_and_conversion import WGS84_to_Lambert
 import json
-from Program.Unused.path import PATH_BELGIUM
+import time
+from shapely.geometry import LineString, Point, mapping
+
 
 # mix a map with the stop positions
-def map_stop(in_path, out_path):
+def map_stop(in_path, out_path,map_path):
     feature_collection = []
 
     data_stop = json.load(open(in_path))
@@ -12,29 +14,28 @@ def map_stop(in_path, out_path):
     stop_pos = {}
     step = 500
     print("target: ", len(data_stop.keys()))
-    for i in range(44500, 47500, step): #len(data_stop.keys())
+    for i in range(len(data_stop.keys()), len(data_stop.keys()), step): #len(data_stop.keys())
 
         listkey = list(data_stop.keys())
         for stop in listkey[i: i+step]:
             #stop = data_stop[stop]
             pos = WGS84_to_Lambert((float(data_stop[stop]["lon"]), float(data_stop[stop]["lat"])))
             stop_pos[stop] = pos
-        with open("../Data_intermediate/stop_lambert_bus_only.json", 'a') as w: #todo path
+        with open(out_path, 'a') as w:
             json.dump(stop_pos, w),
             stop_pos = {}
             print(i)
-            #time.sleep(20)
+            time.sleep(20)
 
     #stop_Lamb = json.load(open("output/stop_lambert_pos.json", "r"))
 
     #for s in stop_Lamb:
     #    stop_pos[s[0]] = s[1]
 
-    stop_pos = json.load(open("../Data_intermediate/stop_lambert_bus_only.json", "r")) #todo path
+    stop_pos = json.load(open(out_path, "r"))
     print("len ", len(stop_pos))
 
     # Creer lien entre les stop
-    """
     for stop in stop_pos.keys():
         # feature_collection.append(elem)
         x,y = stop_pos[stop]
@@ -64,7 +65,8 @@ def map_stop(in_path, out_path):
         }
 
     with open(out_path, 'w') as w:
-        dump(out, w)
-    """
+        json.dump(out, w)
 
-map_stop(PATH_BELGIUM.BUS_ONLY,PATH_BELGIUM.OUT_BUS_LINES_MAP)
+
+map_stop("../../Data/intermediate/bus_only.json","../../Data/intermediate/stop_lambert_bus_only.json",
+         map_path ="/Users/DimiS/Documents/Gotta_go_fast/Project/Data/produced/maps/bus_lines.geojson")

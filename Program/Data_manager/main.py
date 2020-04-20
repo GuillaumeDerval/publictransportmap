@@ -1,11 +1,12 @@
 import os
+import shutil
 import datetime
 import json
 
 from Program.Data_manager.path import Parameters, make_data_structure, PATH_BELGIUM, PATH
 
 from Program.Data_manager._1_parse_gtfs import time_str_to_int, generate_output_for_gtfs
-from Program.Data_manager._2_reduce_data import reduce_rsd_work, reduce_map, reduce_stop, reduce_parsed_gtfs
+from Program.Data_manager._2_reduce_data import reduce_rsd_work, reduce_map, reduce_pop_sector,reduce_stop, reduce_parsed_gtfs
 from Program.Data_manager._3_simplify import simplify_time
 from Program.Data_manager._3b_compute_travels import extract_travel
 
@@ -86,10 +87,10 @@ class DataManager:
 
         DataManager.root = data_path
         path_Belgium = PATH_BELGIUM(data_path_Belgium)
-        path = PATH(data_path, location_name, transport, root_super=data_path_Belgium)
+        path = PATH(data_path, location_name, transport)
         with (open(path.CONFIG, "w")) as conf:
             config = {"locations": location_name, "location_name": location_name, "transport": transport,
-                      "max_walking_time": 0, "walking_speed": 0}
+                      "max_walking_time": 0, "walking_speed": 0, "max_time": 28*60}
             json.dump(config, conf)
 
         parameter = Parameters(path)
@@ -101,6 +102,8 @@ class DataManager:
         refnis_list = reduce_rsd_work(path_Belgium, path, locations)
         print("reduce map")
         reduce_map(path_Belgium, path, refnis_list)
+        print("reduce pop sector")
+        reduce_pop_sector(path_Belgium, path, refnis_list)
 
         print("reduce stop")
         if transport == "train_only":
@@ -117,7 +120,7 @@ class DataManager:
 
 
     @staticmethod
-    def produce_data(data_path, location_name, transport,  max_walking_time, walking_speed):
+    def produce_data(data_path, location_name, transport,  max_walking_time, walking_speed, MAX_TIME= 28 * 60):
         """
 
         :param data_path:
@@ -125,6 +128,7 @@ class DataManager:
         :param transport: train_only, bus_only, train_bus
         :param max_walking_time: min
         :param walking_speed: received in km/h and converted in m/min
+        :param MAX_TIME: 28*60 car certaine donnees depasse 24h pour des raisons pratiques
         :return:
         """
         assert walking_speed >= 0
@@ -134,7 +138,7 @@ class DataManager:
         path = PATH(data_path, location_name, transport)
         with (open(path.CONFIG, "w")) as conf:
             config = {"locations": location_name, "location_name": location_name, "transport": transport,
-                      "max_walking_time": max_walking_time, "walking_speed": walking_speed}
+                      "max_walking_time": max_walking_time, "walking_speed": walking_speed, "max_time": MAX_TIME}
             json.dump(config, conf)
 
         with open(path.TRANSPORT, "r") as tr:
@@ -143,12 +147,14 @@ class DataManager:
 
         extract_travel(path.RSD_WORK, path.TRAVEL)   # 3b
 
-        produce_exthended_graph(PATH=path, MAX_TIME=28 * 60)   # 28 car certaine donnees depasse 24h pour des raisons pratiques
+        produce_exthended_graph(PATH=path, MAX_TIME=MAX_TIME)
 
         parameter = Parameters(path)
         if max_walking_time > 0:
             compute_stations_walking_time(param=parameter)
             compute_walking_edges(path=path)
+        else:
+            shutil.copyfile(path.GRAPH_TC, path.GRAPH_TC_WALK)
 
         return parameter
 
@@ -163,6 +169,6 @@ class DataManager:
 if __name__ == '__main__':
     data_path = "/Users/DimiS/Documents/Gotta_go_fast/Project/Data"
     #make_data_structure(data_path)
-    #DataManager.produce_data_belgium(data_path)
+    DataManager.produce_data_belgium(data_path)
     DataManager.reduce_data(data_path, "Arrondissement de Malines","Malines", "train_only")
     DataManager.produce_data(data_path,"Malines", "train_only", 15, 5)
