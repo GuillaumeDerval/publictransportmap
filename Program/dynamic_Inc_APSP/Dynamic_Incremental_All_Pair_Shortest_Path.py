@@ -156,7 +156,7 @@ class Dynamic_APSP:
         """
         return self.distance.dist(s_name, d_name)
 
-    def dist_from(self, s_name : str) -> list:
+    def dist_from(self, s_name: str) -> list:
         """
         Return the list of the minimal distance from source  s (id)
         """
@@ -174,7 +174,7 @@ class Dynamic_APSP:
         if out_path is None: out_path = self.param.PATH.GRAPH_TC_WALK
         with open(out_path, 'w') as out_file:
             graph = {}
-            for key, value in self.graph.adj_matrix.items():
+            for key, value in self.graph.adj_list.items():
                 l = []
                 for i in value:
                     if i != int(key):
@@ -285,108 +285,4 @@ class Dynamic_APSP:
         return walk_in, walk_out
 
     # ################################################################################################################
-
-
-class SlobbeAlgorithm:
-    @staticmethod
-    def __find_affected_sources(path : PathPresence, graph : Graph, u :int, v : int):
-        # Implementation based on the algo 4 of Slobbe paper
-        S = set()  # affected source
-        S.add(u)
-        graph.vis = {v: False for v in graph.vertex}  # Reset vis(·) to false
-        if not path.is_path(u, v):  # w < self.dist(u,v)
-            Q = deque()
-            Q.append(u)
-            graph.vis[u] = True
-            while len(Q) > 0:
-                x = Q.popleft()
-                for z in graph.reversed_adj_matrix[x]:
-                    if not graph.vis[z] and not path.is_path(z, v) and path.is_path(z, u):  # .dist(z, v) > self.dist(z,u) + w
-                        Q.append(z)
-                        graph.vis[z] = True
-                        S.add(z)
-            graph.vis = {v: False for v in graph.vertex}  # Reset vis(·) to false
-        return S
-
-    @staticmethod
-    def APSP_edge(path: PathPresence, graph: Graph, u: int, v: int):
-        """
-        Ajout non trivial d'une arete dans le graph
-        :param graph: a Data_Structure graph
-        :param u: number of the node
-        :param v: number of the node
-        :return:
-        """
-        # ajout d'un edge entre 2 vertex dejà existant u,v:
-        # - w est defini par la difference de temps entre u et v
-        # - si il existait deja un moyen de joindre v à patir de u , dist(u,v) = difference de temps entre u et v = w
-        # - mis à jour inutile si il existe deja un chemin entre u et v
-        # - METTRE A JOUR UNIQUEMENT SSI DIST(U,V) = -1
-
-        # algo 1
-        if not path.is_path(u, v):
-            S, P = {}, {}
-            S[v] = SlobbeAlgorithm.__find_affected_sources(path, graph, u, v)
-            path.set_is_path(u, v, True)
-            Q = deque()
-            P[v] = v
-            Q.append(v)
-            graph.vis[v] = True
-            while len(Q) > 0:
-                y = Q.popleft()
-                # update distances for source nodes
-                for x in S.get(P[y], []):
-                    if not path.is_path(x, y):
-                        path.set_is_path(x, y, True)
-                        if y != v:
-                            if y not in S: S[y] = set()
-                            S[y].add(x)
-
-                # enqueue all neighbors that get closer to u
-                for w in graph.adj_matrix[y]:
-                    if not graph.vis[w] and not path.is_path(u, w):
-                        Q.append(w)
-                        graph.vis[w] = True
-                        if w in P: print("error P should be a set")
-                        P[w] = y
-
-    @staticmethod
-    def APSP_vertex(path : PathPresence, graph : Graph, z):
-        #TODO contient potentiellement une erreur pour les boucle (ie si z possede une arête vers lui-meme)
-
-        S, P = {}, {}                       # S : sources
-        S[z] = set()
-        Q = deque()
-        #find sources
-        Q.append(z)
-        while len(Q) > 0:
-            x = Q.popleft()
-            for q in graph.reversed_adj_matrix[x]:
-                if not path.is_path(q, z):
-                    path.set_is_path(q, z, True)
-                    Q.append(q)
-                    S[z].add(q)
-
-        Q.append(z)
-        while len(Q) > 0:
-            y = Q.popleft()
-            if y != z:
-                S[y] = set()
-                for x in S[P[y]]:
-                    if not path.is_path(x, y):
-                        path.set_is_path(x, y, True)
-                        S[y].add(x)
-
-            for w in graph.adj_matrix[y]:
-                if not path.is_path(z, w):
-                    Q.append(w)
-                    if w in P: print("\nerror2 P should be a set\n")
-                    P[w] = y
-                    path.set_is_path(z, w, True)
-
-
-
-# reflexion
-# Si on veut rester coehrent avec se qui a été fait precedament lorsqu'on veut ajouter une arrete (entre id1, id2),
-# on  cree potentiellement 2 moment de temps t1, t2 et donc 2 nouveau vertex u = id1*max + t1 et v = id2*max + t2
 
