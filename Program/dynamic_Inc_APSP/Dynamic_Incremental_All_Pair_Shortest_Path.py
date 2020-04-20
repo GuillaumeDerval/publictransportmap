@@ -1,8 +1,10 @@
 from collections import deque
-from Program.dynamic_Inc_APSP.Data_structure_reversible import *
 import json
-import heapq
-#from dynamic_Inc_APSP.Data_structure import *
+
+from Program.dynamic_Inc_APSP.Graph import Graph
+from Program.dynamic_Inc_APSP.PathPresence import PathPresence
+from Program.dynamic_Inc_APSP.MinimumTime import MinimumTime
+
 from Program.Data_manager.path import Parameters
 from Program.General.map import my_map
 from Program.distance_and_conversion import distance_Eucli
@@ -11,7 +13,7 @@ from Program.distance_and_conversion import distance_Eucli
 
 
 class Dynamic_APSP:
-    def __init__(self, param:Parameters, path=None, mmap=None):
+    def __init__(self, param: Parameters, path=None, mmap=None):
         if path is None:
             path = param.PATH.GRAPH_TC_WALK
         with open(path) as file:
@@ -28,7 +30,7 @@ class Dynamic_APSP:
             used.sort()
 
         self.path = PathPresence(self.graph, self.max_time)
-        self.distance = Distance(self.name_to_idx, self.idx_to_name, self.max_time, self.used_time, self.path)
+        self.distance = MinimumTime(self.name_to_idx, self.idx_to_name, self.max_time, self.used_time, self.path)
 
         if mmap is not None: self.map = mmap
         else: self.map = my_map.get_map(param)
@@ -37,33 +39,8 @@ class Dynamic_APSP:
         self.__change_log = []
         self.__stack_log = []
 
-    def __add_isolated_vertex(self, stop_name: str, time: int, position: (float, float)):
-        if stop_name in self.name_to_idx:
-            idx = self.name_to_idx[stop_name]
-            z = idx * self.max_time + time
-            if time in self.used_time[idx]:
-                return idx
-            else:
-                self.used_time[idx].append(time)
-                self.__change_log.append(("add_time", stop_name, time))
-        else:
-            assert position is not None
-            idx = len(self.name_to_idx)
-            self.idx_to_name.append(stop_name)
-            self.map.add_stop(stop_name, position)
-            self.name_to_idx[stop_name] = idx
-            z = idx * self.max_time + time
-            self.used_time.append([time])
-            self.__change_log.append(("add_name", stop_name))
-            self.__change_log.append(("add_time", stop_name, time))
+    def add_vertex(self, z_name, z_time, z_position, z_stop_in=None, z_stop_out=None):
 
-        self.graph.add_vertex(z)
-        self.path.add_vertex(z)
-        self.distance.up_to_date = False
-
-        return idx
-
-    def add_vertex(self, z_name, z_time, z_position, z_stop_in=[], z_stop_out=[]):
         """
 
         :param z_name:
@@ -73,9 +50,11 @@ class Dynamic_APSP:
         :param z_stop_out: [(name_out1, time_out1),...] name_out should be a already generated stop
         :return:
         """
+        if z_stop_in is None : z_stop_in = []
+        if z_stop_out is None: z_stop_out = []
 
         self.distance.up_to_date = False
-
+        # if the node is alreaddy created, simply add edge
         if z_name in self.name_to_idx and z_time in self.used_time[self.name_to_idx[z_name]]:
             # algo don't work, add edge one after the other
             z_idx = self.name_to_idx[z_name]
@@ -83,55 +62,56 @@ class Dynamic_APSP:
                 self.add_edge(name_in, time_in, z_name, z_time)
             for name_out, time_out in z_stop_out:
                 self.add_edge(z_name, z_time, name_out, time_out)
+            return z_idx
 
         else:
-            if z_name in self.name_to_idx:
-                z_position = self.map.get_stop(z_name)[1]
-            else :
-                assert z_position is not None
-
-            z_idx = self.__add_isolated_vertex(z_name, z_time, z_position)
+            z_idx = self.__add_vertex_in_structure(z_name, z_time, z_position)
             z = z_idx * self.max_time + z_time
+            #print("id ", z_idx)
 
-            # walking : find each node reachable thanks to walk
-            reachable_stop = self.map.get_reachable_stop_pt(z_position)
-            walk_in = []
-            walk_out = []
-            for walk_name, walk_pos in reachable_stop:
-                walk_idx = self.name_to_idx[walk_name]
-                walking_time = distance_Eucli(z_position, walk_pos) / self.param.WALKING_SPEED()
-
-                i = len(self.used_time[walk_idx]) - 1
-                while i > 0 and self.used_time[walk_idx][i] + walking_time > z_time:
-                    i -= 1
-                if i > 0:
-                    walk_in.append((walk_name, self.used_time[walk_idx][i]))
-
-                i = 0
-                while i < len(self.used_time[walk_idx]) and self.used_time[walk_idx][i] < z_time + walking_time:
-                    i += 1
-                if i < len(self.used_time[walk_idx]):
-                    walk_out.append((walk_name, self.used_time[walk_idx][i]))
-
-
-            # add vertex to the graph structure
+            # add vertex for the nodes in Z_in/Z_out if they don't exist
             for s_name, s_time in z_stop_in:
                 assert s_time <= z_time
-                s_id = self.__add_isolated_vertex(s_name, s_time,None)
-                s = s_id * self.max_time + s_time
-                self.graph.add_edge(s, z)
+                assert s_name in self.name_to_idx
+                self.add_vertex(s_name, s_time, None)
 
-            for d_name, d_time in z_stop_in:
+            for d_name, d_time in z_stop_out:
                 assert d_time >= z_time
-                d_id = self.__add_isolated_vertex(d_name, d_time, None)
-                d = d_id * self.max_time + d_time
-                self.graph.add_edge(z, d)
+                assert d_name in self.name_to_idx
+                self.add_vertex(d_name, d_time, None)
+
+
+
+            # Permettre a l'utilisateur de rester sur place et d'attendre le prochain TC
+            if z_name in self.name_to_idx:
+                i = 0
+                while i < len(self.used_time[z_idx]) and self.used_time[z_idx][i] != z_time:
+                    i += 1
+                if i > 0:
+                    z_time_inf = self.used_time[z_idx][i - 1]
+                    z_stop_in.append((z_name, z_time_inf))
+                if i+1 < len(self.used_time[z_idx]):
+                    z_time_supp = self.used_time[z_idx][i+1]
+                    z_stop_out.append((z_name, z_time_supp))
+
+            # Allow the user to walk between stops
+            walk_in, walk_out = self.__walking_edges(z_name, z_time, z_position)
 
             # conversion name, time, pos -> node
             z_in = [self.name_to_idx[n] * self.max_time + t for n, t in z_stop_in + walk_in]
             z_out = [self.name_to_idx[n] * self.max_time + t for n, t in z_stop_out + walk_out]
 
-            self.__APSP_vertex(z, z_in, z_out)
+            #Add edge to the graph structure
+            for i in z_in:
+                self.graph.add_edge(i, z)
+                #print("add edge,", i, " to ",z)
+            for o in z_out:
+                self.graph.add_edge(z, o)
+                #print("add edge,", z, " to ", o)
+
+            # computations
+
+            SlobbeAlgorithm.APSP_vertex(self.path, self.graph, z)
         return z_idx
 
     def add_edge(self, u_stop_name, u_time,  v_stop_name, v_time, u_position=None, v_position=None):  #todo tester l'efficacité de separer en plusieur cas
@@ -143,6 +123,7 @@ class Dynamic_APSP:
         v_id = self.add_vertex(v_stop_name, v_time, v_position)
         u = u_id * self.max_time + u_time
         v = v_id * self.max_time + v_time
+        #print("add edge fonction ", u, " to ", v)
 
         # w = v % self.__max_time - u % self.__max_time
         self.graph.add_edge(u, v)
@@ -161,13 +142,13 @@ class Dynamic_APSP:
         elif self.graph.out_degree(v) == 0:
             # for node x :compute dist v a partir de dist(.,u)
             for x in self.graph.vertex:
-               is_path_u = self.path.is_path(x, u)
-               if is_path_u:
-                   self.path.set_is_path(x, v, True)
+                is_path_u = self.path.is_path(x, u)
+                if is_path_u:
+                    self.path.set_is_path(x, v, True)
 
         # cas 4 : neither u neither v is a leaf
         else:
-            self.__APSP_edge(self.path, self.graph, u, v)
+            SlobbeAlgorithm.APSP_edge(self.path, self.graph, u, v)
 
     def dist(self, s_name: str, d_name: str) -> float:
         """
@@ -190,10 +171,17 @@ class Dynamic_APSP:
         self.path.hard_save(out_directory_path)
 
     def hard_save_graph(self, out_path=None):
-        if out_path is None: out_path = self.param.GRAPH_TC_WALKING
+        if out_path is None: out_path = self.param.PATH.GRAPH_TC_WALK
         with open(out_path, 'w') as out_file:
+            graph = {}
+            for key, value in self.graph.adj_matrix.items():
+                l = []
+                for i in value:
+                    if i != int(key):
+                        l.append(i)
+                graph[key] = l
             json.dump({"idx_to_name": self.idx_to_name, "max_time": self.max_time,
-                       "graph": self.graph.adj_matrix, "used_times": self.used_time
+                       "graph": graph, "used_times": self.used_time
                        }, out_file)
 
     def save(self):
@@ -236,22 +224,76 @@ class Dynamic_APSP:
                                   "change_distance": {org_name : {dest_name : (new_dist, old_dist)}}
         """
         changes = self.distance.get_changes()
-        old_size = changes["size"][1]
+        # old_size = changes["size"][1]
         return changes
 
+    # ################################################################################################################
 
-    #################################################################################################################
+    def __add_vertex_in_structure(self, stop_name: str, time: int, position: (float, float)):
+        if stop_name in self.name_to_idx:
+            idx = self.name_to_idx[stop_name]
+            z = idx * self.max_time + time
+            if time in self.used_time[idx]:
+                return idx
+            else:
+                self.used_time[idx].append(time)
+                self.used_time[idx].sort()
+                self.__change_log.append(("add_time", stop_name, time))
+        else:
+            assert position is not None
+            idx = len(self.name_to_idx)
+            self.idx_to_name.append(stop_name)
+            self.map.add_stop(stop_name, position)
+            self.name_to_idx[stop_name] = idx
+            z = idx * self.max_time + time
+            self.used_time.append([time])
+            self.__change_log.append(("add_name", stop_name))
+            self.__change_log.append(("add_time", stop_name, time))
 
+        self.graph.add_vertex(z)
+        self.path.add_vertex(z)
+        self.distance.up_to_date = False
+
+        return idx
+
+    def __walking_edges(self, z_name, z_time, z_position=None):
+        # get positionn of the node
+        if z_name in self.name_to_idx:
+            z_position = self.map.get_stop(z_name)[1]
+        else:
+            assert z_position is not None
+
+        # walking : find each node reachable thanks to walk
+        reachable_stop = self.map.get_reachable_stop_pt(z_position)
+        walk_in = []
+        walk_out = []
+        for walk_name, walk_pos in reachable_stop:
+            walk_idx = self.name_to_idx[walk_name]
+            walking_time = distance_Eucli(z_position, walk_pos) / self.param.WALKING_SPEED()
+
+            i = len(self.used_time[walk_idx]) - 1
+            while i > 0 and self.used_time[walk_idx][i] + walking_time > z_time:
+                i -= 1
+            if i > 0 and walk_name != z_name:
+                walk_in.append((walk_name, self.used_time[walk_idx][i]))
+
+            i = 0
+            while i < len(self.used_time[walk_idx]) and self.used_time[walk_idx][i] < z_time + walking_time:
+                i += 1
+            if i < len(self.used_time[walk_idx]) and walk_name != z_name:
+                walk_out.append((walk_name, self.used_time[walk_idx][i]))
+        return walk_in, walk_out
+
+    # ################################################################################################################
+
+
+class SlobbeAlgorithm:
     @staticmethod
     def __find_affected_sources(path : PathPresence, graph : Graph, u :int, v : int):
-        """
-        Find affected sources
-        Suit l'algo 4
-        :param u:
-        :param v:
-        :return:
-        """
-        S = []  # affected source
+        # Implementation based on the algo 4 of Slobbe paper
+        S = set()  # affected source
+        S.add(u)
+        graph.vis = {v: False for v in graph.vertex}  # Reset vis(·) to false
         if not path.is_path(u, v):  # w < self.dist(u,v)
             Q = deque()
             Q.append(u)
@@ -260,15 +302,14 @@ class Dynamic_APSP:
                 x = Q.popleft()
                 for z in graph.reversed_adj_matrix[x]:
                     if not graph.vis[z] and not path.is_path(z, v) and path.is_path(z, u):  # .dist(z, v) > self.dist(z,u) + w
-                        Q.append(z) # Q.appendleft(z)
+                        Q.append(z)
                         graph.vis[z] = True
-                        S.append(z)
-
+                        S.add(z)
             graph.vis = {v: False for v in graph.vertex}  # Reset vis(·) to false
         return S
 
     @staticmethod
-    def __APSP_edge(path: PathPresence, graph: Graph, u: int, v: int):
+    def APSP_edge(path: PathPresence, graph: Graph, u: int, v: int):
         """
         Ajout non trivial d'une arete dans le graph
         :param graph: a Data_Structure graph
@@ -283,122 +324,65 @@ class Dynamic_APSP:
         # - METTRE A JOUR UNIQUEMENT SSI DIST(U,V) = -1
 
         # algo 1
-
         if not path.is_path(u, v):
             S, P = {}, {}
-            S[v] = Dynamic_APSP.__find_affected_sources(path, graph, u, v)
+            S[v] = SlobbeAlgorithm.__find_affected_sources(path, graph, u, v)
             path.set_is_path(u, v, True)
             Q = deque()
             P[v] = v
             Q.append(v)
-            y = -1
             graph.vis[v] = True
             while len(Q) > 0:
                 y = Q.popleft()
                 # update distances for source nodes
-                #if len(S[P[y]]) > 0:
-                for x in S.get(P[y],[]):
-                    if not path.is_path(x, y) and path.is_path(x, u) and path.is_path(v, y):
+                for x in S.get(P[y], []):
+                    if not path.is_path(x, y):
                         path.set_is_path(x, y, True)
                         if y != v:
-                            if y not in S: S[y] = [x]
-                            else: S[y].append(x)
+                            if y not in S: S[y] = set()
+                            S[y].add(x)
 
                 # enqueue all neighbors that get closer to u
                 for w in graph.adj_matrix[y]:
-                    if not graph.vis[w] and not path.is_path(u, w) and path.is_path(v, w) and path.is_path(v, y):
-                        path.set_is_path(u, w, True)
-                        Q.append(y)
+                    if not graph.vis[w] and not path.is_path(u, w):
                         Q.append(w)
                         graph.vis[w] = True
+                        if w in P: print("error P should be a set")
                         P[w] = y
 
     @staticmethod
-    def __APSP_edge_set(path: PathPresence, graph: Graph, u: int, v: int):
-        """
-        Ajout non trivial d'une arete dans le graph
-        :param graph: a Data_Structure graph
-        :param u: number of the node
-        :param v: number of the node
-        :return:
-        """
-        # ajout d'un edge entre 2 vertex dejà existant u,v:
-        # - w est defini par la difference de temps entre u et v
-        # - si il existait deja un moyen de joindre v à patir de u , dist(u,v) = difference de temps entre u et v = w
-        # - mis à jour inutile si il existe deja un chemin entre u et v
-        # - METTRE A JOUR UNIQUEMENT SSI DIST(U,V) = -1
+    def APSP_vertex(path : PathPresence, graph : Graph, z):
+        #TODO contient potentiellement une erreur pour les boucle (ie si z possede une arête vers lui-meme)
 
-        # algo 1
-
-        if not path.is_path(u, v):
-            S, P = {}, {}
-            S[v] = Dynamic_APSP.__find_affected_sources(path, graph, u, v)
-            path.set_is_path(u, v, True)
-            Q = deque()
-            P[v] = set()
-            P[v].add(v)
-            Q.append(v)
-            y = -1
-            graph.vis[v] = True
-            while len(Q) > 0:
-                y = Q.popleft()
-                # update distances for source nodes
-                #print(P[y])
-                for pred in P[y]:
-                    for x in S[pred]:
-                        if not path.is_path(x, y) and path.is_path(x, u) and path.is_path(v, y):
-                            path.set_is_path(x, y, True)
-                            if y != v:
-                                if y not in S: S[y] = []
-                                S[y].append(x)
-
-
-                # enqueue all neighbors that get closer to u
-                for w in graph.adj_matrix[y]:
-                    if not graph.vis[w] and not path.is_path(u, w) and path.is_path(v, w) and path.is_path(v, y):
-                        path.set_is_path(u, w, True)
-                        Q.append(y)
-                        Q.append(w)
-                        graph.vis[w] = True
-                        if w not in P: P[w] = set()
-                        P[w].add(y)
-
-
-    def __APSP_vertex(self, z, Z_in, Z_out):
-        path: PathPresence = self.path
-        graph: Graph = self.graph
-        z_time = z * self.max_time
-
-        S, P = {}, {}
-        S[z] = []
-        PQ = []     # priority queue
-        heapq.heappush(PQ, (0, z))
-        while len(PQ) > 0:
-            d_xz, x = heapq.heappop(PQ)
+        S, P = {}, {}                       # S : sources
+        S[z] = set()
+        Q = deque()
+        #find sources
+        Q.append(z)
+        while len(Q) > 0:
+            x = Q.popleft()
             for q in graph.reversed_adj_matrix[x]:
-                if not path.is_path(q,z) and path.is_path(q ,x):
+                if not path.is_path(q, z):
                     path.set_is_path(q, z, True)
-                    d_qz = z_time - (q % self.max_time)
-                    heapq.heappush(PQ, (d_qz, q))
-                    S[z].append(q)
+                    Q.append(q)
+                    S[z].add(q)
 
-        heapq.heappush(PQ, (0, z))
-        while len(PQ) > 0:
-            d_zy, y = heapq.heappop(PQ)
+        Q.append(z)
+        while len(Q) > 0:
+            y = Q.popleft()
             if y != z:
-                for pred in P[y]:
-                    for x in S[pred]:
-                        if not path.is_path(x,y) and path.is_path(x,z): # always true : path.is_path(z,y):
-                            path.set_is_path(x,y, True)
-                            if y not in S: S[y] = []
-                            S[z].append(x)
+                S[y] = set()
+                for x in S[P[y]]:
+                    if not path.is_path(x, y):
+                        path.set_is_path(x, y, True)
+                        S[y].add(x)
 
             for w in graph.adj_matrix[y]:
-                if not path.is_path(z, w) and path.is_path(y,w):
-                    d_zw = (w % self.max_time) - z_time
-                    heapq.heappush(d_zw, w)
-                    if w not in P: P[w] = set()
-                    P[w].add(y)
+                if not path.is_path(z, w):
+                    Q.append(w)
+                    if w in P: print("\nerror2 P should be a set\n")
+                    P[w] = y
+                    path.set_is_path(z, w, True)
 
 
 

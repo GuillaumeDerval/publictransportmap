@@ -2,7 +2,9 @@ import json
 import numpy as np
 import datetime
 from multiprocessing import Pool
-from Program.Unused.path import PATH
+#from Program.Unused.path import PATH
+from Program.Data_manager.path import PATH
+
 
 
 """
@@ -10,7 +12,7 @@ in  :   PATH.GRAPH
         PATH.WALKING
 out :    PATH.MINIMAL_TRAVEL_TIME_TC    
 """
-
+PATH=PATH("/Users/DimiS/Documents/Gotta_go_fast/Project/Test/Data_test","APSP_medium","train_bus")
 
 data = json.loads(open(PATH.GRAPH_TC).read())
 walking_time = json.loads(open(PATH.WALKING).read())
@@ -26,7 +28,8 @@ data = None
 
 #gare la meme structure que walking time mais remplace le  nom du stop par son id
 #{stop_id1 : [(distance_time, stop_id_2), ...], ...}
-walking_time = {name_to_idx[x]: [(a, name_to_idx[b]) for a, b in y] for x, y in walking_time.items()}
+#walking_time = {name_to_idx[x]: [(a, name_to_idx[b]) for a, b in y] for x, y in walking_time.items()}
+walking_time = {name_to_idx[x]: [] for x, y in walking_time.items()}
 
 # Generate graph points
 #used_times_next_time = [[-1] * MAX_TIME for x in used_times]
@@ -116,7 +119,8 @@ def compute_for_node(idx):  #idx =  stop_id (only sncb)
 def process_thread(x):
     start = datetime.datetime.now()
     y = compute_for_node(name_to_idx[x])
-    np.save(PATH.MINIMAL_TRAVEL_TIME_TC + x + ".npy", y.astype(np.int16))
+    #np.save(PATH.MINIMAL_TRAVEL_TIME_TC + x + ".npy", y.astype(np.int16))
+    np.save("/Users/DimiS/Documents/Gotta_go_fast/Project/Test/Test_dynamic_inc_APSP/data_test/dist_medium_expected/" + x + ".npy", y.astype(np.int16))
     return x, datetime.datetime.now() - start
 
 
