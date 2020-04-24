@@ -1,7 +1,7 @@
 from unittest import TestCase
 from shapely.geometry import shape
 
-from Program.General.map import my_map
+from Program.map import my_map
 from Program.Data_manager.main import DataManager
 
 

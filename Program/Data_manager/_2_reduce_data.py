@@ -4,7 +4,7 @@ import os
 from geojson import dump
 from shapely.geometry import Point
 
-from Program.General.map import my_map
+from Program.map import my_map
 
 
 

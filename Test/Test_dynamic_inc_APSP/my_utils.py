@@ -3,7 +3,7 @@ import random as rdm
 import math
 import numpy as np
 from Program.dynamic_Inc_APSP.Dynamic_Incremental_All_Pair_Shortest_Path import *
-from Program.General.map import *
+from Program.map import *
 from Program.Data_manager.main import DataManager
 
 
@@ -134,7 +134,7 @@ def transport_add_vertex(transp_dico, z_name, z_time, z_position, z_in=None, z_o
 
     if z_name not in transp_dico:
         pos = Lambert_to_WGS84(z_position)
-        transp_dico[z_name] = {"name": "ADDED","lon": pos[0],"lat": pos[1], "nei": []}
+        transp_dico[z_name] = {"name": "ADDED","lon": pos[0],"lat": pos[1], "x": z_position[0], "y":  z_position[1], "nei": []}
 
     transport_add_edge(transp_dico, z_name, z_time, z_name, z_time)
     for u_stop_name, u_time in z_in:
@@ -209,7 +209,7 @@ def generate_random_edge(APSP,transp_dico):
             else:
                 time2 = rdm.randint(time1, APSP.max_time - 1)
         pos2 = None
-    #print("add edge {} time {} to {} time {}".format(name1, time1, name2, time2))
+    # print("add edge {} time {} to {} time {}".format(name1, time1, name2, time2))
     transport_add_edge(transp_dico,name1, time1, name2, time2, u_position=pos1, v_position=pos2)
     APSP.add_edge(name1, time1, name2, time2, u_position=pos1, v_position=pos2)
 
@@ -250,7 +250,7 @@ def generate_random_vertex(APSP : Dynamic_APSP,transp_dico):
         else:
             z_out.append((name2, time2))
 
-    #print("add vertex {} time {} pos {} :  z_in {} , z_out {}".format(z_name, time, pos, z_in, z_out))
+    # print("add vertex {} time {} pos {} :  z_in {} , z_out {}".format(z_name, time, pos, z_in, z_out))
     APSP.add_vertex(z_name, time, pos, z_in, z_out)
     transport_add_vertex(transp_dico, z_name, time, pos, z_in, z_out)
 

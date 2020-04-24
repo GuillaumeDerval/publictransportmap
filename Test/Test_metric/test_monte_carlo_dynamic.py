@@ -2,7 +2,7 @@ from unittest import TestCase
 import json
 import numpy as np
 from Program.Data_manager.main import DataManager
-import Program.General.map as map
+import Program.map as map
 import Program.metric.monte_carlo_dynamic as mc
 
 

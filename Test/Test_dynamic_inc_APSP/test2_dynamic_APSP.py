@@ -85,7 +85,7 @@ class TestDynamicAPSP(TestCase):
         def my_change(APSP, transp_dico):
             rdm.seed(4242)
             i = 10
-            for _ in range(30):
+            for _ in range(50):
                 choice = rdm.randint(0, 2)
                 if choice == 0:
                     # add existing
@@ -108,8 +108,9 @@ class TestDynamicAPSP(TestCase):
                     name = str(i)
                     i += 1
                     time = rdm.randint(0, APSP.max_time - 1)
-                    APSP.add_vertex(name, time, (rdm.randint(0,50000)/10, rdm.randint(0,50000)/10))
-                    transport_add_vertex(transp_dico,name, time, (rdm.randint(0,50000)/10, rdm.randint(0,50000)/10))
+                    pos = (rdm.randint(0,50000)/10, rdm.randint(0,50000)/10)
+                    APSP.add_vertex(name, time, pos)
+                    transport_add_vertex(transp_dico,name, time, pos)
 
         _, path_comp, dist_comp = check_if_correct_modification(my_change, self.param_mini, self.param_mini_exp)
         self.assertTrue(path_comp)
@@ -143,9 +144,10 @@ class TestDynamicAPSP(TestCase):
                     name = str(i)
                     i += 1
                     time = rdm.randint(0, APSP.max_time - 1)
-                    APSP.add_vertex(name, time, rdm_point_shape(APSP.param))
+                    pos = rdm_point_shape(APSP.param)
+                    APSP.add_vertex(name, time, pos)
                     transport_add_vertex(transp_dico, name, time,
-                                         rdm_point_shape(APSP.param))
+                                         pos)
 
         graph_comp, path_comp, dist_comp = check_if_correct_modification(my_change, param=self.param_medium,
                                                                          param_expect=self.param_medium_exp)
@@ -222,7 +224,7 @@ class TestDynamicAPSP(TestCase):
     def test_add_edge_rdm_mini(self):
         def my_change(APSP: Dynamic_APSP, transp_dico):
             rdm.seed(543)
-            for _ in range(100):
+            for i in range(100):
                 generate_random_edge(APSP, transp_dico)
 
         graph_comp, path_comp, dist_comp = check_if_correct_modification(my_change, self.param_mini,
@@ -265,14 +267,18 @@ class TestDynamicAPSP(TestCase):
     # ######################################### TEST ALL ADD ####################################################
 
     def test_add_mini(self):
-        def my_change(APSP: Dynamic_APSP, transp_dico):
-            rdm.seed(7654)
-            for _ in range(200):
-                generate_random_add(APSP, transp_dico)
+        for seed in range(2500, 2515):
+            self.setUp()
+            rdm.seed(seed)
+            def my_change(APSP: Dynamic_APSP, transp_dico):
+                #rdm.seed(7654)
+                for _ in range(25):
+                    generate_random_add(APSP, transp_dico)
 
-        _, path_comp, dist_comp = check_if_correct_modification(my_change, self.param_mini, self.param_mini_exp)
-        self.assertTrue(path_comp)
-        self.assertTrue(dist_comp)
+            _, path_comp, dist_comp = check_if_correct_modification(my_change, self.param_mini, self.param_mini_exp)
+            print("seed", seed)
+            self.assertTrue(path_comp)
+            self.assertTrue(dist_comp)
 
     def test_add_medium(self):
         def my_change(APSP: Dynamic_APSP, transp_dico):

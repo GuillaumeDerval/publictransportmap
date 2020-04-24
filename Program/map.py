@@ -14,11 +14,11 @@ class my_map:
         if my_map.belgium_map is None:
             if path_shape is None : path_shape = param.PATH.MAP_SHAPE
             if path_pop is None: path_pop = param.PATH.MAP_POP
-            if path_stop_list is None: path_stop_list = param.PATH.STOP_POSITION_LAMBERT
+            if path_stop_list is None: path_stop_list = param.PATH.TRANSPORT
             my_map.belgium_map = my_map(param, path_shape, path_pop, path_stop_list)
         return my_map.belgium_map
 
-    def __init__(self,param, path_shape, path_pop, stop_list_path):
+    def __init__(self, param, path_shape, path_pop, stop_list_path):
         self.__sector_map = {}
         self.__munty_map = {}
         self.path_shape = path_shape
@@ -30,14 +30,21 @@ class my_map:
         self.__set_shape_munty()
 
         # stop_munty
+        self.stop_position_dico = {}
+        with open(param.PATH.STOP_POSITION_LAMBERT, "r") as file:
+            lambert = json.load(file)
         with open(stop_list_path, "r") as file:
-            stop_list = json.load(file)
-            self.stop_position_dico = stop_list#{name: tuple(pos) for name, pos in stop_list}
+            transp = json.load(file)
+        for name in transp.keys():
+            if name in lambert:
+                self.stop_position_dico[name] = tuple(lambert[name])
+            else:
+                WGS84_to_Lambert((transp[name]["lon"],transp[name]["lat"]))
         self.reachable_stop_from_munty = {munty: [] for munty in
                                           self.get_all_munty_refnis()}  # contient tout les stop atteignable depuis une commune
         self.reachable_munty_from_stop = {stop_name: set() for stop_name in
                                           self.stop_position_dico.keys()}  # contient tout les commune depuis un stop
-        self.__set_reachable_stop_from_munty(self.stop_position_dico.items())
+        self.__set_reachable_stop(self.stop_position_dico.items())
 
         # reversible structure
         self.__change_log = []      # added_stop_name
@@ -109,7 +116,7 @@ class my_map:
 
     # ##################################### Relation between stop position and municipality ############################
 
-    def __set_reachable_stop_from_munty(self, stop_list):
+    def __set_reachable_stop(self, stop_list):
         """
         Compute a list containing every reachable stop in a walking_time < max_walking_time for a given munty
 
@@ -195,14 +202,16 @@ class my_map:
     def add_stop(self, stop_name, pos):
         """
         Ajoute un  stop qui n'était pas present dans la liste de stop initiale
-        :param stop_name_pos:
+        :param stop_name:
+        :param pos: en lambert
         """
 
         stop_name_pos = stop_name, pos
 
         self.stop_position_dico[stop_name] = pos
         self.reachable_munty_from_stop[stop_name] = set()
-        self.__set_reachable_stop_from_munty([stop_name_pos])
+        self.__set_reachable_stop([stop_name_pos])
+
         self.__change_log.append(stop_name_pos)
 
     def remove_stop(self, stop_name):

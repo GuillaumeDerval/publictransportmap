@@ -6,7 +6,7 @@ from Program.dynamic_Inc_APSP.PathPresence import PathPresence
 from Program.dynamic_Inc_APSP.MinimumTime import MinimumTime
 
 from Program.Data_manager.path import Parameters
-from Program.General.map import my_map
+from Program.map import my_map
 from Program.distance_and_conversion import distance_Eucli
 
 
@@ -39,21 +39,24 @@ class Dynamic_APSP:
         self.__change_log = []
         self.__stack_log = []
 
-    def add_vertex(self, z_name, z_time, z_position, z_stop_in=None, z_stop_out=None):
+    def add_vertex(self, z_name, z_time, z_position, z_stop_in=None, z_stop_out=None, z_stop_except = None):
 
         """
 
         :param z_name:
         :param z_time:
-        :param z_position: peut etre None si le stop_time etait deja cree
+        :param z_position: en lambert , peut etre None si le stop_time etait deja cree
         :param z_stop_in:  [(name_in1, time_in1),...] name_in should be a already generated stop
         :param z_stop_out: [(name_out1, time_out1),...] name_out should be a already generated stop
         :return:
         """
         if z_stop_in is None : z_stop_in = []
         if z_stop_out is None: z_stop_out = []
+        if z_stop_except is None: z_stop_except = []
 
         self.distance.up_to_date = False
+
+
         # if the node is alreaddy created, simply add edge
         if z_name in self.name_to_idx and z_time in self.used_time[self.name_to_idx[z_name]]:
             # algo don't work, add edge one after the other
@@ -73,14 +76,12 @@ class Dynamic_APSP:
             for s_name, s_time in z_stop_in:
                 assert s_time <= z_time
                 assert s_name in self.name_to_idx
-                self.add_vertex(s_name, s_time, None)
+                self.add_vertex(s_name, s_time, None, z_stop_except = z_stop_except + [(z_name,z_time)])
 
             for d_name, d_time in z_stop_out:
                 assert d_time >= z_time
                 assert d_name in self.name_to_idx
-                self.add_vertex(d_name, d_time, None)
-
-
+                self.add_vertex(d_name, d_time, None, z_stop_except = z_stop_except + [(z_name,z_time)])
 
             # Permettre a l'utilisateur de rester sur place et d'attendre le prochain TC
             if z_name in self.name_to_idx:
@@ -90,8 +91,8 @@ class Dynamic_APSP:
                 if i > 0:
                     z_time_inf = self.used_time[z_idx][i - 1]
                     z_stop_in.append((z_name, z_time_inf))
-                if i+1 < len(self.used_time[z_idx]):
-                    z_time_supp = self.used_time[z_idx][i+1]
+                if i + 1 < len(self.used_time[z_idx]):
+                    z_time_supp = self.used_time[z_idx][i + 1]
                     z_stop_out.append((z_name, z_time_supp))
 
             # Allow the user to walk between stops
@@ -100,6 +101,12 @@ class Dynamic_APSP:
             # conversion name, time, pos -> node
             z_in = [self.name_to_idx[n] * self.max_time + t for n, t in z_stop_in + walk_in]
             z_out = [self.name_to_idx[n] * self.max_time + t for n, t in z_stop_out + walk_out]
+
+            #remove edge in z_except (they will be added later)
+            for n,t in z_stop_except:
+                expt = self.name_to_idx[n] * self.max_time + t
+                if expt in z_in: z_in.remove(expt)
+                if expt in z_out: z_out.remove(expt)
 
             #Add edge to the graph structure
             for i in z_in:
@@ -270,16 +277,19 @@ class Dynamic_APSP:
         for walk_name, walk_pos in reachable_stop:
             walk_idx = self.name_to_idx[walk_name]
             walking_time = distance_Eucli(z_position, walk_pos) / self.param.WALKING_SPEED()
+            if walking_time <= self.param.MAX_WALKING_TIME():
+                i = len(self.used_time[walk_idx]) - 1
+                while i >= 0 and self.used_time[walk_idx][i] + walking_time > z_time:
+                    i -= 1
+                if i >= 0 and walk_name != z_name:
+                    #print("used time ", self.used_time[walk_idx],"walk time", walking_time)
+                    #print("dynamic in",walk_name, "time: ", self.used_time[walk_idx][i],  " to ",z_name, " time", z_time)
+                    walk_in.append((walk_name, self.used_time[walk_idx][i]))
 
-            i = len(self.used_time[walk_idx]) - 1
-            while i > 0 and self.used_time[walk_idx][i] + walking_time > z_time:
-                i -= 1
-            if i > 0 and walk_name != z_name:
-                walk_in.append((walk_name, self.used_time[walk_idx][i]))
-
-            i = 0
-            while i < len(self.used_time[walk_idx]) and self.used_time[walk_idx][i] < z_time + walking_time:
-                i += 1
-            if i < len(self.used_time[walk_idx]) and walk_name != z_name:
-                walk_out.append((walk_name, self.used_time[walk_idx][i]))
+                i = 0
+                while i < len(self.used_time[walk_idx]) and self.used_time[walk_idx][i] < z_time + walking_time:
+                    i += 1
+                if i < len(self.used_time[walk_idx]) and walk_name != z_name:
+                    #print("dynamic out", z_name, z_time," to ", walk_name, self.used_time[walk_idx][i])
+                    walk_out.append((walk_name, self.used_time[walk_idx][i]))
         return walk_in, walk_out

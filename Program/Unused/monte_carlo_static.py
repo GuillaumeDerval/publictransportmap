@@ -9,13 +9,12 @@
 # pour chaque secteur la population est repartie uniformement
 
 # function of cumulative distribution =  function of repartition
-from Program.Data_manager.main import Parameters as p
 from Program.Data_manager.path_data import PATH
 from shapely.geometry import MultiPolygon, Point
 import random
 import math
 from Program.distance_and_conversion import *
-from Program.General.map import my_map
+from Program.map import my_map
 import numpy as np
 import time
 

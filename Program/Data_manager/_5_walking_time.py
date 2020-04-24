@@ -1,11 +1,11 @@
 import json
 import math
-import progressbar
+# import progressbar
 import numpy as np
 import sklearn.neighbors
 
 from utils import haversine
-from Program.distance_and_conversion import distance_Eucli
+from Program.distance_and_conversion import distance_Eucli, WGS84_to_Lambert
 
 
 def compute_stations_walking_time1(param):
@@ -22,7 +22,7 @@ def compute_stations_walking_time1(param):
 
     def distance_to_walking_time(dist_km):
         minutes = (dist_km * 1000) / param.WALKING_SPEED()
-        return round(minutes)
+        return minutes
 
     #def hexacontaround(x):
         #return int(round(x / 60) * 60)
@@ -71,8 +71,17 @@ def compute_stations_walking_time(param):
     out = {x: [] for x in names}
     for org in names:
         for dest in names:
-            walking_time = distance_Eucli(stop_lamb[org],stop_lamb[dest]) / param.WALKING_SPEED()
-            out[org].append((walking_time, dest))
+            if org not in stop_lamb:
+                if "x" in data[org] and "y" in data[org]: stop_lamb[org] = (data[org]["x"], data[org]["y"])
+                else: stop_lamb[org] = WGS84_to_Lambert((data[org]["lon"], data[org]["lat"]))
+            if dest not in stop_lamb:
+                if "x" in data[dest] and "y" in data[dest]: stop_lamb[dest] = (data[dest]["x"], data[dest]["y"])
+                else: stop_lamb[dest] = WGS84_to_Lambert((data[dest]["lon"], data[dest]["lat"]))
+
+            walking_time = distance_Eucli(stop_lamb[org], stop_lamb[dest]) / param.WALKING_SPEED()
+            if walking_time <= param.MAX_WALKING_TIME() and org != dest:
+                #print("compute station time: ", org, " to ",dest, " trav time", walking_time)
+                out[org].append((walking_time, dest))
 
     out = {x: sorted(y)[0:50] for x, y in out.items()}
     with open(param.PATH.WALKING, "w") as walk_file:
@@ -113,6 +122,7 @@ def compute_walking_edges(path):
                     while i < len(dest_time) and dest_time[i] < o_time + walk_time:
                         i += 1
                     if i < len(dest_time):
+                        # print("static: ",org_name, o_time, " to ", dest_name, dest_time[i])
                         graph_walk_tc["graph"][str(org_idx*max_time + o_time)].append(dest_idx*max_time + dest_time[i])
 
     with open(path.GRAPH_TC_WALK, "w") as out:

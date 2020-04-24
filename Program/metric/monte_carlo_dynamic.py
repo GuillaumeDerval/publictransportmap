@@ -42,7 +42,7 @@ class TravellersModelisation:
         if travel_path is None: travel_path = param.PATH.TRAVEL
 
         if mapmap is None:
-            from Program.General.map import my_map
+            from Program.map import my_map
             mapmap = my_map.get_map(param)
 
         if my_seed is not None:
