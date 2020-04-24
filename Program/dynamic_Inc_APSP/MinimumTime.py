@@ -19,11 +19,11 @@ class MinimumTime:
         self.__true_size = self.size
         self.distance = [np.full((self.size,), -1, dtype=np.int) for _ in range(self.size)]
         self.up_to_date = True
-        self.__compute_distances()
+        self.__compute_times()
         self.__backup = {"size": self.size, "change_distance": {}}
         self.__backup_stack = []  # permet de faire une recherche sur plusieur etage
 
-    def __compute_distances(self):
+    def __compute_times(self):
         for source_idx in range(self.size):
             src_time_list = self.used_time[source_idx]
             for destination_idx in range(self.size):

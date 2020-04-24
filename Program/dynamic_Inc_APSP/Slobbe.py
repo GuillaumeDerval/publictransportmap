@@ -4,6 +4,8 @@ from Program.dynamic_Inc_APSP.PathPresence import PathPresence
 
 
 class SlobbeAlgorithm:
+    """Ce code est base sur les algorithmes proposé dans l'article  Faster Incremental All-pairs Shortest Paths"""
+
     @staticmethod
     def __find_affected_sources(path : PathPresence, graph: Graph, u: int, v: int):
         # Implementation based on the algo 4 of Slobbe paper

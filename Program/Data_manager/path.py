@@ -140,7 +140,7 @@ class Parameters:
         return self.__WALKING_SPEED*60/1000
 
     def MAX_RADIUS(self):
-        return (self.__MAX_WALKING_TIME / 3600.0) * self.__WALKING_SPEED / 6367.0  # todo check
+        return (self.__MAX_WALKING_TIME / 60.0) * self.WALKING_SPEED_KM_H() / 6367.0  # todo check
 
     def distance_to_walking_time(self, dist_km):
         hours = dist_km / self.__WALKING_SPEED

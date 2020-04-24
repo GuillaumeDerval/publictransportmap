@@ -10,7 +10,7 @@ class TestInitialisationAPSP(TestCase):
     def setUp(self):
         super().setUp()
 
-        self.param_small = DataManager.load_data("./../Data_test", "APSP_mini", "train_only") # without walk
+        self.param_small = DataManager.load_data("./../Data_test", "APSP_mini", "train_only")  # without walk
         self.param_medium = DataManager.load_data("./../Data_test","APSP_medium", "train_bus")
 
         for file_name in os.listdir("data_test/dist_computed/"):

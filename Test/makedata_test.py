@@ -112,5 +112,5 @@ artifical_travel_time()
 DataManager.produce_data("./Data_test", "APSP_medium", "train_bus", 15, 5)
 
 #Expect
-DataManager.produce_data("./Data_test", "APSP_mini_exp", "train_only", 0, 0, MAX_TIME=100)
+DataManager.produce_data("./Data_test", "APSP_mini_exp", "train_only", 60, 2, MAX_TIME=100)
 DataManager.produce_data("./Data_test", "APSP_medium_exp", "train_bus", 15, 5)

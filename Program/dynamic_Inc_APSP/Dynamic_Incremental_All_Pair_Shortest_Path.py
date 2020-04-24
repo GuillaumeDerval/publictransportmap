@@ -1,6 +1,6 @@
-from collections import deque
 import json
 
+from Program.dynamic_Inc_APSP.Slobbe import SlobbeAlgorithm
 from Program.dynamic_Inc_APSP.Graph import Graph
 from Program.dynamic_Inc_APSP.PathPresence import PathPresence
 from Program.dynamic_Inc_APSP.MinimumTime import MinimumTime
@@ -9,7 +9,7 @@ from Program.Data_manager.path import Parameters
 from Program.General.map import my_map
 from Program.distance_and_conversion import distance_Eucli
 
-"""Ce code est base sur les algorithmes proposé dans l'article  Faster Incremental All-pairs Shortest Paths"""
+
 
 
 class Dynamic_APSP:
@@ -257,7 +257,7 @@ class Dynamic_APSP:
         return idx
 
     def __walking_edges(self, z_name, z_time, z_position=None):
-        # get positionn of the node
+        # get position of the node
         if z_name in self.name_to_idx:
             z_position = self.map.get_stop(z_name)[1]
         else:
@@ -283,6 +283,3 @@ class Dynamic_APSP:
             if i < len(self.used_time[walk_idx]) and walk_name != z_name:
                 walk_out.append((walk_name, self.used_time[walk_idx][i]))
         return walk_in, walk_out
-
-    # ################################################################################################################
-

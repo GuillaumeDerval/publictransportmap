@@ -11,7 +11,7 @@ class TestMy_map(TestCase):
 
     def setUp(self):
         self.param = DataManager.load_data("./../Data_test","small1", "train_only")
-        TestMy_map.mapp = my_map.get_map(self.param,  path_pop="./../Data_test/intermediate/small1_train_only/popsector.csv")
+        TestMy_map.mapp = my_map.get_map(self.param,  path_pop="./../Data_test/intermediate/small1_train_only/pop_sector.csv")
 
     def tearDown(self):
         my_map.belgium_map = None

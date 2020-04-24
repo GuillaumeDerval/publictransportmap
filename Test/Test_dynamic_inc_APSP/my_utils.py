@@ -7,7 +7,6 @@ from Program.General.map import *
 from Program.Data_manager.main import DataManager
 
 
-
 def compare_results_distance(path_distance_dir_exp, path_distance_dir_actu):
     files_exp = os.listdir(path_distance_dir_exp)
     files_actu = os.listdir(path_distance_dir_actu)
@@ -137,6 +136,7 @@ def transport_add_vertex(transp_dico, z_name, z_time, z_position, z_in=None, z_o
         pos = Lambert_to_WGS84(z_position)
         transp_dico[z_name] = {"name": "ADDED","lon": pos[0],"lat": pos[1], "nei": []}
 
+    transport_add_edge(transp_dico, z_name, z_time, z_name, z_time)
     for u_stop_name, u_time in z_in:
         transport_add_edge(transp_dico, u_stop_name, u_time, z_name, z_time)
     for v_stop_name, v_time in z_out:

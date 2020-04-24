@@ -34,13 +34,13 @@ class PathPresence:
 
         # on peut passer d'un  noeud a l'autre au meme instant
 
-        #TODO verifer si ne contient pas de bug quand un n oeud pointe vers lui même
+        #TODO verifer si ne contient pas de bug quand un noeud pointe vers lui même
 
-        def init_time_level(time : int, node_list : list, adj_matrix, max_time):
+        def init_time_level(time : int, node_list : list, adj_list, max_time):
             wait__for_change = {} #{n, m} if the value of n is changed then m must be recomputed
             while len(node_list) > 0:
                 x = node_list.pop()
-                neightboors = adj_matrix[x]
+                neightboors = adj_list[x]
                 for nei in neightboors:
                     old_x_value = self.is_path_from(x).copy()
                     self.or_in_place(x, nei)
@@ -61,12 +61,12 @@ class PathPresence:
             x_time = x % max_time
             self.set_is_path(x, x, True)
             if x_time != time:
-                init_time_level(time, node_list, graph.adj_matrix,max_time)
+                init_time_level(time, node_list, graph.adj_list,max_time)
                 node_list = [x]
                 time = x_time
             else:
                 node_list.append(x)
-        init_time_level(time, node_list, graph.adj_matrix,max_time)
+        init_time_level(time, node_list, graph.adj_list,max_time)
 
     def is_path(self, u: int, v: int) -> bool:
         """
@@ -145,6 +145,17 @@ class PathPresence:
             self.size += 1
             self.is_reachable[size][size] = True
 
+    def hard_save(self, out_directory_path):
+        for pos in range(self.size):
+            v = self.pos_to_vertex[pos]
+            data = self.is_path_from(v)
+            np.save(out_directory_path + str(v) + ".npy", data.astype(np.bool))
+
+        with open(out_directory_path + "__conversion.json", "w") as out:
+            json.dump(self.vertex_to_pos, out)
+
+    # #################################################################################################################
+
     def save(self):
         self.__backup_stack.append(self.__backup)
         self.__backup = {"size": self.size, "single_change": {}, "line_change": {}}
@@ -179,13 +190,4 @@ class PathPresence:
                 new_values["single_change"][u][v] = self.is_reachable[self.vertex_to_pos[u]][self.vertex_to_pos[v]]
 
         return new_values
-
-    def hard_save(self, out_directory_path):
-        for pos in range(self.size):
-            v = self.pos_to_vertex[pos]
-            data = self.is_path_from(v)
-            np.save(out_directory_path + str(v) + ".npy", data.astype(np.bool))
-
-        with open(out_directory_path + "__conversion.json", "w") as out:
-            json.dump(self.vertex_to_pos, out)
 
