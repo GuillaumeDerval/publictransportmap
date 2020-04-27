@@ -120,7 +120,8 @@ def __get_trip_contents(folder, trip_ids, stop_id_resolver, start, end):
         for row in reader:
             if row["trip_id"] in trip_ids :
                 # check start_time <= travel <= end_time
-                if start <= time_str_to_int(row["departure_time"]) and time_str_to_int(row["arrival_time"]) <= end:
+                #if start <= time_str_to_int(row["departure_time"]) and time_str_to_int(row["arrival_time"]) <= end:
+                if start <= time_str_to_int(row["departure_time"]) < end:
                     if row["trip_id"] not in out:
                         out[row["trip_id"]] = {}
                     out[row["trip_id"]][int(row["stop_sequence"])] = (stop_id_resolver[row["stop_id"]], row["arrival_time"],

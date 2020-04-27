@@ -76,7 +76,12 @@ def reduce_stop(PATH_BELGIUM, PATH, parsed_gtfs_path,refnis_list, transport, par
 
     reduced_stop = {}
     position_lamber = json.load(open(PATH_BELGIUM.STOP_POSITION_LAMBERT[transport], "r"))
-    mmap = my_map.get_map(param)
+    if transport == "train_only":
+        mmap = my_map.get_map(param, path_stop_list= PATH_BELGIUM.TRAIN_ONLY)
+    elif transport == "bus_only":
+        mmap = my_map.get_map(param, path_stop_list= PATH_BELGIUM.BUS_ONLY)
+    else:
+        mmap = my_map.get_map(param, path_stop_list= PATH_BELGIUM.TRAIN_BUS)
     for refnis in refnis_list:
         munty_shape = mmap.get_shape_refnis(refnis)
 
