@@ -2,6 +2,7 @@ import time
 from Program.Data_manager.main import make_data_structure, time_str_to_int
 from Program.Data_manager.path import PATH,PATH_BELGIUM
 from Test.Test_dynamic_inc_APSP.my_utils import *
+from Program.map import my_map
 
 
 def TimeInterval():
@@ -44,8 +45,6 @@ def TimeInterval():
         res.close()
 
 
-
-
 def reduce_all():
     def list_arrodissement():
         arrodisement_set = set()
@@ -60,10 +59,10 @@ def reduce_all():
     arrondissement_list.sort()
     print(arrondissement_list)
     names = []
-    for arrondissement in arrondissement_list[12:]:
+    for arrondissement in arrondissement_list[39:40]:
         name = arrondissement.replace("’", "e ").replace("Arrondissement de ", "")
         print(name)
-        DataManager.reduce_data(data_path, arrondissement, name, "train_only")
+        DataManager.reduce_data(data_path, arrondissement, name, "train_bus")
         names.append(name)
     names = list(names)
     names.sort()
@@ -78,7 +77,7 @@ def edge_node_by_arrondissement(names,transports):
         for tr in transports:
             file = open(data_path + "/intermediate/" + arr + "_"+ tr +"/transport.json")
             dico = json.load(file)
-            V = sum(len(dico[k]["nei"]) > 0 for k in dico.keys())
+            V = len(dico.keys()) # sum(len(dico[k]["nei"]) > 0 for k in dico.keys())
             E = sum([len(dico[k]["nei"]) for k in dico.keys()])
             out.write("{};{};{};{}\n".format(tr,arr, V, E))
             file.close()
@@ -87,7 +86,6 @@ def edge_node_by_arrondissement(names,transports):
 # ###################################################################################################################
 
 def generate_random_edge(APSP):
-    is_new_name1 = rdm.randint(0, 3)
     name1 = rdm.sample(APSP.idx_to_name, 1).pop()
     time1 = rdm.sample(APSP.used_time[APSP.name_to_idx[name1]], 1).pop()
     name2 = rdm.sample(APSP.idx_to_name, 1).pop()
@@ -99,7 +97,7 @@ def generate_random_edge(APSP):
         time2 = rdm.sample(possible_time, 1).pop()
     else:
         time2 = rdm.randint(time1, APSP.max_time - 1)
-
+    #print("add edge {} time {} to {} time {}".format(name1, time1, name2, time2))
     APSP.add_edge(name1, time1, name2, time2, u_position=None, v_position=None)
 
 
@@ -109,7 +107,7 @@ def generate_random_vertex_new_pos(APSP):
     z_name = str(rdm.random())  # on pourrait avoir 2 fois le meme nom mais c'est improbable + pas grave
     time = rdm.randint(time_str_to_int("06:00:00")//60, time_str_to_int("10:30:00")//60)
     pos = rdm_point_shape(APSP.param)
-    # print("add vertex {} time {} pos {} :  z_in {} , z_out {}".format(z_name, time, pos, z_in, z_out))
+    #print("add vertex {} time {} pos {} :  z_in {} , z_out {}".format(z_name, time, pos, [],[]))
     APSP.add_vertex(z_name, time, pos)
 
 
@@ -119,7 +117,7 @@ def generate_random_vertex_old_pos(APSP):
     z_name = rdm.sample(APSP.idx_to_name, 1).pop()
     time = rdm.randint(time_str_to_int("06:00:00")//60, time_str_to_int("10:30:00")//60)
     pos = mmap.stop_position_dico[z_name]
-    # print("add vertex {} time {} pos {} :  z_in {} , z_out {}".format(z_name, time, pos, z_in, z_out))
+    #print("add vertex {} time {} pos {} :  z_in {} , z_out {}".format(z_name, time, pos, [],[]))
     APSP.add_vertex(z_name, time, pos)
 
 # #####################################################################################################################
@@ -133,7 +131,9 @@ def time_static_dynamic(names, transports):
     out.write("transport;localisation;type;mean;all\n")
 
     for tr in transports:
+        print("transport : ", tr)
         for n in names:
+            print(n)
             times = {"static": [], "dynamic_edge": [], "dynamic_vertex_new": [], "dynamic_vertex_old": []}
             param = DataManager.produce_data(data_path,n, tr,max_walking_time, walking_speed, MAX_TIME)
 
@@ -141,33 +141,36 @@ def time_static_dynamic(names, transports):
             start_time = time.time()
             APSP = Dynamic_APSP(param)
             times["static"].append(time.time() - start_time)
-            for i in range(20):
+            for i in range(50):
                 start_time = time.time()
                 generate_random_edge(APSP)
                 times["dynamic_edge"].append(time.time() - start_time)
+            my_map.belgium_map = None
 
             # Vertex new add
             start_time = time.time()
             APSP = Dynamic_APSP(param)
             times["static"].append(time.time() - start_time)
-            for i in range(20):
+            for i in range(50):
                 start_time = time.time()
                 generate_random_vertex_new_pos(APSP)
                 times["dynamic_vertex_new"].append(time.time() - start_time)
+            my_map.belgium_map = None
 
             # Vertex old add
             start_time = time.time()
             APSP = Dynamic_APSP(param)
             times["static"].append(time.time() - start_time)
-            for i in range(20):
+            for i in range(50):
                 start_time = time.time()
                 generate_random_vertex_old_pos(APSP)
                 times["dynamic_vertex_old"].append(time.time() - start_time)
+            my_map.belgium_map = None
 
             out.write("{};{};{};{};{}".format(tr, n, "static", sum(times["static"])/3, times["static"]))
-            out.write("{};{};{};{};{}".format(tr, n, "dynamic_edge", sum(times["dynamic_edge"]) / 20, times["dynamic_edge"]))
-            out.write("{};{};{};{};{}".format(tr, n, "dynamic_vertex_new", sum(times["dynamic_vertex_new"]) / 20, times["dynamic_vertex_new"]))
-            out.write("{};{};{};{};{}".format(tr, n, "dynamic_vertex_old", sum(times["dynamic_vertex_old"]) / 20, times["dynamic_vertex_old"]))
+            out.write("{};{};{};{};{}".format(tr, n, "dynamic_edge", sum(times["dynamic_edge"]) / 50, times["dynamic_edge"]))
+            out.write("{};{};{};{};{}".format(tr, n, "dynamic_vertex_new", sum(times["dynamic_vertex_new"]) / 50, times["dynamic_vertex_new"]))
+            out.write("{};{};{};{};{}".format(tr, n, "dynamic_vertex_old", sum(times["dynamic_vertex_old"]) / 50, times["dynamic_vertex_old"]))
 
 
 def max_walking_time_effect(names, transports):
@@ -179,16 +182,17 @@ def max_walking_time_effect(names, transports):
 
         for tr in transports:
             for n in names:
+                print(n)
                 times = []
                 param = DataManager.produce_data(data_path, n, tr, max_walking_time, walking_speed, MAX_TIME)
 
                 # Vertex old add
                 APSP = Dynamic_APSP(param)
-                for i in range(20):
+                for i in range(50):
                     start_time = time.time()
                     generate_random_vertex_old_pos(APSP)
                     times.append(time.time() - start_time)
-                out.write("{};{};{};{};{}".format(tr, n, max_walking_time, sum(times) / 20, times))
+                out.write("{};{};{};{};{}".format(tr, n, max_walking_time, sum(times) / 50, times))
 
 
 if __name__ == '__main__':
@@ -196,13 +200,18 @@ if __name__ == '__main__':
     data_path = "/Users/DimiS/Documents/Gotta_go_fast/Project/Data"
     result_path = "/Users/DimiS/Documents/Gotta_go_fast/Project/Program/Performance/Result"
     path_Belgium = PATH_BELGIUM(data_path)
-    names = reduce_all()
-    print(names)
-    #names =
-    #transports = ["train_only","bus_only","train_bus"]
-    #edge_node_by_arrondissement(names, transports)
+    #   reduce_all()
+    names = ['Alost', 'Anvers', 'Arlon', 'Ath', 'Audenarde', 'Bastogne', 'Bruges', 'Bruxelles-Capitale', 'Charleroi',
+             'Courtrai', 'Dinant', 'Dixmude', 'Eeklo', 'Furnes', 'Gand', 'Hal-Vilvorde', 'Hasselt', 'Huy', 'Liège',
+             'Louvain', 'Maaseik', 'Malines', 'Marche-en-Famenne', 'Mons', 'Mouscron', 'Namur', 'Neufchâteau',
+             'Nivelles', 'Ostende', 'Philippeville', 'Roulers', 'Saint-Nicolas', 'Soignies', 'Termonde', 'Thuin',
+             'Tielt', 'Tongres', 'Tournai', 'Turnhout', 'Verviers', 'Virton', 'Waremme', 'Ypres']
 
-    #time_static_dynamic(names, transports)
-    #max_walking_time_effect(names, ["train_bus"])
+    names2 = ['Ath','Bruxelles-Capitale', 'Charleroi','Dixmude','Nivelles','Mons', 'Liège', 'Tournai']
+    transports = ["train_only"] #,"bus_only","train_bus"]
+    edge_node_by_arrondissement(names, transports)
+
+    time_static_dynamic(names2, transports)
+    max_walking_time_effect(names2, ["train_bus"])
 
 

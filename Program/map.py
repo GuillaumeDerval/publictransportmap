@@ -10,28 +10,28 @@ class my_map:
     belgium_map = None
 
     @classmethod
-    def get_map(cls, param, path_shape=None, path_pop=None, path_stop_list=None):
+    def get_map(cls, param, path_shape=None, path_pop=None, path_stop_list=None, path_stop_Lambert = None):
         if my_map.belgium_map is None:
             if path_shape is None : path_shape = param.PATH.MAP_SHAPE
             if path_pop is None: path_pop = param.PATH.MAP_POP
             if path_stop_list is None: path_stop_list = param.PATH.TRANSPORT
-            my_map.belgium_map = my_map(param, path_shape, path_pop, path_stop_list)
+            if path_stop_Lambert is None: path_stop_Lambert = param.PATH.STOP_POSITION_LAMBERT
+            my_map.belgium_map = my_map(param, path_shape, path_pop, path_stop_list, path_stop_Lambert)
         return my_map.belgium_map
 
-    def __init__(self, param, path_shape, path_pop, stop_list_path):
+    def __init__(self, param, path_shape, path_pop, stop_list_path, path_stop_lambert):
         self.__sector_map = {}
         self.__munty_map = {}
         self.path_shape = path_shape
         self.path_pop = path_pop
         self.param = param
 
-
         self.__set_sector()
         self.__set_shape_munty()
 
         # stop_munty
         self.stop_position_dico = {}
-        with open(param.PATH.STOP_POSITION_LAMBERT, "r") as file:
+        with open(path_stop_lambert, "r") as file:
             lambert = json.load(file)
         with open(stop_list_path, "r") as file:
             transp = json.load(file)
@@ -124,7 +124,6 @@ class my_map:
         :modify: reachable_stop_from_munty : {munty1 : [stop1,stop2,...]} where walking_time(muntyi,stopi) < MAX_WALKING_TIME
                  reachable_munty_from_stop: {stop_name1 : [munty1,munty2,...]} where walking_time(muntyi,stopi) < MAX_WALK_TIME
         """
-
         for munty in self.get_all_munty_refnis():
             munty_shape = self.get_shape_refnis(munty)
 

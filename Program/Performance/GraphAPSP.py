@@ -36,9 +36,8 @@ def graph_TimeInterval():
     # plt.xticks(y_pos, bars)
     #plt.show()
 
-def graph_Node_by_Arrondi():
+def graph_Node_by_Arrondi(tr):
     data_path = "/Users/DimiS/Documents/Gotta_go_fast/Project/Program/Performance/Result"
-    tr = "train_only"
 
 
     with open(data_path+"/ArrondVertexEdge.csv", newline='') as csvfile:
@@ -52,18 +51,29 @@ def graph_Node_by_Arrondi():
                 edges.append(int(row["edge"]))
                 nodes.append(int(row["node"]))
 
-        barWidth = 1
-        plt.bar(arrond, nodes, color='#2d7f5e', edgecolor='white', width=barWidth)
-        plt.title("Nombre de stations de train par arrondissement")
-        plt.xlabel("Arrondissement")
-        plt.ylabel("Nombre de stations")
-        plt.show()
+        import math
+        arrNode = list(zip(arrond, nodes))
+        arrNode.sort(key = lambda x : x[1])
+        arrEdge = list(zip(arrond, edges))
+        arrEdge.sort(key = lambda x : x[1])
 
         barWidth = 1
-        plt.bar(arrond, edges, color='#2d7f5e', edgecolor='white', width=barWidth)
+        plt.bar([x[0] for x in arrNode], [x[1] for x in arrNode], color='#2d7f5e', edgecolor='white', width=barWidth)
+        plt.title("Nombre de stations de train par arrondissement")
+        plt.xlabel("Arrondissement")
+        plt.xticks(rotation=90)
+        plt.ylabel("Nombre de stations")
+        plt.yscale('log')
+        plt.show()
+
+
+        barWidth = 1
+        plt.bar([x[0] for x in arrEdge], [x[1] for x in arrEdge], color='#2d7f5e', edgecolor='white', width=barWidth)
         plt.title("Nombre de connexion de train par arrondissement")
         plt.xlabel("Arrondissement")
+        plt.xticks(rotation=90)
         plt.ylabel("Nombre de connexions")
+        plt.yscale('log')
         plt.show()
 
     #plt.bar(starts, train_nodes, color='#557f2d', edgecolor='white', width=barWidth)
@@ -74,5 +84,6 @@ def graph_Node_by_Arrondi():
 
 
 if __name__ == '__main__':
-    graph_TimeInterval()
-    graph_Node_by_Arrondi()
+    #graph_TimeInterval()
+    #graph_Node_by_Arrondi(tr = "train_only")
+    graph_Node_by_Arrondi(tr="train_bus")
