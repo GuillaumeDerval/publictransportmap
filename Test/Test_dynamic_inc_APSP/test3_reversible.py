@@ -25,7 +25,7 @@ class TestInitialisationAPSP(TestCase):
         remove_files("data_test/path_computed/")
         remove_files("data_test/path_expected/")
 
-        my_map.belgium_map = None
+        MyMap.belgium_map = None
 
     def test_one_level_one_edge(self):
         APSP = Dynamic_APSP(self.param_mini)

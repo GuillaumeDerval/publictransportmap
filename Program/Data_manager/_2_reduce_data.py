@@ -3,12 +3,10 @@ import json
 import os
 from geojson import dump
 from shapely.geometry import Point
-
-from Program.map import my_map
-
+from Program.Map import MyMap
 
 
-def reduce_rsd_work(PATH_BELGIUM,PATH,locations_list):
+def reduce_rsd_work(PATH_BELGIUM, PATH,locations_list):
     with open(PATH_BELGIUM.RSD_WORK, newline='') as csvfile:
         reader = csv.DictReader(csvfile, delimiter='|')
         with open(PATH.RSD_WORK, mode='w') as out:
@@ -46,6 +44,7 @@ def reduce_map(PATH_BELGIUM, PATH, refnis_list):
     with open(PATH.MAP_SHAPE, 'w') as w:
         dump(out, w)
 
+
 def reduce_pop_sector(PATH_BELGIUM, PATH,refnis_list):
     with open(PATH_BELGIUM.MAP_POP,"r") as in_file:
         with open(PATH.MAP_POP,"w") as out_file:
@@ -56,7 +55,6 @@ def reduce_pop_sector(PATH_BELGIUM, PATH,refnis_list):
                 refnis = str(row["\ufeffCD_REFNIS"])
                 if refnis in refnis_list:
                     writer.writerow(row)
-
 
 
 def reduce_stop(PATH_BELGIUM, PATH, parsed_gtfs_path,refnis_list, transport, param):
@@ -76,12 +74,7 @@ def reduce_stop(PATH_BELGIUM, PATH, parsed_gtfs_path,refnis_list, transport, par
 
     reduced_stop = {}
     position_lamber = json.load(open(PATH_BELGIUM.STOP_POSITION_LAMBERT[transport], "r"))
-    if transport == "train_only":
-        mmap = my_map.get_map(param, path_stop_list= PATH_BELGIUM.TRAIN_ONLY, path_stop_Lambert= PATH_BELGIUM.STOP_POSITION_LAMBERT["train_only"])
-    elif transport == "bus_only":
-        mmap = my_map.get_map(param, path_stop_list= PATH_BELGIUM.BUS_ONLY, path_stop_Lambert= PATH_BELGIUM.STOP_POSITION_LAMBERT["bus_only"])
-    else:
-        mmap = my_map.get_map(param, path_stop_list= PATH_BELGIUM.TRAIN_BUS, path_stop_Lambert= PATH_BELGIUM.STOP_POSITION_LAMBERT["train_bus"])
+    mmap = MyMap(param)
     for refnis in refnis_list:
         munty_shape = mmap.get_shape_refnis(refnis)
 
@@ -91,7 +84,7 @@ def reduce_stop(PATH_BELGIUM, PATH, parsed_gtfs_path,refnis_list, transport, par
 
             if munty_shape.contains(pos_point):
                 reduced_stop[name] = position_lamber[name]
-    my_map.belgium_map = None
+    MyMap.belgium_map = None
     os.remove(PATH.STOP_POSITION_LAMBERT)
     with open(PATH.STOP_POSITION_LAMBERT, "w") as out:
         json.dump(reduced_stop, out)

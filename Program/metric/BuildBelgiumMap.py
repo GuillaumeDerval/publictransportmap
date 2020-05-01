@@ -1,11 +1,11 @@
-from Program.distance_and_conversion import WGS84_to_Lambert
+from Program.DistanceAndConversion import WGS84_to_Lambert
 import json
 import time
 from shapely.geometry import LineString, Point, mapping
 
 
 # mix a map with the stop positions
-def map_stop(in_path, out_path,map_path):
+def map_stop(in_path, out_path):
     feature_collection = []
 
     data_stop = json.load(open(in_path))

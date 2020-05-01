@@ -1,7 +1,7 @@
 from unittest import TestCase
 from shapely.geometry import shape
 
-from Program.map import my_map
+from Program.map import MyMap
 from Program.Data_manager.main import DataManager
 
 
@@ -11,10 +11,10 @@ class TestMy_map(TestCase):
 
     def setUp(self):
         self.param = DataManager.load_data("./../Data_test","small1", "train_only")
-        TestMy_map.mapp = my_map.get_map(self.param,  path_pop="./../Data_test/intermediate/small1_train_only/pop_sector.csv")
+        TestMy_map.mapp = MyMap.get_map(self.param, path_pop="./../Data_test/intermediate/small1_train_only/pop_sector.csv")
 
     def tearDown(self):
-        my_map.belgium_map = None
+        MyMap.belgium_map = None
 
     def test_get_map(self):
         self.assertIsNotNone(TestMy_map.mapp)

@@ -1,6 +1,6 @@
 #Monte carlo
 
-################################## Pick a rdm travel ##################################################
+# ################################# Pick a rdm travel ##################################################
 
 
 # Trouver la distribution des temps de marche par rapport a un stop (id) Pour chaque commune
@@ -24,31 +24,25 @@
 # function of cumulative distribution =  function of repartition
 import random
 import math
-
-
+import json
 from shapely.geometry import Point
 
-from Program.distance_and_conversion import *
+from Program.DistanceAndConversion import distance_Eucli
 from Program.Data_manager.path import Parameters
 
 
 # ################################# Monte Carlo #########################################################
 class TravellersModelisation:
 
-    def __init__(self,param:Parameters, distance_oracle, reducing_factor: int, travel_path: str = None,
-                 mapmap=None, my_seed = None):
+    def __init__(self, param: Parameters, distance_oracle, reducing_factor: int, travel_path: str = None, my_seed=None):
 
         assert reducing_factor > 0
-        if travel_path is None: travel_path = param.PATH.TRAVEL
-
-        if mapmap is None:
-            from Program.map import my_map
-            mapmap = my_map.get_map(param)
-
+        if travel_path is None:
+            travel_path = param.PATH.TRAVEL
         if my_seed is not None:
             random.seed(my_seed)
 
-        self.map = mapmap
+        self.map = param.MAP()
         self.speed = param.WALKING_SPEED()
         self.max_walk_time = param.MAX_WALKING_TIME()
         # virtual traveller generation

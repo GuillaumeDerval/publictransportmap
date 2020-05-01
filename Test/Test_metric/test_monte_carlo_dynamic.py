@@ -45,14 +45,14 @@ class TestMonteCarlo(TestCase):
 
         self.distance_oracle = DistanceOracle("./../Data_test/produced/minimal_distance/small1_mc/", self.idx_to_name)
         self.reducing_factor = 1
-        self.mapmap = map.my_map.get_map(self.param, path_pop="./../Data_test/intermediate/small1_train_only/popsector.csv")
+        self.mapmap = map.MyMapStop(self.param, path_pop="./../Data_test/intermediate/small1_train_only/popsector.csv")
         self.travel_model = mc.TravellersModelisation(param=self.param,
                                                       travel_path=self.param.PATH.TRAVEL,
                                                       distance_oracle=self.distance_oracle,
                                                       reducing_factor=self.reducing_factor,
                                                       mapmap=self.mapmap)
     def tearDown(self):
-        map.my_map.belgium_map =  None
+        map.MyMap.belgium_map =  None
 
     # ######################################### TEST INITIALISATION ###################################################
     def test_virtual_travellers(self):

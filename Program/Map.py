@@ -2,53 +2,25 @@
 import csv
 from shapely.geometry import shape, MultiPolygon, Point
 # from shapely.ops import Point
-from Program.distance_and_conversion import *
+from Program.DistanceAndConversion import *
 
 
+class MyMap:
+    def __init__(self, PATH, MAX_WALKING_TIME, SPEED , path_shape=None, path_pop=None):
+        if path_shape is None: path_shape = PATH.MAP_SHAPE
+        if path_pop is None: path_pop = PATH.MAP_POP
 
-class my_map:
-    belgium_map = None
+        self.MAX_WALKING_TIME = MAX_WALKING_TIME
+        self.SPEED = SPEED
 
-    @classmethod
-    def get_map(cls, param, path_shape=None, path_pop=None, path_stop_list=None, path_stop_Lambert = None):
-        if my_map.belgium_map is None:
-            if path_shape is None : path_shape = param.PATH.MAP_SHAPE
-            if path_pop is None: path_pop = param.PATH.MAP_POP
-            if path_stop_list is None: path_stop_list = param.PATH.TRANSPORT
-            if path_stop_Lambert is None: path_stop_Lambert = param.PATH.STOP_POSITION_LAMBERT
-            my_map.belgium_map = my_map(param, path_shape, path_pop, path_stop_list, path_stop_Lambert)
-        return my_map.belgium_map
-
-    def __init__(self, param, path_shape, path_pop, stop_list_path, path_stop_lambert):
         self.__sector_map = {}
         self.__munty_map = {}
         self.path_shape = path_shape
         self.path_pop = path_pop
-        self.param = param
+        #self.param = param
 
         self.__set_sector()
         self.__set_shape_munty()
-
-        # stop_munty
-        self.stop_position_dico = {}
-        with open(path_stop_lambert, "r") as file:
-            lambert = json.load(file)
-        with open(stop_list_path, "r") as file:
-            transp = json.load(file)
-        for name in transp.keys():
-            if name in lambert:
-                self.stop_position_dico[name] = tuple(lambert[name])
-            else:
-                WGS84_to_Lambert((transp[name]["lon"],transp[name]["lat"]))
-        self.reachable_stop_from_munty = {munty: [] for munty in
-                                          self.get_all_munty_refnis()}  # contient tout les stop atteignable depuis une commune
-        self.reachable_munty_from_stop = {stop_name: set() for stop_name in
-                                          self.stop_position_dico.keys()}  # contient tout les commune depuis un stop
-        self.__set_reachable_stop(self.stop_position_dico.items())
-
-        # reversible structure
-        self.__change_log = []      # added_stop_name
-        self.__stack_log = []       # permet de faire une recherche sur plusieur etage
 
     def __set_sector(self):
         with open(self.path_shape) as f:
@@ -104,7 +76,7 @@ class my_map:
     def get_shape_refnis(self, refnis):
         return self.__munty_map[refnis]["shape"]
 
-    #population
+    # population
     def get_pop_sector(self, sector_id):
         return self.__sector_map[sector_id]["pop"]
 
@@ -114,7 +86,40 @@ class my_map:
     def get_sector_ids(self, refnis_munty):
         return self.__munty_map[refnis_munty]["sector_ids"]
 
-    # ##################################### Relation between stop position and municipality ############################
+
+# ##################################### Relation between stop position and municipality ############################
+
+
+class MyMapStop(MyMap):
+
+    def __init__(self, PATH, MAX_WALKING_TIME,SPEED,
+                 path_shape=None, path_pop=None, path_stop_list=None, path_stop_lambert=None):
+        MyMap.__init__(self,PATH=PATH, MAX_WALKING_TIME=MAX_WALKING_TIME, SPEED=SPEED,
+                       path_shape=path_shape, path_pop=path_pop)
+
+        if path_stop_list is None: path_stop_list = PATH.TRANSPORT
+        if path_stop_lambert is None: path_stop_lambert = PATH.STOP_POSITION_LAMBERT
+
+        # stop_munty
+        self.stop_position_dico = {}
+        with open(path_stop_lambert, "r") as file:
+            lambert = json.load(file)
+        with open(path_stop_list, "r") as file:
+            transp = json.load(file)
+        for name in transp.keys():
+            if name in lambert:
+                self.stop_position_dico[name] = tuple(lambert[name])
+            else:
+                WGS84_to_Lambert((transp[name]["lon"], transp[name]["lat"]))
+        self.reachable_stop_from_munty = {munty: [] for munty in
+                                          self.get_all_munty_refnis()}  # contient tout les stop atteignable depuis une commune
+        self.reachable_munty_from_stop = {stop_name: set() for stop_name in
+                                          self.stop_position_dico.keys()}  # contient tout les commune depuis un stop
+        self.__set_reachable_stop(self.stop_position_dico.items())
+
+        # reversible structure
+        self.__change_log = []  # added_stop_name
+        self.__stack_log = []  # permet de faire une recherche sur plusieur etage
 
     def __set_reachable_stop(self, stop_list):
         """
@@ -134,17 +139,16 @@ class my_map:
                     self.reachable_stop_from_munty[munty].append(stop)  # stop in the municipality
                     self.reachable_munty_from_stop[stop[0]].add(munty)
 
-
                 elif isinstance(munty_shape,MultiPolygon):  # stop not in the municipality and municipality in several part
                     for poly in munty_shape:
                         dist = poly.exterior.distance(pos_point)
-                        if dist < self.param.MAX_WALKING_TIME() * self.param.WALKING_SPEED():
+                        if dist < self.MAX_WALKING_TIME * self.SPEED:
                             self.reachable_stop_from_munty[munty].append(stop)
                             self.reachable_munty_from_stop[stop[0]].add(munty)
                             break
                 else:  # stop not in the municipality and one block municipality
                     dist = munty_shape.exterior.distance(pos_point)
-                    if dist < self.param.MAX_WALKING_TIME() * self.param.WALKING_SPEED():
+                    if dist < self.MAX_WALKING_TIME * self.SPEED:
                         self.reachable_stop_from_munty[munty].append(stop)
                         self.reachable_munty_from_stop[stop[0]].add(munty)
 
@@ -187,7 +191,7 @@ class my_map:
             stop_list_munty = self.get_reachable_stop_from_munty(munty)
         reachable_stop = []
         for stop in stop_list_munty:
-            if distance_Eucli(pos, stop[1]) < self.param.MAX_WALKING_TIME() * self.param.WALKING_SPEED():
+            if distance_Eucli(pos, stop[1]) < self.MAX_WALKING_TIME * self.SPEED:
                 reachable_stop.append(stop)
         return reachable_stop
 
@@ -226,7 +230,7 @@ class my_map:
         self.__change_log = []
 
     def restore(self):
-        #for added_stop in self.__change_log:
+        # for added_stop in self.__change_log:
         self.remove_stop(self.__change_log)
 
         self.__change_log = self.__stack_log.pop()

@@ -2,8 +2,9 @@ import os
 import random as rdm
 import math
 import numpy as np
+from shapely.geometry import Point
 from Program.dynamic_Inc_APSP.Dynamic_Incremental_All_Pair_Shortest_Path import *
-from Program.map import *
+from Program.DistanceAndConversion import Lambert_to_WGS84
 from Program.Data_manager.main import DataManager
 
 
@@ -157,7 +158,7 @@ def transport_add_edge(transp_dico, u_stop_name, u_time,  v_stop_name, v_time, u
 
 def rdm_point_shape(param):
     """pick uniformaly at rdm a point in the shape"""
-    mmap = my_map.get_map(param)
+    mmap = param.MAP()
     refnis = rdm.sample(mmap.get_all_munty_refnis(), 1)[0]
     shape = mmap.get_shape_refnis(refnis)
     assert shape.area > 0
@@ -169,7 +170,7 @@ def rdm_point_shape(param):
     if shape.contains(Point(x, y)):
         return p
     else:
-        return rdm_point_shape(shape)
+        return rdm_point_shape(param)
 
 # ################################# Edge / Vertex Generation ##########################################################
 
@@ -214,9 +215,8 @@ def generate_random_edge(APSP,transp_dico):
     APSP.add_edge(name1, time1, name2, time2, u_position=pos1, v_position=pos2)
 
 
-
 def generate_random_vertex(APSP : Dynamic_APSP,transp_dico):
-    mmap = my_map.get_map(APSP.param)
+    mmap = APSP.map
     if rdm.randint(0, 1) == 1:                  # New position or not
         # New position
         z_name = str(rdm.random())  # on pourrait avoir 2 fois le meme nom mais c'est improbable + pas grave

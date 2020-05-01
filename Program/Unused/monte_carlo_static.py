@@ -14,13 +14,13 @@ from shapely.geometry import MultiPolygon, Point
 import random
 import math
 from Program.distance_and_conversion import *
-from Program.map import my_map
+from Program.map import MyMap
 import numpy as np
 import time
 
 def get_n_rdm_point(n, munty):
     "pick a rdm point in the shape, the probability of select a point depend on the number of people in the sector"
-    map = my_map.get_map()
+    map = MyMap.get_map()
 
     def rdm_point_shape(shape):
         "pick uniformaly at rdm a point in the shape"
@@ -106,7 +106,7 @@ class stop_munty:
         :return: [(stop_id, (coord_x, coord_y))] where distance (munty, stop) < max_walking_time
         """
 
-        map = my_map.get_map()
+        map = MyMap.get_map()
         reachable_stop = cls.__reachable_stop_munty.get(munty, None)
         if reachable_stop is None:
             reachable_stop = []
@@ -347,7 +347,7 @@ def monte_carlo(travel_path, get_total= False):
         res = all_results.get(rsd_munty, result())
         n = int(trav["n"])
         res.resid += n
-        res.pop = my_map.get_map().get_pop_refnis(rsd_munty)
+        res.pop = MyMap.get_map().get_pop_refnis(rsd_munty)
 
         # compute monte carlo for iter travel
         iters = __iter_by_pop(n, REDUCING_FACTOR)
@@ -371,7 +371,7 @@ def monte_carlo(travel_path, get_total= False):
 
 
 if __name__ == '__main__':
-    map = my_map.get_map(path_shape = PATH.MAP_SHAPE, path_pop  = PATH.MAP_POP)
+    map = MyMap.get_map(path_shape = PATH.MAP_SHAPE, path_pop  = PATH.MAP_POP)
 
     start = time.time()
     computations = monte_carlo(PATH.TRAVEL)

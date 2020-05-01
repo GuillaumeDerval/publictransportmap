@@ -22,7 +22,7 @@ class TestDynamicAPSP(TestCase):
         for file_name in os.listdir("data_test/path_expected/"):
             os.remove("data_test/path_expected/" + file_name)
 
-        my_map.belgium_map = None
+        MyMap.belgium_map = None
 
     def test_modify_graph(self):
         APSP = Dynamic_APSP(param=self.param_mini)

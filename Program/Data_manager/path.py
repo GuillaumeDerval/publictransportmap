@@ -1,5 +1,6 @@
 import os
 import json
+from Program.Map import MyMapStop
 
 
 initial = "initial"
@@ -119,6 +120,7 @@ class Parameters:
         self.__MAX_WALKING_TIME = config["max_walking_time"] # in min
         self.__WALKING_SPEED = config["walking_speed"]  # m/min
         self.__max_time = config["max_time"]  # min
+        self.__map = None
 
 
         # self.__date = date
@@ -150,3 +152,8 @@ class Parameters:
 
     def MAX_TIME(self):
         return self.__max_time
+
+    def MAP(self):
+        if self.__map is None:
+            self.__map = MyMapStop(self.PATH, self.MAX_WALKING_TIME(), self.WALKING_SPEED())
+        return self.__map

@@ -27,7 +27,7 @@ SPEED = WALKING_SPEED /0.06 #in m/min
 SPEED = 15/0.06
 
 #map
-map = mapp.my_map.get_map(path.SHAPE, path.POP)
+map = mapp.MyMap.get_map(path.SHAPE, path.POP)
 
 
 

@@ -14,7 +14,7 @@ class TestMonte_carlo(TestCase):
         #PATH.MINIMAL_TRAVEL_TIME_TC = "data/out/"
         #PATH.GRAPH = "data/out.json"
 
-        mc.map = map.my_map.get_map("data/smallmap.geojson", "data/popsector.csv")
+        mc.map = map.MyMap.get_map("data/smallmap.geojson", "data/popsector.csv")
         with open("data/stop_pos.json", "r") as file:
             mc.stop_munty.stop_list = json.load(file)
 

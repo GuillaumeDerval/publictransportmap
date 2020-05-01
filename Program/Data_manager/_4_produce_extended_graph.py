@@ -1,18 +1,15 @@
 import json
-import time
-# from collections import deque
 
 
-"""
-    rajoute des connection pour pouvoir faire un trajet qui s'etant sur 2 jour ???
-    
-    transformation des noeud : passage de nom, temps  à un seul chiffre ????
-
-    in  : PATH.SIMPLIFIED
-    out : PATH.GRAPH
-"""
 def produce_exthended_graph(PATH, MAX_TIME):
+    """
+        rajoute des connection pour pouvoir faire un trajet qui s'etant sur 2 jour ???
 
+        transformation des noeud : passage de nom, temps  à un seul chiffre ????
+
+        in  : PATH.SIMPLIFIED
+        out : PATH.GRAPH
+    """
 
     #print("--- Loading data")
     with open(PATH.SIMPLIFIED,"r") as s:

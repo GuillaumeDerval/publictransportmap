@@ -6,14 +6,12 @@ from Program.dynamic_Inc_APSP.PathPresence import PathPresence
 from Program.dynamic_Inc_APSP.MinimumTime import MinimumTime
 
 from Program.Data_manager.path import Parameters
-from Program.map import my_map
-from Program.distance_and_conversion import distance_Eucli
-
-
+from Program.Map import MyMapStop
+from Program.DistanceAndConversion import distance_Eucli
 
 
 class Dynamic_APSP:
-    def __init__(self, param: Parameters, path=None, mmap=None):
+    def __init__(self, param: Parameters, path=None):
         if path is None:
             path = param.PATH.GRAPH_TC_WALK
         with open(path) as file:
@@ -32,8 +30,7 @@ class Dynamic_APSP:
         self.path = PathPresence(self.graph, self.max_time)
         self.distance = MinimumTime(self.name_to_idx, self.idx_to_name, self.max_time, self.used_time, self.path)
 
-        if mmap is not None: self.map = mmap
-        else: self.map = my_map.get_map(param)
+        self.map: MyMapStop = param.MAP()
 
         # reversible state -> record change
         self.__change_log = []

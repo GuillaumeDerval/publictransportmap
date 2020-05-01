@@ -30,7 +30,8 @@ class DataManager:
     #    make_data_structure(data_path)
 
     @staticmethod
-    def produce_data_belgium(data_path, date=datetime.date(2019, 12, 2), start_time=time_str_to_int("06:00:00"), end_time=time_str_to_int("10:30:00")):
+    def produce_data_belgium(data_path, date=datetime.date(2019, 12, 2), start_time=time_str_to_int("06:00:00"),
+                             end_time=time_str_to_int("10:30:00")):
         assert start_time <= end_time
 
         DataManager.root = data_path
@@ -44,7 +45,6 @@ class DataManager:
         if not os.path.exists(path_Belgium.GTFS):
             print("You need to download gtfs data and put it in the gtfs folder")
             raise Exception
-
 
         print("START: Belgium parse gtfs")
         # parse gtfs
@@ -96,8 +96,7 @@ class DataManager:
         parameter = Parameters(path)
 
 
-
-        #reduce data
+        # reduce data
         print("reduce Census")
         refnis_list = reduce_rsd_work(path_Belgium, path, locations)
         print("reduce map")
@@ -117,7 +116,6 @@ class DataManager:
             reduce_parsed_gtfs(path, path_Belgium.TRAIN_BUS, out=path.TRANSPORT)
 
         os.remove(path.CONFIG)
-
 
     @staticmethod
     def produce_data(data_path, location_name, transport,  max_walking_time, walking_speed, MAX_TIME= 28 * 60):
@@ -158,7 +156,6 @@ class DataManager:
 
         return parameter
 
-
     @staticmethod
     def load_data(data_path, location_name, transport):
         path = PATH(data_path, location_name, transport)
@@ -169,6 +166,6 @@ class DataManager:
 if __name__ == '__main__':
     data_path = "/Users/DimiS/Documents/Gotta_go_fast/Project/Data"
     #make_data_structure(data_path)
-    DataManager.produce_data_belgium(data_path)
-    #DataManager.reduce_data(data_path, "Arrondissement de Malines","Malines", "train_only")
+    #DataManager.produce_data_belgium(data_path)
+    DataManager.reduce_data(data_path, "Arrondissement de Malines","Malines", "bus_only")
     #DataManager.produce_data(data_path,"Malines", "train_only", 15, 5)
