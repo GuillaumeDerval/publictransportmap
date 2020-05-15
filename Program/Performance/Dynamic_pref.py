@@ -74,7 +74,7 @@ def reduce_all():
 
 def edge_node_by_arrondissement(names,transports):
     # ne compte pas le arrete des trajet à pied ni rester sur place
-    out = open(result_path + "/ArrondVertexEdge.csv","w")
+    out = open(result_path + "/ArrondVertexEdgeAll.csv","w")
     out.write("transport;arrondissementName;node;edge\n")
     for arr in names:
         for tr in transports:
@@ -199,25 +199,31 @@ def time_static_dynamic(names, transports):
 
 
 def max_walking_time_effect(names, transports):
-    out = open(result_path + "/WalkingTimeEffect.csv", "w")
-    out.write("transport;localisation;max_time;mean;all\n")
-    for max_walking_time in range(0, 60, 5):
-        walking_speed = 3.2
-        MAX_TIME = 12 * 60
-
+    out1 = open(result_path + "/WalkingTimeEffectVertex.csv", "w")
+    out1.write("transport;localisation;max_time;mean;all\n")
+    out2 = open(result_path + "/WalkingTimeEffectInit.csv", "w")
+    out2.write("transport;localisation;max_time;value\n")
+    for n in names:
         for tr in transports:
-            for n in names:
-                print(n)
-                times = []
+            for max_walking_time in range(0, 61, 5):
+                walking_speed = 3.2
+                MAX_TIME = 12 * 60
+                print(n,"  ",max_walking_time)
+
                 param = DataManager.produce_data(data_path, n, tr, max_walking_time, walking_speed, MAX_TIME)
 
                 # Vertex old add
+                start_time = time.time()
                 APSP = Dynamic_APSP(param)
+                t = time.time() - start_time
+                out2.write("{};{};{};{}\n".format(tr, n, max_walking_time, t))
+
+                times = []
                 for i in range(50):
                     start_time = time.time()
                     generate_random_vertex_old_pos(APSP)
                     times.append(time.time() - start_time)
-                out.write("{};{};{};{};{}\n".format(tr, n, max_walking_time, sum(times) / 50, times))
+                out1.write("{};{};{};{};{}\n".format(tr, n, max_walking_time, sum(times) / 50, times))
 
 
 if __name__ == '__main__':
@@ -232,11 +238,11 @@ if __name__ == '__main__':
              'Nivelles', 'Ostende', 'Philippeville', 'Roulers', 'Saint-Nicolas', 'Soignies', 'Termonde', 'Thuin',
              'Tielt', 'Tongres', 'Tournai', 'Turnhout', 'Verviers', 'Virton', 'Waremme', 'Ypres']
 
-    names2 = ['Dixmude','Ath','Tournai','Mons','Nivelles', 'Charleroi']#, 'Liège', 'Bruxelles-Capitale']
+    names2 = ['Charleroi']#'Dixmude','Ath','Tournai','Mons','Nivelles', ]#', 'Liège', 'Bruxelles-Capitale']
     transports = ["train_bus"] #,"bus_only","train_bus"]
-    edge_node_by_arrondissement(names2, transports)
+    #edge_node_by_arrondissement(names, transports)
 
     #time_static_dynamic(names2, transports)
-    #max_walking_time_effect(names2, ["train_bus"])
+    max_walking_time_effect(names2, ["train_bus"])
 
 
