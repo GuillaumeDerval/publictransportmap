@@ -11,7 +11,7 @@ from Program.DistanceAndConversion import distance_Eucli
 
 
 class Dynamic_APSP:
-    def __init__(self, param: Parameters, path=None):
+    def __init__(self, param: Parameters, path=None,load = False):
         if path is None:
             path = param.PATH.GRAPH_TC_WALK
         with open(path) as file:
@@ -27,9 +27,22 @@ class Dynamic_APSP:
         for used in self.used_time:
             used.sort()
 
-        self.path = PathPresence(self.graph, self.max_time)
-        self.distance = MinimumTime(self.name_to_idx, self.idx_to_name, self.max_time, self.used_time, self.path)
+        if load:
+            with open(param.PATH.CONFIG) as f:
+                conf1 = json.load(f)
+            with open(param.PATH.IS_PATH+"/config.json") as f:
+                conf2 = json.load(f)
+            with open(param.PATH.MINIMAL_TRAVEL_TIME_TC+"/config.json") as f:
+                conf3 = json.load(f)
+            assert conf1 == conf2 == conf3
 
+            self.path = PathPresence(self.graph, self.max_time,load_path = param.PATH.IS_PATH)
+            self.distance = MinimumTime(self.name_to_idx, self.idx_to_name, self.max_time, self.used_time, self.path,
+                                        load_path = param.PATH.MINIMAL_TRAVEL_TIME_TC)
+        else:
+            #standart initialisation
+            self.path = PathPresence(self.graph, self.max_time)
+            self.distance = MinimumTime(self.name_to_idx, self.idx_to_name, self.max_time, self.used_time, self.path)
         self.map: MyMapStop = param.MAP()
 
         # reversible state -> record change
@@ -194,6 +207,13 @@ class Dynamic_APSP:
         self.distance.save()
         self.map.save()
         #todo save new positions
+
+        with open(self.param.PATH.CONFIG) as f:
+            conf = json.load(f)
+        with open(self.param.PATH.IS_PATH + "/config.json") as f:
+            json.dump(conf,f)
+        with open(self.param.PATH.MINIMAL_TRAVEL_TIME_TC + "/config.json") as f:
+            json.dump(conf, f)
 
         self.__stack_log.append(self.__change_log)
         self.__change_log = []

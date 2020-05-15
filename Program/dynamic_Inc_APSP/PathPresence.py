@@ -4,7 +4,7 @@ import json
 
 class PathPresence:
 
-    def __init__(self, graph, max_time):
+    def __init__(self, graph, max_time,load_path=None):
         vertex = graph.vertex
         self.pos_to_vertex = vertex.copy()
         self.vertex_to_pos = {x: i for i, x in enumerate(self.pos_to_vertex)}
@@ -14,7 +14,12 @@ class PathPresence:
         self.__true_size = self.size
         self.__backup = {"size": self.size, "single_change": {}, "line_change": {}}
         self.__backup_stack = []  # permet de faire une recherche sur plusieur etage
-        self.initialisation(graph, max_time)
+        if load_path is None:
+            self.initialisation(graph, max_time)
+        else:
+            #load data
+            self.__load_data(load_path)
+
         self.__backup = {"size": self.size, "single_change": {}, "line_change": {}}
 
     def initialisation(self, graph, max_time):
@@ -153,6 +158,19 @@ class PathPresence:
 
         with open(out_directory_path + "__conversion.json", "w") as out:
             json.dump(self.vertex_to_pos, out)
+
+    def __load_data(self, path):
+        with open(path + "__conversion.json", "w") as f:
+            self.vertex_to_pos = json.load(f)
+            self.size = len(self.vertex_to_pos)
+            self.pos_to_vertex = [0]* self.size
+            for x, i in self.vertex_to_pos.items():
+                self.pos_to_vertex[i] = x
+        for v in self.pos_to_vertex:
+            with open(path + str(v) + ".npy") as f:
+                is_path_list = np.load(f)
+                self.is_reachable[self.vertex_to_pos[v]] = is_path_list
+
 
     # #################################################################################################################
 

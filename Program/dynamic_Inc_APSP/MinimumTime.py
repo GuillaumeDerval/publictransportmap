@@ -9,7 +9,7 @@ class MinimumTime:
     # !!! attention le distance sont mise à jour seulement après un appel a update()
     # todo sauvegarde sur des fichiers pour limiter l'utilisation de memoire ???
 
-    def __init__(self, name_to_idx, idx_to_name, max_time, used_time, path_presence):
+    def __init__(self, name_to_idx, idx_to_name, max_time, used_time, path_presence, load_path = None):
         self.name_to_idx = name_to_idx
         self.idx_to_name = idx_to_name
         self.max_time = max_time
@@ -18,6 +18,8 @@ class MinimumTime:
         self.size: int = len(name_to_idx)
         self.__true_size = self.size
         self.distance = [np.full((self.size,), -1, dtype=np.int) for _ in range(self.size)]
+        if load_path is not None:
+            self.__load(load_path)
         self.up_to_date = True
         self.__compute_times()
         self.__backup = {"size": self.size, "change_distance": {}}
@@ -191,4 +193,16 @@ class MinimumTime:
 
         with open(out_directory_path + "__conversion.json", "w") as out:
             json.dump(self.name_to_idx, out)
+
+    def __load_data(self, path):
+        with open(path + "__conversion.json", "w") as f:
+            self.name_to_idx = json.load(f)
+            self.size = len(self.name_to_idx)
+            self.idx_to_name = [0]* self.size
+            for x, i in self.name_to_idx.items():
+                self.idx_to_name[i] = x
+        for name in self.idx_to_name:
+            with open(path + str(name) + ".npy") as f:
+                is_path_list = np.load(f)
+                self.is_reachable[self.name_to_idx[name]] = is_path_list
 
