@@ -34,9 +34,9 @@ from Program.Data_manager.path import Parameters
 # ################################# Monte Carlo #########################################################
 class TravellersModelisation:
 
-    def __init__(self, param: Parameters, distance_oracle, reducing_factor: int, travel_path: str = None, my_seed=None):
+    def __init__(self, param: Parameters, distance_oracle, C: int, travel_path: str = None, my_seed=None):
 
-        assert reducing_factor > 0
+        assert C > 0
         if travel_path is None:
             travel_path = param.PATH.TRAVEL
         if my_seed is not None:
@@ -46,7 +46,7 @@ class TravellersModelisation:
         self.speed = param.WALKING_SPEED()
         self.max_walk_time = param.MAX_WALKING_TIME()
         # virtual traveller generation
-        self.reducing_factor = reducing_factor
+        self.reducing_factor = C
         # travel_loc :  dico {(munty_rsd, munty_work): [(pt_rsd, pt_work,(best_rsd_stop, best_work_stop), best_TC),...]}
         self.traveller_locations = {}
         self.__generate_virtual_travellers(travel_path)
@@ -57,6 +57,7 @@ class TravellersModelisation:
         # min/max_time bound
         self.__min_max_time = {}  # store min and max time for each couple of munty orgin -> munty dest
 
+        print("estimate result")
         # computation
         self.all_results = {}           # contains result for each munty
         self.total_results = Result()   # Result for the country
@@ -135,9 +136,9 @@ class TravellersModelisation:
             return out
 
         def __iter_by_pop(pop, reducing_factor):
-            iteration = pop // reducing_factor
+            iteration = math.floor(reducing_factor * pop)
             # avoid bias
-            remaining = (pop % reducing_factor) / reducing_factor
+            remaining = reducing_factor * pop - iteration
             if random.random() < remaining:
                 iteration += 1
             return iteration

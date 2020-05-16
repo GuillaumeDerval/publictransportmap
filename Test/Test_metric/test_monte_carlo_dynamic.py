@@ -49,7 +49,7 @@ class TestMonteCarlo(TestCase):
         self.travel_model = mc.TravellersModelisation(param=self.param,
                                                       travel_path=self.param.PATH.TRAVEL,
                                                       distance_oracle=self.distance_oracle,
-                                                      reducing_factor=self.reducing_factor,
+                                                      C=self.reducing_factor,
                                                       mapmap=self.mapmap)
     def tearDown(self):
         map.MyMap.belgium_map =  None
@@ -114,7 +114,7 @@ class TestMonteCarlo(TestCase):
                                                       distance_oracle=DistanceOracle("./../Data_test/produced/minimal_distance/small2_mc/", self.idx_to_name+ ["S6"],
                                                                                       "./../Data_test/produced/minimal_distance/small1_mc/",
                                                                                       self.idx_to_name),
-                                                      reducing_factor=self.reducing_factor,
+                                                      C=self.reducing_factor,
                                                       mapmap=self.mapmap,
                                                       my_seed=seed)
             change = {"size": (6, 5),
@@ -131,7 +131,7 @@ class TestMonteCarlo(TestCase):
             expected_model = mc.TravellersModelisation(self.param,
                                                        travel_path=self.param.PATH.TRAVEL,
                                                        distance_oracle=DistanceOracle("./../Data_test/produced/minimal_distance/small2_mc/", self.idx_to_name + ["S6"]),
-                                                       reducing_factor=self.reducing_factor,
+                                                       C=self.reducing_factor,
                                                        mapmap=self.mapmap,
                                                        my_seed=seed)
 

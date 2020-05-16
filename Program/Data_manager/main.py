@@ -118,7 +118,7 @@ class DataManager:
         os.remove(path.CONFIG)
 
     @staticmethod
-    def produce_data(data_path, location_name, transport,  max_walking_time, walking_speed, MAX_TIME= 28 * 60):
+    def produce_data(data_path, location_name, transport,  max_walking_time = 30, walking_speed =3.6, MAX_TIME= 28 * 60):
         """
 
         :param data_path:

@@ -11,7 +11,7 @@ from Program.DistanceAndConversion import distance_Eucli
 
 
 class Dynamic_APSP:
-    def __init__(self, param: Parameters, path=None,load = False):
+    def __init__(self, param: Parameters, path=None,load=False):
         if path is None:
             path = param.PATH.GRAPH_TC_WALK
         with open(path) as file:
