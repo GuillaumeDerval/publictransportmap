@@ -103,7 +103,7 @@ class PATH:
         self.MINIMAL_TRAVEL_TIME_TC = "{0}/{1}/minimal_distance/{2}_{3}/".format(root, produced, location_name, transport)
 
         # output map
-        self.OUT_TIME_MAP = "{0}/{1}/time_map_{2}_{3}.geojson".format(root, produced, location_name, transport)
+        self.OUT_TIME_MAP = "{0}/{1}/maps/time_map_{2}_{3}.geojson".format(root, produced, location_name, transport)
         self.OUT_MUNTY_MAP = "{0}/{1}/maps/munty_map_{2}_{3}.geojson".format(root, produced, location_name, transport)
         self.OUT_STOP_MAP = "{0}/{1}/maps/stop_map_{2}_{3}.geojson".format(root, produced, location_name, transport)
 
