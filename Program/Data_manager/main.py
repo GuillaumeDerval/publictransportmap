@@ -24,6 +24,10 @@ class DataManager:
     tc = {"train_only" : ["sncb"], "bus_only" : ["stib", "tec", "delijn"]}
 
     @staticmethod
+    def time_str_to_int(time):
+        return time_str_to_int(time)
+
+    @staticmethod
     def make_data_structure(data_path):
         make_data_structure(data_path)
 
@@ -116,7 +120,6 @@ class DataManager:
             reduce_stop(path_Belgium, path, path_Belgium.TRAIN_BUS, refnis_list,"train_bus", parameter, start_time, end_time)
             reduce_parsed_gtfs(path, path_Belgium.TRAIN_BUS,start_time, end_time, out=path.TRANSPORT)
 
-        os.remove(path.CONFIG)
 
     @staticmethod
     def produce_data(data_path, location_name, transport, max_walking_time = 30, walking_speed =3.6, MAX_TIME= 28 * 60):
@@ -139,6 +142,7 @@ class DataManager:
             config = json.load(conf)
             start_time = config["start_time"]
             end_time = config["end_time"]
+            os.remove(path.CONFIG)
         with (open(path.CONFIG, "w")) as conf:
             config = {"locations": location_name, "location_name": location_name, "transport": transport,
                       "start_time": start_time, "end_time": end_time,
