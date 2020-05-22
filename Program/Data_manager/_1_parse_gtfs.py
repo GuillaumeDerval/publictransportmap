@@ -35,8 +35,8 @@ def time_str_to_int(time):
     """
     transform hh:mm:ss into a time given in second
     """
-    a, b, c = [int(x) for x in time.split(":")]
-    return ((a*60)+b)*60+c
+    a, b, _ = [int(x) for x in time.split(":")]
+    return (a*60)+b
 
 
 def __get_service_ids(folder, date):
