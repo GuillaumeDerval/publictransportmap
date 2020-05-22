@@ -1,12 +1,20 @@
+from Program.Data_manager.main import DataManager
+from Program.NetworkEfficiency import NetworkEfficiency, NetworkModification, AddConnexion, AddLine
 
 """
 Ce fichier contient un example d'utilisation du projet
 """
 
 
-# 0) Initialisation des dossier + localisation des donnée : fichier GTFS, census, ...
-# A ne faire qu'une seule fois
-main.initialisation(destination_path, gtfs_path, census_path, pop_path)
+# 0) Etapes à faire une seule fois , lors du téléchargement du projet
+
+#Initialiser la structure de dossier contenant les données
+import os
+os.makedirs("./Data/")
+DataManager.make_data_structure("./Data/")
+
+# Déplacer les fichier ...
+
 
 
 if __name__ == '__main__':
