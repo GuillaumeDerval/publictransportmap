@@ -6,7 +6,7 @@ import json
 from Program.Data_manager.path import Parameters, make_data_structure, PATH_BELGIUM, PATH
 
 from Program.Data_manager._1_parse_gtfs import time_str_to_int, generate_output_for_gtfs
-from Program.Data_manager._2_reduce_data import reduce_rsd_work, reduce_map, reduce_pop_sector,reduce_stop, reduce_parsed_gtfs
+from Program.Data_manager._2_reduce_data import reduce_rsd_work, reduce_map, reduce_pop_sector,reduce_stop_and_parsed_gtfs
 from Program.Data_manager._3_simplify import simplify_time
 from Program.Data_manager._3b_compute_travels import extract_travel
 
@@ -24,7 +24,7 @@ class DataManager:
     tc = {"train_only" : ["sncb"], "bus_only" : ["stib", "tec", "delijn"]}
 
     @staticmethod
-    def time_str_to_int(time):
+    def time_transformation(time):
         return time_str_to_int(time)
 
     @staticmethod
@@ -55,7 +55,7 @@ class DataManager:
         if not os.path.exists(path_Belgium.TRAIN_ONLY) or not os.path.exists(path_Belgium.TRAIN_BUS):
             for tc in DataManager.tc["train_only"]:
                 print(tc.upper())
-                stops_train.update(generate_output_for_gtfs(path_Belgium.GTFS+ "/" + tc, tc, date, start_time, end_time))
+                stops_train.update(generate_output_for_gtfs(path_Belgium.GTFS + tc, tc, date, start_time, end_time))
 
             json.dump(stops_train, open(path_Belgium.TRAIN_ONLY, "w"))
 
@@ -63,7 +63,7 @@ class DataManager:
         if not os.path.exists(path_Belgium.BUS_ONLY) or not os.path.exists(path_Belgium.TRAIN_BUS):
             for tc in DataManager.tc["bus_only"]:
                 print(tc.upper())
-                stops.update(generate_output_for_gtfs(path_Belgium.GTFS+ "/" + tc, tc, date, start_time, end_time))
+                stops.update(generate_output_for_gtfs(path_Belgium.GTFS + tc, tc, date, start_time, end_time))
 
             json.dump(stops, open(path_Belgium.BUS_ONLY, "w"))
 
@@ -93,7 +93,7 @@ class DataManager:
         path_Belgium = PATH_BELGIUM(data_path_Belgium)
         path = PATH(data_path, location_name, transport)
         with (open(path.CONFIG, "w")) as conf:
-            config = {"locations": location_name, "location_name": location_name, "transport": transport,
+            config = {"locations": locations, "location_name": location_name, "transport": transport,
                       "start_time": start_time, "end_time": end_time,
                       "max_walking_time": 0, "walking_speed": 0, "max_time": 28*60}
             json.dump(config, conf)
@@ -111,14 +111,17 @@ class DataManager:
 
         print("reduce stop")
         if transport == "train_only":
-            reduce_stop(path_Belgium, path, path_Belgium.TRAIN_ONLY, refnis_list, "train_only", parameter, start_time, end_time)
-            reduce_parsed_gtfs(path, path_Belgium.TRAIN_ONLY,start_time, end_time, out=path.TRANSPORT)
+            reduce_stop_and_parsed_gtfs(path_Belgium, path, path_Belgium.TRAIN_ONLY, refnis_list, "train_only", parameter,
+                                        start_time, end_time, path.TRANSPORT)
+
         elif transport == "bus_only":
-            reduce_stop(path_Belgium, path, path_Belgium.BUS_ONLY, refnis_list,"bus_only", parameter, start_time, end_time)
-            reduce_parsed_gtfs(path, path_Belgium.BUS_ONLY,start_time, end_time, out=path.TRANSPORT)
+            reduce_stop_and_parsed_gtfs(path_Belgium, path, path_Belgium.BUS_ONLY, refnis_list,"bus_only", parameter,
+                                        start_time, end_time, path.TRANSPORT)
+
         elif transport == "train_bus":
-            reduce_stop(path_Belgium, path, path_Belgium.TRAIN_BUS, refnis_list,"train_bus", parameter, start_time, end_time)
-            reduce_parsed_gtfs(path, path_Belgium.TRAIN_BUS,start_time, end_time, out=path.TRANSPORT)
+            reduce_stop_and_parsed_gtfs(path_Belgium, path, path_Belgium.TRAIN_BUS, refnis_list,"train_bus", parameter,
+                                        start_time, end_time, path.TRANSPORT)
+
 
 
     @staticmethod
@@ -142,9 +145,10 @@ class DataManager:
             config = json.load(conf)
             start_time = config["start_time"]
             end_time = config["end_time"]
+            locations = config["locations"]
             os.remove(path.CONFIG)
         with (open(path.CONFIG, "w")) as conf:
-            config = {"locations": location_name, "location_name": location_name, "transport": transport,
+            config = {"locations": locations, "location_name": location_name, "transport": transport,
                       "start_time": start_time, "end_time": end_time,
                       "max_walking_time": max_walking_time, "walking_speed": walking_speed, "max_time": MAX_TIME}
             json.dump(config, conf)

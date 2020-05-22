@@ -9,7 +9,7 @@ from Program.NetworkEfficiency import NetworkEfficiency, NetworkModification, Ad
 
 # 0b) Etapes à faire une seule fois , lors du téléchargement du projet
 # Initialiser la structure de dossier contenant les données
-DataManager.make_data_structure("./Data/")
+DataManager.make_data_structure("./Data")
 
 # Telecharger les fichiers GTFS du TEC : https://data.gov.be/en/dataset/tec
 #                               de la STIB : https://opendata.stib-mivb.be/store/data
@@ -31,9 +31,10 @@ DataManager.make_data_structure("./Data/")
 
 
 #TODO LAMBERT
+raise (Exception, "commenter cette ligne apres avoir telecharger le données ")
 
 # Transformer regrouper et changer le format des données GTFS
-DataManager.produce_data_belgium("./Data/")  #cela peut prendre qq minutes
+DataManager.produce_data_belgium("./Data")  #cela peut prendre qq minutes
 
 
 

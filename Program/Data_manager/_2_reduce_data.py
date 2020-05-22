@@ -57,11 +57,14 @@ def reduce_pop_sector(PATH_BELGIUM, PATH,refnis_list):
                     writer.writerow(row)
 
 
-def reduce_stop(PATH_BELGIUM, PATH, parsed_gtfs_path,refnis_list, transport, param, start_time, end_time):
+def reduce_stop_and_parsed_gtfs(PATH_BELGIUM, PATH, parsed_gtfs_path,refnis_list, transport, param, start_time, end_time, out_path):
     """
     Renvoie une liste contenant les stop valide
     C'est à dire le stop positionné dans une commune de munty_list
     Necessite map
+
+    +
+     Creer et renvoie un nouveau set de donnee plus petit ne contenant que les stop de valid_stop_list
     """
     # todo improve pour avoir tout les stop atteingnable et pas uniquement ceux au sein de l'arrondissement
 
@@ -81,8 +84,8 @@ def reduce_stop(PATH_BELGIUM, PATH, parsed_gtfs_path,refnis_list, transport, par
         for name in parsed_gtfs.keys():
             # check that the stop contains at least a departure between start_time and end_time
             valid = False
-            for _,_,t in parsed_gtfs[name]["nei"]:
-                if start_time <= t < end_time:
+            for _,t1,t2 in parsed_gtfs[name]["nei"]:
+                if start_time <= t1 < end_time and start_time <= t2 < end_time:
                     valid = True
                     break
             if valid:
@@ -96,27 +99,18 @@ def reduce_stop(PATH_BELGIUM, PATH, parsed_gtfs_path,refnis_list, transport, par
     with open(PATH.STOP_POSITION_LAMBERT, "w") as out:
         json.dump(reduced_stop, out)
 
-
-# Reduire les donné au stop valables
-def reduce_parsed_gtfs(PATH, parsed_gtfs_path,start_time, end_time, out):
-    """
-    Creer et renvoie un nouveau set de donnee plus petit ne contenant que les stop de valid_stop_list
-    """
-    with open(PATH.STOP_POSITION_LAMBERT) as file:
-        stop_list = json.load(file)
-
-    with open(parsed_gtfs_path) as file:
-        parsed_gtfs = json.load(file)
-    reduced_data = {}
+    reduced_transport = {}
     for name in parsed_gtfs.keys():
-        if name in stop_list:
+        if name in reduced_stop:
             content = parsed_gtfs[name]
-            stop = {"name": content["name"], "lat": content["lat"], "lon": content["lon"], "nei" : []}
-            for name, arrival, departure in content["nei"]:
-                if name in stop_list and start_time <= arrival < end_time:
-                    stop["nei"].append((name, arrival, departure))
-            reduced_data[name] = stop
-    json.dump(reduced_data, open(out, "w"))
+            stop = {"name": content["name"], "lat": content["lat"], "lon": content["lon"], "nei": []}
+            for namedest, arrival, departure in content["nei"]:
+                if namedest in reduced_stop and start_time <= arrival < end_time and start_time <= departure < end_time:
+                    stop["nei"].append((namedest, arrival, departure))
+            reduced_transport[name] = stop
+    with open(out_path, "w") as out:
+        json.dump(reduced_transport,out)
+
 
 
 
