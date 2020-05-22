@@ -114,7 +114,6 @@ def __get_trip_contents(folder, trip_ids, stop_id_resolver, start, end):
 
     trip_ids = set(trip_ids)
     out = {}
-    node_counter = 0 # todo remove
     with open(os.path.join(folder, "stop_times.txt"), newline='') as csvfile:
         reader = csv.DictReader(csvfile)
         for row in reader:
@@ -126,9 +125,7 @@ def __get_trip_contents(folder, trip_ids, stop_id_resolver, start, end):
                         out[row["trip_id"]] = {}
                     out[row["trip_id"]][int(row["stop_sequence"])] = (stop_id_resolver[row["stop_id"]], row["arrival_time"],
                                                                       row["departure_time"])
-                    node_counter += 1
     out = {x: [z[1] for z in sorted(y.items())] for x, y in out.items()}
-    print("node counter : ", node_counter)
     return out
 
 

@@ -22,17 +22,15 @@ class DataManager:
     produced = "produced"
 
     tc = {"train_only" : ["sncb"], "bus_only" : ["stib", "tec", "delijn"]}
-    #tc["train_bus"] = tc["train_only"] + tc["bus_only"]
-
-
-    #@staticmethod
-    #def make_data_structure(data_path):
-    #    make_data_structure(data_path)
 
     @staticmethod
-    def produce_data_belgium(data_path, date=datetime.date(2019, 12, 2), start_time=time_str_to_int("06:00:00"),
-                             end_time=time_str_to_int("10:30:00")):
-        assert start_time <= end_time
+    def make_data_structure(data_path):
+        make_data_structure(data_path)
+
+    @staticmethod
+    def produce_data_belgium(data_path, date=datetime.date(2019, 12, 2)):
+
+        start_time, end_time = time_str_to_int("00:00:00"), time_str_to_int("27:59:59")
 
         DataManager.root = data_path
         path_Belgium = PATH_BELGIUM(data_path)
@@ -50,7 +48,7 @@ class DataManager:
         # parse gtfs
         # produce the json format for each kind of transport in belgium
         stops_train = {}
-        if not os.path.exists(path_Belgium.TRAIN_ONLY) or  not os.path.exists(path_Belgium.TRAIN_BUS):
+        if not os.path.exists(path_Belgium.TRAIN_ONLY) or not os.path.exists(path_Belgium.TRAIN_BUS):
             for tc in DataManager.tc["train_only"]:
                 print(tc.upper())
                 stops_train.update(generate_output_for_gtfs(path_Belgium.GTFS+ "/" + tc, tc, date, start_time, end_time))
@@ -72,7 +70,8 @@ class DataManager:
         print("END: Belgium parse gtfs")
 
     @staticmethod
-    def reduce_data(data_path, locations, location_name, transport, data_path_Belgium=None):
+    def reduce_data(data_path, locations, location_name, transport, data_path_Belgium=None,
+                    start_time=time_str_to_int("06:00:00"), end_time=time_str_to_int("10:30:00")):
         """
         Les donnes sont reduites afin de ne considerer que les commune situe dans les arrondissement donne par locations
         Les stop et trajet considere ne seront que ceux ce situant dans ces communes
@@ -82,6 +81,7 @@ class DataManager:
         :param transport: train_only, bus_only, train_bus
         """
         assert transport in ["train_only", "bus_only", "train_bus"]
+        assert start_time <= end_time
 
         if data_path_Belgium is None : data_path_Belgium = data_path
 
@@ -90,6 +90,7 @@ class DataManager:
         path = PATH(data_path, location_name, transport)
         with (open(path.CONFIG, "w")) as conf:
             config = {"locations": location_name, "location_name": location_name, "transport": transport,
+                      "start_time": start_time, "end_time": end_time,
                       "max_walking_time": 0, "walking_speed": 0, "max_time": 28*60}
             json.dump(config, conf)
 
@@ -106,19 +107,19 @@ class DataManager:
 
         print("reduce stop")
         if transport == "train_only":
-            reduce_stop(path_Belgium, path, path_Belgium.TRAIN_ONLY, refnis_list, "train_only", parameter)
-            reduce_parsed_gtfs(path, path_Belgium.TRAIN_ONLY, out=path.TRANSPORT)
+            reduce_stop(path_Belgium, path, path_Belgium.TRAIN_ONLY, refnis_list, "train_only", parameter, start_time, end_time)
+            reduce_parsed_gtfs(path, path_Belgium.TRAIN_ONLY,start_time, end_time, out=path.TRANSPORT)
         elif transport == "bus_only":
-            reduce_stop(path_Belgium, path, path_Belgium.BUS_ONLY, refnis_list,"bus_only", parameter)
-            reduce_parsed_gtfs(path, path_Belgium.BUS_ONLY, out=path.TRANSPORT)
+            reduce_stop(path_Belgium, path, path_Belgium.BUS_ONLY, refnis_list,"bus_only", parameter, start_time, end_time)
+            reduce_parsed_gtfs(path, path_Belgium.BUS_ONLY,start_time, end_time, out=path.TRANSPORT)
         elif transport == "train_bus":
-            reduce_stop(path_Belgium, path, path_Belgium.TRAIN_BUS, refnis_list,"train_bus", parameter)
-            reduce_parsed_gtfs(path, path_Belgium.TRAIN_BUS, out=path.TRANSPORT)
+            reduce_stop(path_Belgium, path, path_Belgium.TRAIN_BUS, refnis_list,"train_bus", parameter, start_time, end_time)
+            reduce_parsed_gtfs(path, path_Belgium.TRAIN_BUS,start_time, end_time, out=path.TRANSPORT)
 
         os.remove(path.CONFIG)
 
     @staticmethod
-    def produce_data(data_path, location_name, transport,  max_walking_time = 30, walking_speed =3.6, MAX_TIME= 28 * 60):
+    def produce_data(data_path, location_name, transport, max_walking_time = 30, walking_speed =3.6, MAX_TIME= 28 * 60):
         """
 
         :param data_path:
@@ -134,8 +135,13 @@ class DataManager:
         walking_speed = walking_speed * 1000 / 60
 
         path = PATH(data_path, location_name, transport)
+        with (open(path.CONFIG, "r")) as conf:
+            config = json.load(conf)
+            start_time = config["start_time"]
+            end_time = config["end_time"]
         with (open(path.CONFIG, "w")) as conf:
             config = {"locations": location_name, "location_name": location_name, "transport": transport,
+                      "start_time": start_time, "end_time": end_time,
                       "max_walking_time": max_walking_time, "walking_speed": walking_speed, "max_time": MAX_TIME}
             json.dump(config, conf)
 
@@ -160,6 +166,7 @@ class DataManager:
     def load_data(data_path, location_name, transport):
         path = PATH(data_path, location_name, transport)
         param = Parameters(path)
+
         return param
 
 
