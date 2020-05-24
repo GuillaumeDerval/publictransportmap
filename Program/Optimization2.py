@@ -43,26 +43,3 @@ def find_best_Duo_modification(network : NE.NetworkEfficiency, modifications: li
             network.restore()
         network.restore()
     return best, min_value
-
-def find_best_combination_of_modifications(network : NE.NetworkEfficiency, modifications: list, weight: list, max_weight):
-    """
-    Trouve la meilleur combinaison de modification tel que la somme des poids qui leur son attribuée est inféreiur a max_weight
-    :param network: NetworkEfficency, reseau surlequel les modification seront testée
-    :param Modifications: Une liste de  NetworkModification
-    :param weight: Une liste de poids associé respectivement à chaque modifications
-    :param max_weight: valeur maximal de la somme de poids d'une combinaison de modifications
-    :return: best_combi, min_value ; liste reprenant la meilleur combinaion modificaion , valeur de la métrique obtenue
-    """
-
-    # Cette methode de recherche n'a pas été optimisé
-
-    best = None
-    min_value = math.inf
-    curr_value = 0
-    for i in range(len(modifications)):
-        if curr_value+ weight[i] < max_weight:
-            modif = modifications[i]
-            other_modif = modifications.copy()
-            other_modif.remove(i)
-            network.save()
-            #todo recursive
