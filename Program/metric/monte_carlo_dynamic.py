@@ -276,7 +276,7 @@ class TravellersModelisation:
         return opti_path, opti_time
 
     # #################################### Dynamic part ################################################################
-    def update(self, changes):
+    def update(self, changes)->None:
         """
         Met a jour la mesure de temps de trajet en fonciton des changement apporter au reseau.
         :param changes: A dictionnary : {"size": (new_number_of_stop, old_number of stop),

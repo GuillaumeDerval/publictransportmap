@@ -18,7 +18,8 @@ class NetworkEfficiency:
 
     def modify(self, modification):
         modification.run(APSP=self.APSP)
-        new_value = self.metric.update(changes=self.APSP.get_changes())
+        self.metric.update(changes=self.APSP.get_changes())
+        new_value = self.metric.total_results.mean()
         return new_value
 
     def save(self):

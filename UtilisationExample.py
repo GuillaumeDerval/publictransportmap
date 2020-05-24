@@ -49,8 +49,8 @@ DataManager.reduce_data("./Data",
                         ["Arrondissement de Namur", "Arrondissement de Dinant"],
                         "Province_Namur",
                         "train_bus",
-                        start_time=DataManager.time_str_to_int("06:00:00"),
-                        end_time=DataManager.time_str_to_int("10:30:00"))
+                        start_time=DataManager.time_transformation("06:00:00"),
+                        end_time=DataManager.time_transformation("10:30:00"))
 
 
 
