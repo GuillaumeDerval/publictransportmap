@@ -15,14 +15,10 @@ class TestInitialisationAPSP(TestCase):
 
         for file_name in os.listdir("data_test/dist_computed/"):
             os.remove("data_test/dist_computed/" + file_name)
-        for file_name in os.listdir("data_test/dist_expected/"):
-            os.remove("data_test/dist_expected/" + file_name)
+
         for file_name in os.listdir("data_test/path_computed/"):
             os.remove("data_test/path_computed/" + file_name)
-        for file_name in os.listdir("data_test/path_expected/"):
-            os.remove("data_test/path_expected/" + file_name)
-
-
+        
 
     def test_save_graph_mini(self):
         APSP = Dynamic_APSP(self.param_small)
@@ -53,13 +49,13 @@ class TestInitialisationAPSP(TestCase):
         np.save(exp_path + "120.npy", np.array([0, 1, 0, 1, 1, 1], dtype=np.bool).astype(np.bool))
         np.save(exp_path + "170.npy", np.array([0, 0, 0, 0, 1, 0], dtype=np.bool).astype(np.bool))
         np.save(exp_path + "270.npy", np.array([0, 0, 0, 0, 0, 1], dtype=np.bool).astype(np.bool))
+        with open(exp_path+ "__conversion.json",'w') as out:
+            json.dump({"0":0,"50":1,"110":2,"120":3,"170":4,"270":5}, out)
         for file_name in os.listdir(compu_path):
             os.remove(compu_path + file_name)
         APSP = Dynamic_APSP(self.param_small)
-        for name, array in zip(APSP.path.pos_to_vertex, APSP.path.is_reachable):
-            path = compu_path + str(name) + ".npy"
-            #print(path, array)
-            np.save(path, array)
+        APSP.path.hard_save(compu_path)
+
         comparisson = compare_results_distance(exp_path, compu_path)
         self.assertTrue(comparisson)
 
@@ -71,6 +67,8 @@ class TestInitialisationAPSP(TestCase):
         # np.save(exp_path + "c.npy", np.array([-1, -1, 0]).astype(np.int16))
         # np.save("data_test/dist_mini_expected/d.npy", np.array([-1, -1, -1]).astype(np.int16))
         # np.save("data_test/dist_mini_expected/e.npy", np.array([-1, -1, -1]).astype(np.int16))
+        #with open(exp_path+ "__conversion.json",'w') as out:
+        #    json.dump({"a":0,"b":1,"c":2}, out)
 
         APSP = Dynamic_APSP(self.param_small)
         APSP.hard_save_distance(compu_path)
