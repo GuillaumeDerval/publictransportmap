@@ -1,6 +1,7 @@
 from unittest import TestCase
 from Test.Test_dynamic_inc_APSP.my_utils import *
 from Program.dynamic_Inc_APSP.Dynamic_Incremental_All_Pair_Shortest_Path import *
+from Program.Map import MyMap
 import random as rdm
 import shutil
 

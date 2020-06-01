@@ -2,6 +2,7 @@ from unittest import TestCase
 
 from Test.Test_dynamic_inc_APSP.my_utils import *
 from Program.Data_manager.main import DataManager
+from Program.Map import MyMap
 
 
 class TestDynamicAPSP(TestCase):

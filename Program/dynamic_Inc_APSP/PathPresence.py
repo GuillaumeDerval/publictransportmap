@@ -22,6 +22,8 @@ class PathPresence:
 
         self.__backup = {"size": self.size, "single_change": {}, "line_change": {}}
 
+
+
     def initialisation(self, graph, max_time):
         """
         Lance le calcul pour savoir si il existe un chemin entre chaque paire de noeud
