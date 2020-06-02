@@ -15,6 +15,8 @@ class NetworkEfficiency:
 
     #def getMap(self):
     #    return self.param.MAP()
+    def get_value(self):
+        return self.metric.total_results.mean()
 
     def modify(self, modification):
         modification.run(APSP=self.APSP)

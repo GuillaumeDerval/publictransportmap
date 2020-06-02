@@ -7,6 +7,7 @@ from Program.Data_manager.path import PATH_BELGIUM
 from Test.Test_dynamic_inc_APSP.my_utils import *
 from Program.Map import MyMap
 from Program.metric.monte_carlo_dynamic import TravellersModelisation
+from Program.NetworkEfficiency import *
 
 
 def TimeInterval():
@@ -302,6 +303,24 @@ def time_metric_vs_APSP(names):
         out.write("{};{};{}\n".format(n, "métrique", t_metric))
         out.write("{};{};{}\n".format(n, "valeur_métrique", metric.total_results.mean()))
 
+def MC_reducing_factor(name = 'Dixmude'):
+    c_values = [pow(10,(i/4)) for i in range(-3*4, 3*4)]
+    out = open(result_path + "/MC_reducing_factor.csv", "w")
+    out.write("localisation;c;times;values\n")
+
+    for c in c_values:
+        times = []
+        values = []
+        for i in range(10):
+            param = DataManager.load_data(data_path, name, "train_bus")
+            t = time.time()
+            net = NetworkEfficiency(param,c,load_data=True)
+            t = time.time() - t
+            times.append(t)
+            values.append(net.get_value())
+        out.write("{};{};{}\n".format(name, c,times,values))
+
+
 if __name__ == '__main__':
     #TimeInterval()
     data_path = "/Users/DimiS/Documents/Gotta_go_fast/Project/Data"
@@ -320,16 +339,6 @@ if __name__ == '__main__':
 
     #time_static_dynamic(names2, transports)
     #max_walking_time_effect(names2, ["train_bus"])
-    #time_metric_vs_APSP(names2)
-
-    param = DataManager.load_data(data_path, 'Dixmude', "train_bus")
-
-    #APSP: Dynamic_APSP = Dynamic_APSP(param, load=False)
-    #APSP.hard_save()
-
-    APSP: Dynamic_APSP = Dynamic_APSP(param, load=True)
-
-    for i in range(100):
-        generate_realist_random_edge(APSP, new_node=False)
+    time_metric_vs_APSP(names2)
 
 

@@ -315,3 +315,5 @@ class Dynamic_APSP:
                     #print("dynamic out", z_name, z_time," to ", walk_name, self.used_time[walk_idx][i])
                     walk_out.append((walk_name, self.used_time[walk_idx][i]))
         return walk_in, walk_out
+
+
