@@ -2,7 +2,7 @@ import numpy as np
 from math import inf
 import json
 from Program.dynamic_Inc_APSP.PathPresence import PathPresence
-
+import os
 
 class MinimumTime:
 
@@ -19,9 +19,10 @@ class MinimumTime:
         self.__true_size = self.size
         self.distance = [np.full((self.size,), -1, dtype=np.int) for _ in range(self.size)]
         if load_path is not None:
-            self.__load(load_path)
+            self.__load_data(load_path)
+        else:
+            self.__compute_times()
         self.up_to_date = True
-        self.__compute_times()
         self.__backup = {"size": self.size, "change_distance": {}}
         self.__backup_stack = []  # permet de faire une recherche sur plusieur etage
 
@@ -186,6 +187,9 @@ class MinimumTime:
     def hard_save(self, out_directory_path):
         if not self.up_to_date: self.update()
 
+        for f_rm in os.listdir(out_directory_path):
+            os.remove(out_directory_path + f_rm)
+
         for idx in range(self.size):
             name = self.idx_to_name[idx]
             data = self.distance[idx]
@@ -195,14 +199,14 @@ class MinimumTime:
             json.dump(self.name_to_idx, out)
 
     def __load_data(self, path):
-        with open(path + "__conversion.json", "w") as f:
+        with open(path + "__conversion.json", "r") as f:
             self.name_to_idx = json.load(f)
             self.size = len(self.name_to_idx)
             self.idx_to_name = [0]* self.size
             for x, i in self.name_to_idx.items():
                 self.idx_to_name[i] = x
         for name in self.idx_to_name:
-            with open(path + str(name) + ".npy") as f:
-                is_path_list = np.load(f)
-                self.is_reachable[self.name_to_idx[name]] = is_path_list
+            file = path + str(name) + ".npy"
+            is_path_list = np.load(file)
+            self.distance[self.name_to_idx[name]] = is_path_list
 

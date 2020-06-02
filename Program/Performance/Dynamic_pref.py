@@ -92,8 +92,8 @@ def edge_node_by_arrondissement(names,transports):
 def generate_realist_random_edge(APSP, new_node):
     name1 = rdm.sample(APSP.idx_to_name, 1).pop()
     name2 = rdm.sample(APSP.idx_to_name, 1).pop()
-    pos1 = APSP.map.stop_position_dico(name1)
-    pos2 = APSP.map.stop_position_dico(name2)
+    pos1 = APSP.map.stop_position_dico[name1]
+    pos2 = APSP.map.stop_position_dico[name2]
     dist = distance_Eucli(pos1, pos2)
     speed = rdm.uniform(10, 20)
     travel_time = dist / speed
@@ -106,17 +106,16 @@ def generate_realist_random_edge(APSP, new_node):
         if len(APSP.used_time[APSP.name_to_idx[name1]]) >= 1 and len(APSP.used_time[APSP.name_to_idx[name2]]) >= 1 and APSP.used_time[APSP.name_to_idx[name1]][0] + travel_time <=  APSP.used_time[APSP.name_to_idx[name2]][-1]:
             last_time1 = APSP.used_time[APSP.name_to_idx[name2]][-1] - travel_time
             possible_time = APSP.used_time[APSP.name_to_idx[name1]].copy()
-            for t in possible_time:
-                if t > last_time1:
-                    possible_time.remove(t)
+            possible_time = [t for t in possible_time if t <= last_time1]
             assert len(possible_time) > 0
             time1 = rdm.sample(possible_time, 1).pop()
+            #time2 = time1 + travel_time
             for t in APSP.used_time[APSP.name_to_idx[name2]]:
                 if t >= time1 + travel_time:
                     time2 = t
                     break
         else:
-            generate_random_edge(APSP, new_node)
+            generate_realist_random_edge(APSP, new_node)
             return
 
     print("add edge {} time {} to {} time {}".format(name1, time1, name2, time2))
@@ -301,7 +300,7 @@ def time_metric_vs_APSP(names):
         out.write("{};{};{}\n".format(n,"carte", t_map))
         out.write("{};{};{}\n".format(n, "APSP", t_APSP))
         out.write("{};{};{}\n".format(n, "métrique", t_metric))
-        out.write("{};{};{}\n".format(n, "valeur_métrique", metric.total_results))
+        out.write("{};{};{}\n".format(n, "valeur_métrique", metric.total_results.mean()))
 
 if __name__ == '__main__':
     #TimeInterval()
@@ -321,6 +320,16 @@ if __name__ == '__main__':
 
     #time_static_dynamic(names2, transports)
     #max_walking_time_effect(names2, ["train_bus"])
-    time_metric_vs_APSP(names2)
+    #time_metric_vs_APSP(names2)
+
+    param = DataManager.load_data(data_path, 'Dixmude', "train_bus")
+
+    #APSP: Dynamic_APSP = Dynamic_APSP(param, load=False)
+    #APSP.hard_save()
+
+    APSP: Dynamic_APSP = Dynamic_APSP(param, load=True)
+
+    for i in range(100):
+        generate_realist_random_edge(APSP, new_node=False)
 
 

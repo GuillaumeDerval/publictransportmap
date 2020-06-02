@@ -30,7 +30,7 @@ class Dynamic_APSP:
         if load:
             with open(param.PATH.CONFIG) as f:
                 conf1 = json.load(f)
-            with open(param.PATH.IS_PATH+"/config.json") as f:
+            with open(param.PATH.IS_PATH+"config.json") as f:
                 conf2 = json.load(f)
             with open(param.PATH.MINIMAL_TRAVEL_TIME_TC+"/config.json") as f:
                 conf3 = json.load(f)
@@ -202,19 +202,23 @@ class Dynamic_APSP:
                        "graph": graph, "used_times": self.used_time
                        }, out_file)
 
+    def hard_save(self):
+        self.hard_save_graph(out_path = self.param.PATH.GRAPH_TC_WALK)
+        self.hard_save_is_reachable(out_directory_path = self.param.PATH.IS_PATH)
+        self.hard_save_distance(out_directory_path = self.param.PATH.MINIMAL_TRAVEL_TIME_TC)
+        with open(self.param.PATH.CONFIG,"r") as f:
+            conf = json.load(f)
+        with open(self.param.PATH.IS_PATH + "config.json","w") as f:
+            json.dump(conf, f)
+        with open(self.param.PATH.MINIMAL_TRAVEL_TIME_TC + "config.json","w") as f:
+            json.dump(conf, f)
+
     def save(self):
         self.graph.save()
         self.path.save()
         self.distance.save()
         self.map.save()
         #todo save new positions
-
-        with open(self.param.PATH.CONFIG) as f:
-            conf = json.load(f)
-        with open(self.param.PATH.IS_PATH + "config.json","w") as f:
-            json.dump(conf,f)
-        with open(self.param.PATH.MINIMAL_TRAVEL_TIME_TC + "config.json") as f:
-            json.dump(conf, f)
 
         self.__stack_log.append(self.__change_log)
         self.__change_log = []

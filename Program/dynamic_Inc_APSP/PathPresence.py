@@ -1,6 +1,6 @@
 import numpy as np
 import json
-
+import os
 
 class PathPresence:
 
@@ -153,25 +153,31 @@ class PathPresence:
             self.is_reachable[size][size] = True
 
     def hard_save(self, out_directory_path):
+        #remove old files
+        for f_rm in os.listdir(out_directory_path):
+            os.remove(out_directory_path + f_rm)
         for pos in range(self.size):
             v = self.pos_to_vertex[pos]
             data = self.is_path_from(v)
             np.save(out_directory_path + str(v) + ".npy", data.astype(np.bool))
+            #np.save(out_directory_path + str(v) + ".npy", data)
 
         with open(out_directory_path + "__conversion.json", "w") as out:
             json.dump(self.vertex_to_pos, out)
 
     def __load_data(self, path):
-        with open(path + "__conversion.json", "w") as f:
+        with open(path + "__conversion.json","r") as f:
             self.vertex_to_pos = json.load(f)
+            self.vertex_to_pos = {int(v):p for v,p in self.vertex_to_pos.items()}
             self.size = len(self.vertex_to_pos)
             self.pos_to_vertex = [0]* self.size
             for x, i in self.vertex_to_pos.items():
+
                 self.pos_to_vertex[i] = x
         for v in self.pos_to_vertex:
-            with open(path + str(v) + ".npy") as f:
-                is_path_list = np.load(f)
-                self.is_reachable[self.vertex_to_pos[v]] = is_path_list
+            file = path + str(v) + ".npy"
+            is_path_list = np.load(file)
+            self.is_reachable[self.vertex_to_pos[v]] = is_path_list
 
 
     # #################################################################################################################

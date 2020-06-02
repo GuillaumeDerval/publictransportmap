@@ -31,9 +31,7 @@ class NetworkEfficiency:
         self.metric.restore()
 
     def hard_save(self):
-        self.APSP.hard_save_graph()
-        self.APSP.hard_save_is_reachable()
-        self.APSP.hard_save_distance()
+        self.APSP.hard_save()
 
 
 class NetworkModification:
