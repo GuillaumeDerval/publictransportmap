@@ -31,7 +31,7 @@ DataManager.make_data_structure("./Data")
 
 
 #TODO LAMBERT
-raise (Exception, "commenter cette ligne apres avoir telecharger le données ")
+#raise (Exception, "commenter cette ligne apres avoir telecharger le données ")
 
 # Transformer regrouper et changer le format des données GTFS
 DataManager.produce_data_belgium("./Data")  #cela peut prendre qq minutes
@@ -46,8 +46,8 @@ DataManager.produce_data_belgium("./Data")  #cela peut prendre qq minutes
 #            - le moyen de transport : "train_only", "bus_only",  "train_bus"
 #            - la tranche horaire observée  (défaut :  6h à 10h30)
 DataManager.reduce_data("./Data",
-                        ["Arrondissement de Namur", "Arrondissement de Dinant"],
-                        "Province_Namur",
+                        ["Arrondissement de Dixmude"],
+                        "Example",
                         "train_bus",
                         start_time=DataManager.time_transformation("06:00:00"),
                         end_time=DataManager.time_transformation("10:30:00"))
@@ -62,16 +62,17 @@ DataManager.reduce_data("./Data",
 #           - le temps de trajet maximale en une traite   (défaut :  30 min)
 #           - la vitesse de marche à pied à vol d'oiseau  (défaut :  3.6 km/h)
 #           - le temps maximal atteignable               (défaut :  28*60 min)
-parameter = DataManager.produce_data("./Data","Province_Namur", "train_bus", 30, 3.6)
+parameter = DataManager.produce_data("./Data", "Example", "train_bus", 30, 3.6)
+
 
 # 2b) OU charger des données déjà produites
-parameter =DataManager.load_data("./Data","Province_Namur", "train_bus")
+parameter =DataManager.load_data("./Data", "Dixmude", "train_bus")
 
 
 
 
 
-
+print("compute")
 
 # 3) Utiliser la class calculant l'efficacité d'un réseau
 
@@ -81,11 +82,11 @@ parameter =DataManager.load_data("./Data","Province_Namur", "train_bus")
 #            - c : int
 #            - load_data = True , pour charger les résultat d'un initialisation précedante
 #            (Attention à n'utilisé que si une unique sauvegarde effectué après l'initialisation et avant toute modifications)
-network_efficiency = NetworkEfficiency(param=parameter, c= 1, load_data=False)
-
+network_efficiency = NetworkEfficiency(param=parameter, c=0.01, load_data=False)
+print("save")
 #Sauvegarder les résultat
 network_efficiency.hard_save()
-
+print("end")
 
 #Effectuer une modification
 # Ajouter une connexion entre 2 arrêts

@@ -179,6 +179,7 @@ class Dynamic_APSP:
         """
         return self.distance.dist_from(s_name)
 
+
     def hard_save_distance(self, out_directory_path=None):
         if out_directory_path is None: out_directory_path=self.param.PATH.MINIMAL_TRAVEL_TIME_TC
         self.distance.hard_save(out_directory_path)
@@ -210,9 +211,9 @@ class Dynamic_APSP:
 
         with open(self.param.PATH.CONFIG) as f:
             conf = json.load(f)
-        with open(self.param.PATH.IS_PATH + "/config.json") as f:
+        with open(self.param.PATH.IS_PATH + "config.json","w") as f:
             json.dump(conf,f)
-        with open(self.param.PATH.MINIMAL_TRAVEL_TIME_TC + "/config.json") as f:
+        with open(self.param.PATH.MINIMAL_TRAVEL_TIME_TC + "config.json") as f:
             json.dump(conf, f)
 
         self.__stack_log.append(self.__change_log)

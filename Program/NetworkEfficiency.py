@@ -31,7 +31,9 @@ class NetworkEfficiency:
         self.metric.restore()
 
     def hard_save(self):
-        self.APSP.save()
+        self.APSP.hard_save_graph()
+        self.APSP.hard_save_is_reachable()
+        self.APSP.hard_save_distance()
 
 
 class NetworkModification:
@@ -114,3 +116,5 @@ class AddLine(NetworkModification):
             s_name, _, s_time, s_position = self.station_List[i]
             d_name, d_time, _, d_position = self.station_List[i+1]
             APSP.add_edge(s_name, s_time, d_name, d_time, s_position, d_position)
+
+
