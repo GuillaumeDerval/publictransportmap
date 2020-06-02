@@ -15,17 +15,13 @@ Convert the data with format GTFS into a json with the form :
              ]
          }
      }
-          
+
 departure_time and arrival_time are given in seconds   
-            
+
 Time : update the date  
-
-
 in  : PATH.GTFS
-
     Localisation of data :  put respectively the GTFS sncb,stib,tec, delijn 
                         in the folder ../gtfs/sncb, ../gtfs/stib, ../gtfs/tec, ../gtfs/delijn
-
 out :    PATH_BELGIUM.BUS_ONLY,  PATH_BELGIUM.TRAIN_ONLY,  PATH_BELGIUM.TRAIN_BUS
 #######################################################################################################################                                               
 """
@@ -35,8 +31,8 @@ def time_str_to_int(time):
     """
     transform hh:mm:ss into a time given in second
     """
-    a, b, _ = [int(x) for x in time.split(":")]
-    return (a*60)+b
+    a, b, c = [int(x) for x in time.split(":")]
+    return ((a * 60) + b) * 60 + c
 
 
 def __get_service_ids(folder, date):
@@ -54,7 +50,7 @@ def __get_service_ids(folder, date):
         with open(os.path.join(folder, "calendar.txt"), newline='') as csvfile:
             reader = csv.DictReader(csvfile)
             for row in reader:
-                if True or int(row["start_date"]) <= int_format <= int(row["end_date"]): #todo remove true
+                if True or int(row["start_date"]) <= int_format <= int(row["end_date"]):  # todo remove true
                     if row[weekdays[date.weekday()]] == "1":
                         out.add(row["service_id"])
 
@@ -109,26 +105,27 @@ def __get_trip_contents(folder, trip_ids, stop_id_resolver, start, end):
     return : n°trip_ids    a list of [n°stop_sequence stop_id, arrival_time, departure_time ]
              where  start_time <= departure_time and arrival_time <= end_time
     """
-    #todo passage d'un jour à l'autre ! on peut depasser 23h59
-
+    # todo passage d'un jour à l'autre ! on peut depasser 23h59
 
     trip_ids = set(trip_ids)
     out = {}
+    node_counter = 0  # todo remove
     with open(os.path.join(folder, "stop_times.txt"), newline='') as csvfile:
         reader = csv.DictReader(csvfile)
         for row in reader:
-            if row["trip_id"] in trip_ids :
+            if row["trip_id"] in trip_ids:
                 # check start_time <= travel <= end_time
-                #if start <= time_str_to_int(row["departure_time"]) and time_str_to_int(row["arrival_time"]) <= end:
+                # if start <= time_str_to_int(row["departure_time"]) and time_str_to_int(row["arrival_time"]) <= end:
                 if start <= time_str_to_int(row["departure_time"]) < end:
                     if row["trip_id"] not in out:
                         out[row["trip_id"]] = {}
-                    out[row["trip_id"]][int(row["stop_sequence"])] = (stop_id_resolver[row["stop_id"]], row["arrival_time"],
-                                                                      row["departure_time"])
+                    out[row["trip_id"]][int(row["stop_sequence"])] = (
+                    stop_id_resolver[row["stop_id"]], row["arrival_time"],
+                    row["departure_time"])
+                    node_counter += 1
     out = {x: [z[1] for z in sorted(y.items())] for x, y in out.items()}
+    print("node counter : ", node_counter)
     return out
-
-
 
 
 def generate_output_for_gtfs(folder, prefix, date, start_time, end_time):
@@ -152,25 +149,23 @@ def generate_output_for_gtfs(folder, prefix, date, start_time, end_time):
     stops, stop_id_resolver = __get_stops(folder)
     trip_contents = __get_trip_contents(folder, [x[0] for x in trip_ids], stop_id_resolver, start_time, end_time)
 
-
-    #minimal = 1000
+    # minimal = 1000
     for idx in stops:
         stops[idx]["nei"] = []
     for trip_id in trip_contents:
-        for idx in range(0, len(trip_contents[trip_id])-1):
+        for idx in range(0, len(trip_contents[trip_id]) - 1):
             cur_stop_id, _, departure = trip_contents[trip_id][idx]
-            next_stop_id, arrival, _ = trip_contents[trip_id][idx+1]
+            next_stop_id, arrival, _ = trip_contents[trip_id][idx + 1]
 
-            #minimal = min(minimal, time_str_to_int(arrival)-time_str_to_int(departure))
+            # minimal = min(minimal, time_str_to_int(arrival)-time_str_to_int(departure))
 
             # note: it is possible that departure == arrival.
-            stops[cur_stop_id]["nei"].append([prefix + next_stop_id, time_str_to_int(departure), time_str_to_int(arrival)])
+            stops[cur_stop_id]["nei"].append(
+                [prefix + next_stop_id, time_str_to_int(departure), time_str_to_int(arrival)])
     for idx in stops:
         stops[idx]["nei"] = sorted(stops[idx]["nei"], key=lambda x: x[1])
 
-    #print("minimum travel duration {}".format(minimal))
-    stops = {prefix+x: y for x, y in stops.items()}
-    print("number of stop_id ",len(stops))
+    # print("minimum travel duration {}".format(minimal))
+    stops = {prefix + x: y for x, y in stops.items()}
+    print("number of stop_id ", len(stops))
     return stops
-
-

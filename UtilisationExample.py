@@ -34,7 +34,10 @@ DataManager.make_data_structure("./Data")
 #raise (Exception, "commenter cette ligne apres avoir telecharger le données ")
 
 # Transformer regrouper et changer le format des données GTFS
-DataManager.produce_data_belgium("./Data")  #cela peut prendre qq minutes
+# 0) Créer les donner pour la belgique et choisir la tranche horaire
+#- la tranche horaire observée  (défaut :  6h à 10h30)
+DataManager.produce_data_belgium("./Data", start_time=DataManager.time_transformation("06:00:00"),
+                        end_time=DataManager.time_transformation("10:30:00"))
 
 
 
@@ -44,13 +47,11 @@ DataManager.produce_data_belgium("./Data")  #cela peut prendre qq minutes
 # 1) Reduire le nombre de données traitées en selectionnant:
 #            - un ou plusieur arrondissement + donner leur un nom
 #            - le moyen de transport : "train_only", "bus_only",  "train_bus"
-#            - la tranche horaire observée  (défaut :  6h à 10h30)
+#
 DataManager.reduce_data("./Data",
                         ["Arrondissement de Dixmude"],
                         "Example",
-                        "train_bus",
-                        start_time=DataManager.time_transformation("06:00:00"),
-                        end_time=DataManager.time_transformation("10:30:00"))
+                        "train_bus")
 
 
 

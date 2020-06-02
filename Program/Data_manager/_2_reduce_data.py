@@ -57,14 +57,11 @@ def reduce_pop_sector(PATH_BELGIUM, PATH,refnis_list):
                     writer.writerow(row)
 
 
-def reduce_stop_and_parsed_gtfs(PATH_BELGIUM, PATH, parsed_gtfs_path,refnis_list, transport, param, start_time, end_time, out_path):
+def reduce_stop(PATH_BELGIUM, PATH, parsed_gtfs_path,refnis_list, transport, param):
     """
     Renvoie une liste contenant les stop valide
     C'est à dire le stop positionné dans une commune de munty_list
     Necessite map
-
-    +
-     Creer et renvoie un nouveau set de donnee plus petit ne contenant que les stop de valid_stop_list
     """
     # todo improve pour avoir tout les stop atteingnable et pas uniquement ceux au sein de l'arrondissement
 
@@ -82,38 +79,34 @@ def reduce_stop_and_parsed_gtfs(PATH_BELGIUM, PATH, parsed_gtfs_path,refnis_list
         munty_shape = mmap.get_shape_refnis(refnis)
 
         for name in parsed_gtfs.keys():
-            # check that the stop contains at least a departure between start_time and end_time
-            valid = False
-            for _,t1,t2 in parsed_gtfs[name]["nei"]:
-                if start_time <= t1 < end_time and start_time <= t2 < end_time:
-                    valid = True
-                    break
-            if valid:
-                pos = position_lamber[name]
-                pos_point = Point(pos[0], pos[1])
+            pos = position_lamber[name]
+            pos_point = Point(pos[0], pos[1])
 
-                if munty_shape.contains(pos_point):
-                    reduced_stop[name] = position_lamber[name]
+            if munty_shape.contains(pos_point):
+                reduced_stop[name] = position_lamber[name]
     MyMap.belgium_map = None
     os.remove(PATH.STOP_POSITION_LAMBERT)
     with open(PATH.STOP_POSITION_LAMBERT, "w") as out:
         json.dump(reduced_stop, out)
 
-    reduced_transport = {}
+
+# Reduire les donné au stop valables
+def reduce_parsed_gtfs(PATH, parsed_gtfs_path, out):
+    """
+    Creer et renvoie un nouveau set de donnee plus petit ne contenant que les stop de valid_stop_list
+    """
+    with open(PATH.STOP_POSITION_LAMBERT) as file:
+        stop_list = json.load(file)
+
+    with open(parsed_gtfs_path) as file:
+        parsed_gtfs = json.load(file)
+    reduced_data = {}
     for name in parsed_gtfs.keys():
-        if name in reduced_stop:
+        if name in stop_list:
             content = parsed_gtfs[name]
-            stop = {"name": content["name"], "lat": content["lat"], "lon": content["lon"], "nei": []}
-            for namedest, arrival, departure in content["nei"]:
-                if namedest in reduced_stop and start_time <= arrival < end_time and start_time <= departure < end_time:
-                    stop["nei"].append((namedest, arrival, departure))
-            reduced_transport[name] = stop
-    with open(out_path, "w") as out:
-        json.dump(reduced_transport,out)
-
-
-
-
-
-
-
+            stop = {"name": content["name"], "lat": content["lat"], "lon": content["lon"], "nei" : []}
+            for nei in content["nei"]:
+                if nei[0] in stop_list:
+                    stop["nei"].append(nei)
+            reduced_data[name] = stop
+    json.dump(reduced_data, open(out, "w"))
