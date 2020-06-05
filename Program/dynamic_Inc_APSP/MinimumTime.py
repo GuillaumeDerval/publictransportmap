@@ -7,7 +7,6 @@ import os
 class MinimumTime:
 
     # !!! attention le distance sont mise à jour seulement après un appel a update()
-    # todo sauvegarde sur des fichiers pour limiter l'utilisation de memoire ???
 
     def __init__(self, name_to_idx, idx_to_name, max_time, used_time, path_presence, load_path = None):
         self.name_to_idx = name_to_idx
@@ -19,10 +18,11 @@ class MinimumTime:
         self.__true_size = self.size
         self.distance = [np.full((self.size,), -1, dtype=np.int) for _ in range(self.size)]
         if load_path is not None:
+            self.up_to_date = True
             self.__load_data(load_path)
         else:
+            self.up_to_date = True
             self.__compute_times()
-        self.up_to_date = True
         self.__backup = {"size": self.size, "change_distance": {}}
         self.__backup_stack = []  # permet de faire une recherche sur plusieur etage
 
@@ -54,6 +54,8 @@ class MinimumTime:
         """
         Return the minimal distance between u_name and v_name
         """
+        if not self.up_to_date:
+            self.update()
         if s_name not in self.name_to_idx or d_name not in self.name_to_idx:
             return -1
         s_idx = self.name_to_idx[s_name]
@@ -72,6 +74,7 @@ class MinimumTime:
         """
         Return the list of the minimal distance from source  s (id)
         """
+        if not self.up_to_date: self.update()
         assert  s_name in self.name_to_idx
         s_idx = self.name_to_idx[s_name]
         return self.distance[s_idx][:self.size], self.name_to_idx
@@ -113,10 +116,11 @@ class MinimumTime:
                     self.distance[i][self.size] = -1
                 self.distance[self.size] = np.full((1, self.size + 1),-1, dtype=np.int)
             self.distance[self.size][self.size] = 0
-            self.size += 1
+            self.size = self.size + 1
 
     def update(self):
         if not self.up_to_date:
+            self.up_to_date = True
             self.__update_size()
             changes = self.is_reachable.get_changes()
             for s, content in changes["single_change"].items():
@@ -136,7 +140,7 @@ class MinimumTime:
                         time = d % self.max_time - s % self.max_time
                         assert time >= 0
                         self.single_update(s_name, d_name, time)
-            self.up_to_date =True
+
 
     def single_update(self, s_name, d_name, new_time):
         self.__update_size()

@@ -100,8 +100,13 @@ def generate_realist_random_edge(APSP, new_node):
     travel_time = dist / speed
 
     if new_node:
-        time1 = rdm.randint(time_str_to_int("06:00:00") // 60, (time_str_to_int("10:30:00") // 60) - travel_time)
-        time2 = time1 + travel_time
+        start, end = time_str_to_int("06:00:00") // 60, math.floor((time_str_to_int("10:30:00") // 60) - travel_time)
+        if end >= start:
+            time1 = rdm.randint(start, end)
+            time2 = time1 + round(travel_time)
+        else:
+            return generate_realist_random_edge(APSP, new_node)
+
     else:
         # verifie qu'il est possible de crée un  nouvelle ligne respectant le condition avec des noeud preexistant
         if len(APSP.used_time[APSP.name_to_idx[name1]]) >= 1 and len(APSP.used_time[APSP.name_to_idx[name2]]) >= 1 and APSP.used_time[APSP.name_to_idx[name1]][0] + travel_time <=  APSP.used_time[APSP.name_to_idx[name2]][-1]:
@@ -116,8 +121,7 @@ def generate_realist_random_edge(APSP, new_node):
                     time2 = t
                     break
         else:
-            generate_realist_random_edge(APSP, new_node)
-            return
+            return generate_realist_random_edge(APSP, new_node)
 
     print("add edge {} time {} to {} time {}".format(name1, time1, name2, time2))
     APSP.add_edge(name1, time1, name2, time2, u_position=None, v_position=None)
@@ -296,33 +300,48 @@ def time_metric_vs_APSP(names):
         t_APSP = time.time() - t_APSP
         metric = TravellersModelisation(param, APSP, C=c)
         t_metric = time.time() - t_metric
-        APSP.hard_save_is_reachable()
-        APSP.hard_save_distance()
+        APSP.hard_save()
         out.write("{};{};{}\n".format(n,"carte", t_map))
-        out.write("{};{};{}\n".format(n, "APSP", t_APSP))
+        out.write("{};{};{}\n".format(n, "APSP", t_APSP+t_map))
         out.write("{};{};{}\n".format(n, "métrique", t_metric))
         out.write("{};{};{}\n".format(n, "valeur_métrique", metric.total_results.mean()))
 
+
 def MC_reducing_factor(name = 'Dixmude'):
-    c_values = [pow(10,(i/4)) for i in range(-3*4, 3*4)]
-    out = open(result_path + "/MC_reducing_factor.csv", "w")
-    out.write("localisation;c;times;values\n")
+    c_values = [pow(10,(i/4)) for i in range(-2*4, 2*4+1)]
+    out1 = open(result_path + "/MC_reducing_factor_init.csv", "w")
+    out1.write("localisation;c;time;value\n")
+    out2 = open(result_path + "/MC_reducing_factor_modif.csv", "w")
+    out2.write("localisation;modification;c;time;value\n")
 
     for c in c_values:
-        times = []
-        values = []
-        for i in range(10):
+        print("c = ",c)
+        for i in range(3):
             param = DataManager.load_data(data_path, name, "train_bus")
             t = time.time()
-            net = NetworkEfficiency(param,c,load_data=True)
-            t = time.time() - t
-            times.append(t)
-            values.append(net.get_value())
-        out.write("{};{};{}\n".format(name, c,times,values))
+            net = NetworkEfficiency(param,c,load_data=True, seed = 40+i)
+            t2 = time.time() - t
+            out1.write("{};{};{};{}\n".format(name, c, t2, net.get_value()))
+            print("modif1")
+            t = time.time()
+            net.modify(AddConnexion("delijn42525", 438, "delijn90508", 440))
+            t2 = time.time() - t
+            out2.write("{};{};{};{};{}\n".format(name,"modif1", c, t2, net.get_value()))
+            print("modif2")
+            t = time.time()
+            net.modify(AddConnexion("delijn42296", 526, "delijn41729", 530))
+            t2 = time.time() - t
+            out2.write("{};{};{};{};{}\n".format(name, "modif2", c, t2, net.get_value()))
+            print("modif3")
+            t = time.time()
+            net.modify(AddConnexion("delijn87605", 404, "delijn42537", 418))
+            t2 = time.time() - t
+            out2.write("{};{};{};{};{}\n".format(name, "modif3", c, t2, net.get_value()))
+        #out2.write("{};{};{};{}\n".format(name, c, times, values))
 
 
 if __name__ == '__main__':
-    #TimeInterval()
+    # TimeInterval()
     data_path = "/Users/DimiS/Documents/Gotta_go_fast/Project/Data"
     result_path = "/Users/DimiS/Documents/Gotta_go_fast/Project/Program/Performance/Result"
     path_Belgium = PATH_BELGIUM(data_path)
@@ -339,6 +358,7 @@ if __name__ == '__main__':
 
     #time_static_dynamic(names2, transports)
     #max_walking_time_effect(names2, ["train_bus"])
-    time_metric_vs_APSP(names2)
+    #time_metric_vs_APSP(names2)
+    MC_reducing_factor()
 
 

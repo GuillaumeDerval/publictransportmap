@@ -219,7 +219,8 @@ class TravellersModelisation:
             #print("travels estimation: from ", rsd_munty, " to ", work_munty, "iteration :", len(travellers))
             res = self.all_results.get(rsd_munty, Result())
             for i in range(len(travellers)):
-                rsd, work = travellers[i]
+                rsd = travellers[i][0]
+                work = travellers[i][1]
                 opti_path, opti_time = self.optimal_travel_time(rsd, rsd_munty, work, work_munty)
                 (time, walk1, walk2, TC, dist, unreachable) = opti_time
                 travellers[i] = (rsd, work, opti_path, TC)
@@ -276,6 +277,13 @@ class TravellersModelisation:
         return opti_path, opti_time
 
     # #################################### Dynamic part ################################################################
+    def update1(self, changes) -> None:
+        #reevaluate all
+        self.__min_max_time = {}
+        self.all_results = {}  # contains result for each munty
+        self.total_results = Result()  # Result for the country
+        self.__estimate_travel_time()
+
     def update(self, changes)->None:
         """
         Met a jour la mesure de temps de trajet en fonciton des changement apporter au reseau.
@@ -285,8 +293,8 @@ class TravellersModelisation:
 
         for org_name_ch, dico in changes["change_distance"].items():
             for dest_name_ch, (new_value, old_value) in dico.items():
-                self.update_travel_time(org_name_ch, dest_name_ch, new_distance=new_value,
-                                                     old_distance=old_value)  # update used structure
+                #self.update_travel_time(org_name_ch, dest_name_ch, new_distance=new_value,old_distance=old_value)  # update used structure
+                #todo uncomment if we use get_min, get_max, optimal_path, _estimate...
                 assert new_value <= old_value or old_value == -1
                 org_ch_pos = self.map.stop_position_dico[org_name_ch]
                 dest_ch_pos = self.map.stop_position_dico[dest_name_ch]
@@ -311,24 +319,26 @@ class TravellersModelisation:
                                 # old_TC = old_TC
                                 old_time = old_walk1 + old_TC + old_walk2
 
-                            new_walk1 = distance_Eucli(rsd_pt, org_ch_pos) / self.speed  # walking time
-                            new_walk2 = distance_Eucli(work_pt, dest_ch_pos) / self.speed  # walking time
                             new_TC = self.distance.dist(org_name_ch, dest_name_ch)
                             assert new_TC >= 0
-                            new_time = new_walk1 + new_TC + new_walk2
+                            if new_TC < old_time:
+                                new_walk1 = distance_Eucli(rsd_pt, org_ch_pos) / self.speed  # walking time
+                                new_walk2 = distance_Eucli(work_pt, dest_ch_pos) / self.speed  # walking time
+                                new_time = new_walk1 + new_TC + new_walk2
 
-                            if new_time < old_time and new_walk1 < self.max_walk_time and new_walk2 < self.max_walk_time:
-                                #record old state
-                                if rsd_munty not in self.__change_log["all_results_save"]:
-                                    self.__change_log["travellers"][i] = travellers[i]
-                                    self.__change_log["all_results_save"][rsd_munty]= self.all_results[rsd_munty].__copy__()
-                                if "total_result" not in self.__change_log:
-                                    self.__change_log["total_result"] = self.total_results.__copy__()
-                                travellers[i] = rsd_pt, work_pt, ((org_name_ch,org_ch_pos), (dest_name_ch,dest_ch_pos)),new_TC
-                                self.all_results[rsd_munty].remove(old_time, old_walk1, old_walk2, old_TC, unreachable=old_unreach)
-                                self.all_results[rsd_munty].add(new_time, new_walk1, new_walk2, new_TC, unreachable=0)
-                                self.total_results.remove(old_time, old_walk1, old_walk2, old_TC, unreachable=old_unreach)
-                                self.total_results.add(new_time, new_walk1, new_walk2, new_TC, unreachable=0)
+                                if new_time < old_time and new_walk1 < self.max_walk_time and new_walk2 < self.max_walk_time:
+                                    #record old state
+                                    if rsd_munty not in self.__change_log["all_results_save"]:
+                                        self.__change_log["travellers"][i] = travellers[i]
+                                        self.__change_log["all_results_save"][rsd_munty]= self.all_results[rsd_munty].__copy__()
+                                    if "total_result" not in self.__change_log:
+                                        self.__change_log["total_result"] = self.total_results.__copy__()
+                                    travellers[i] = rsd_pt, work_pt, ((org_name_ch,org_ch_pos), (dest_name_ch,dest_ch_pos)),new_TC
+                                    if old_unreach == 1 : print("unreachable")
+                                    self.all_results[rsd_munty].remove(old_time, old_walk1, old_walk2, old_TC, unreachable=old_unreach)
+                                    self.all_results[rsd_munty].add(new_time, new_walk1, new_walk2, new_TC, unreachable=0)
+                                    self.total_results.remove(old_time, old_walk1, old_walk2, old_TC, unreachable=old_unreach)
+                                    self.total_results.add(new_time, new_walk1, new_walk2, new_TC, unreachable=0)
 
     # #################################### Reversible part
     def save(self):

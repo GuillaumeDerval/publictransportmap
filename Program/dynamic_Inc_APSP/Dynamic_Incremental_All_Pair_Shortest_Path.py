@@ -32,7 +32,7 @@ class Dynamic_APSP:
                 conf1 = json.load(f)
             with open(param.PATH.IS_PATH+"config.json") as f:
                 conf2 = json.load(f)
-            with open(param.PATH.MINIMAL_TRAVEL_TIME_TC+"/config.json") as f:
+            with open(param.PATH.MINIMAL_TRAVEL_TIME_TC+"config.json") as f:
                 conf3 = json.load(f)
             assert conf1 == conf2 == conf3
 

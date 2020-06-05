@@ -42,7 +42,7 @@ def graph_TimeInterval():
 
     #plt.xticks(y_pos, bars)
 
-    plt.savefig("./Result/edgeTime.png")
+    plt.savefig("./Images/edgeTime.png")
     plt.show()
 
     #plt.bar(starts, train_nodes, color='#557f2d', edgecolor='white', width=barWidth)
@@ -97,7 +97,7 @@ def graph_Node_by_Arrondi(tr):
         #plt.yscale('log')
         plt.legend()
         plt.gcf().subplots_adjust(bottom=0.40)
-        plt.savefig('./Result/sationsArrond.png', format='png')
+        plt.savefig('./Images/sationsArrond.png', format='png')
         plt.show()
 
 
@@ -114,7 +114,7 @@ def graph_Node_by_Arrondi(tr):
         #plt.yscale('log')
         plt.legend()
         plt.gcf().subplots_adjust(bottom=0.40)
-        plt.savefig('./Result/connexArrond.png', format='png')
+        plt.savefig('./Images/connexArrond.png', format='png')
         plt.show()
 
 
@@ -125,7 +125,7 @@ def graph_Node_by_Arrondi(tr):
         plt.xlabel("Nombre de stations")
         plt.ylabel("Nombre de connexions")
         plt.legend()
-        plt.savefig('./Result/sationsConnex.png')
+        plt.savefig('./Images/sationsConnex.png')
         plt.show()
 
 
@@ -204,7 +204,7 @@ def perf_graph():
         plt.title("Durée d'execution d'un ajout en fonction de l'arrondissement")
         plt.xlabel("Arrondissement/ nombre d'arêtes")
         #plt.ylim()
-        plt.ylabel("Temps (s)")
+        plt.ylabel("Temps [secondes]")
         plt.xticks(r2, [arrond[tr][i] + "\n arêtes: " + str(edges[i]) for i in range(len(arrond[tr]))], rotation=45)
         plt.legend()
         plt.gcf().subplots_adjust(bottom=0.27)
@@ -218,7 +218,6 @@ def perf_graph():
     #plt.bar(starts, bus_nodes, color='#2d7f5e', edgecolor='white', width=barWidth)
     # plt.xticks(y_pos, bars)
     #plt.show()
-
 
 
 def perf_graph2():
@@ -299,7 +298,7 @@ def perf_graph2():
         plt.xlabel("Arrondissement / nombre d'arêtes")
         plt.xticks()
         #plt.ylim()
-        plt.ylabel("Temps [s]")
+        plt.ylabel("Temps [secondes]")
         plt.xscale('log')
         plt.xticks(r3, [arrond[tr][i] + "\n arêtes: " + str(edges[i]) for i in range(len(arrond[tr]))], rotation=45)
         plt.yscale('log')
@@ -373,13 +372,90 @@ def time_effectVertexRatio():
     plt.savefig("./Result/WalkingTimeEffectEdgeRatio.png")
     plt.show()
 
+def metricVsAPSP():
+    data = pd.read_csv("./Result/metricVsAPSP.csv",delimiter=';')
+    sns.barplot("localisation", "value", data=data, hue="type",hue_order= ["métrique","APSP","carte"], dodge=False)
+    #plt.legend(loc='upper left')
+    plt.ylabel("Temps [seconds]")
+    plt.xlabel("Arrondissement")
+
+    #plt.savefig("./Result/metricVsAPSP.png")
+    plt.show()
+    #fig = plt.scatter(data, x="max_time", y="value")
+    #fig.show()
+
+
+def  MC_reducing_factor():
+    data = pd.read_csv("./Result/MC_reducing_factor_init.csv", delimiter=';')
+    # data.plot(kind='bar')
+
+    sns.lmplot("c", "time", data=data, hue='localisation', legend=False, ci=None)  # ci=None, fit_reg=False,  col_wrap=2
+    plt.legend(loc='upper left')
+    plt.ylabel("Temps [seconds]")
+    plt.xlabel("C : Constante multiplicatrice de la taille de l'échantillon")
+    #plt.xscale('log')
+    #plt.yscale('log')
+
+    plt.savefig("./Images/MC_reducing_factor_time.png")
+    plt.show()
+
+    data = pd.read_csv("./Result/MC_reducing_factor_init.csv", delimiter=';')
+    # data.plot(kind='bar')
+
+    sns.lmplot("c", "value", data=data, hue='localisation', legend=False, ci=None, fit_reg=False)  # ci=None, fit_reg=False,  col_wrap=2
+    plt.legend(loc='upper left')
+    plt.ylabel("Valeur de a métrique")
+    plt.xlabel("C : Constante multiplicatrice de la taille de l'échantillon")
+    plt.xscale('log')
+
+    plt.savefig("./Images/MC_reducing_factor_value.png")
+    plt.show()
+    # fig = plt.scatter(data, x="max_time", y="value")
+    # fig.show()
+
+
+
+
+
+
+
+
+    data = pd.read_csv("./Result/MC_reducing_factor_modif.csv", delimiter=';')
+    # data.plot(kind='bar')
+
+    sns.lmplot("c", "time", data=data, hue='modification', legend=False, ci=None)  # ci=None, fit_reg=False,  col_wrap=2
+    plt.legend(loc='upper left')
+    plt.ylabel("Temps [seconds]")
+    plt.xlabel("C : Constante multiplicatrice de la taille de l'échantillon")
+    # plt.xscale('log')
+    # plt.yscale('log')
+
+    plt.savefig("./Images/MC_reducing_factor_time.png")
+    plt.show()
+
+    data = pd.read_csv("./Result/MC_reducing_factor_modif.csv", delimiter=';')
+    # data.plot(kind='bar')
+
+    sns.lmplot("c", "value", data=data, hue='modification', legend=False, ci=None,
+               fit_reg=False)  # ci=None, fit_reg=False,  col_wrap=2
+    plt.legend(loc='upper left')
+    plt.ylabel("Valeur de a métrique")
+    plt.xlabel("C : Constante multiplicatrice de la taille de l'échantillon")
+    plt.xscale('log')
+
+    plt.savefig("./Images/MC_reducing_factor_value.png")
+    plt.show()
+    # fig = plt.scatter(data, x="max_time", y="value")
+    # fig.show()
 if __name__ == '__main__':
     #graph_TimeInterval()
     #graph_Node_by_Arrondi(tr="train_only")
     #graph_Node_by_Arrondi(tr="train_bus")
     #perf_graph()
     #perf_graph2()
-    time_effectInit()
-    time_effectVertex()
-    time_effectInitRatio()
-    time_effectVertexRatio()
+    #time_effectInit()
+    #time_effectVertex()
+    #time_effectInitRatio()
+    #time_effectVertexRatio()
+    #metricVsAPSP()
+    MC_reducing_factor()

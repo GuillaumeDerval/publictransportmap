@@ -8,10 +8,10 @@ class NetworkEfficiency:
 
     """
 
-    def __init__(self, param: Parameters, c=1, load_data=False):
+    def __init__(self, param: Parameters, c=1, load_data=False, seed = None):
         self.param: Parameters = param
         self.APSP: Dynamic_APSP = Dynamic_APSP(param, load=load_data)
-        self.metric = TravellersModelisation(param, self.APSP, C=c)
+        self.metric = TravellersModelisation(param, self.APSP, C=c, my_seed= seed)
 
     #def getMap(self):
     #    return self.param.MAP()
