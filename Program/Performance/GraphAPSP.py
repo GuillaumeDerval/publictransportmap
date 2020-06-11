@@ -431,7 +431,7 @@ def MC_reducing_factor_modif():
     data = pd.read_csv("./Result/MC_reducing_factor_modif.csv", delimiter=';')
     # data.plot(kind='bar')
 
-    sns.lmplot("c", "time", data=data, hue='modification', legend=False, ci=None)  # ci=None, fit_reg=False,  col_wrap=2
+    sns.lmplot("c", "time", data=data, hue='modification', legend=False, ci=None, palette =np.array(["red","darkorange","forestgreen"]))  # ci=None, fit_reg=False,  col_wrap=2
     plt.legend(loc='upper left')
     plt.ylabel("Temps [seconds]")
     plt.xlabel("C : Constante multiplicatrice de la taille de l'échantillon")
@@ -445,7 +445,7 @@ def MC_reducing_factor_modif():
     # data.plot(kind='bar')
 
     sns.lmplot("c", "value", data=data, hue='modification', legend=False, ci=None,
-               fit_reg=False)  # ci=None, fit_reg=False,  col_wrap=2
+               fit_reg=False, palette =np.array(["red","darkorange","forestgreen"]))  # ci=None, fit_reg=False,  col_wrap=2
     plt.legend(loc='upper left')
     plt.ylabel("Valeur de a métrique  [minutes]")
     plt.xlabel("C : Constante multiplicatrice de la taille de l'échantillon")
@@ -461,7 +461,7 @@ def MC_reducing_factor_modif_delta():
     # data.plot(kind='bar')
 
     sns.lmplot("c", "value", data=data, hue='modification', legend=False, ci=None,
-               fit_reg=False)  # ci=None, fit_reg=False,  col_wrap=2
+               fit_reg=False, palette =np.array(["red","darkorange","forestgreen"]))  # ci=None, fit_reg=False,  col_wrap=2
     plt.legend(loc='upper left')
     plt.ylabel("Différence de valeur  [minutes]")
     plt.xlabel("C : Constante multiplicatrice de la taille de l'échantillon")

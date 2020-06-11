@@ -4,7 +4,8 @@ Ce fichier contient un example d'utilisation du projet
 
 # 0) Effectuer le import suivants
 from Program.Data_manager.main import DataManager
-from Program.NetworkEfficiency import NetworkEfficiency, NetworkModification, AddConnexion, AddLine
+from Program.NetworkEfficiency import NetworkEfficiency, AddConnexion, AddLine,AddRandomConnexion
+from Program.Optimization import find_best_modification, find_best_Duo_modification
 
 
 # 0b) Etapes à faire une seule fois , lors du téléchargement du projet
@@ -91,13 +92,16 @@ print("end")
 
 #Effectuer une modification
 # Ajouter une connexion entre 2 arrêts
-modif = AddConnexion()
-network_efficiency(modif)
+modif1 = AddConnexion("delijn42525", 438, "delijn90508", 440)
+network_efficiency.modify(modif1)
 
 #Ajouter une ligne de TC
 # Ajouter une connexion entre 2 arrêts
-modif = AddConnexion()
-network_efficiency(modif)
+modif2 = AddLine([("delijn42525", 500, 500, None),("delijn42296",510,511,None),("delijn87605",525,525,None)])
+network_efficiency.modify(modif2)
+
+modif3 = AddRandomConnexion()
+network_efficiency.modify(modif3)
 
 
 # Il est aussi possible de créer ces propre modification en implementant l'interface
@@ -120,4 +124,8 @@ network_efficiency.restore()
 
 
 # 4) Utiliser le fonction d'optimisation conçue
-# Todo
+network = NetworkEfficiency(param=parameter, c=0.01, load_data=False)
+best, best_value = find_best_modification(network=network, modifications=[modif1, modif2, modif3])
+print(best, " with value : ", best_value)
+best, best_value = find_best_Duo_modification(network=network, modifications=[modif1, modif2, modif3])
+print(best, " with value : ", best_value)

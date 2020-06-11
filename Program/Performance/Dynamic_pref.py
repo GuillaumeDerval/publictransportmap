@@ -8,6 +8,7 @@ from Test.Test_dynamic_inc_APSP.my_utils import *
 from Program.Map import MyMap
 from Program.metric.monte_carlo_dynamic import TravellersModelisation
 from Program.NetworkEfficiency import *
+from Program.Optimization import find_best_modification
 
 
 def TimeInterval():
@@ -271,7 +272,7 @@ def time_static_dynamic(names, transports):
             out.close()
 
 
-def max_walking_time_effect(names, transports):
+def max_walking_time_effect_APSP(names, transports):
     out1 = open(result_path + "/WalkingTimeEffectVertex.csv", "w")
     out1.write("transport;localisation;max_time;mean;all\n")
     out2 = open(result_path + "/WalkingTimeEffectInit.csv", "w")
@@ -297,6 +298,27 @@ def max_walking_time_effect(names, transports):
                     generate_random_vertex_old_pos(APSP)
                     times.append(time.time() - start_time)
                 out1.write("{};{};{};{};{}\n".format(tr, n, max_walking_time, sum(times) / 50, times))
+
+def max_walking_time_effect_network(names):
+    out = open(result_path + "/WalkingTimeEffectInitNetwork.csv", "w")
+    out.write("localisation;max_time;time;value\n")
+    out.close()
+    for n in names:
+        for max_walking_time in range(0, 61, 5):
+            walking_speed = 3.2
+            MAX_TIME = 12 * 60
+            print(n,"  ",max_walking_time)
+
+            param = DataManager.produce_data(data_path, n, "train_bus", max_walking_time, walking_speed, MAX_TIME)
+
+            # initialisation
+            t = time.time()
+            net = NetworkEfficiency(param, c=1, load_data=False)
+            t = time.time() - t
+            out = open(result_path + "/WalkingTimeEffectInitNetwork.csv", "a")
+            out.write("{};{};{};{}\n".format(n, max_walking_time, t, net.get_value()))
+            out.close()
+
 
 
 def time_metric_vs_APSP(names):
@@ -375,11 +397,13 @@ def optimization_time(names):
             generate_realist_random_edge(APSP,True)
 
 
-    c = 0.1 #todo
+    c = 1 #todo
     out = open(result_path + "/optiTimeAbsolu.csv", "w")
     out.write("localisation;type;value\n")
+    out.close()
     out2 = open(result_path + "/optiTimeRelative.csv", "w")
     out2.write("localisation;type;value\n")
+    out2.close()
 
     for n in names:
         param = DataManager.load_data(data_path, n, "train_bus")
@@ -424,6 +448,7 @@ def optimization_time(names):
             metric.restore()
             t_metric_revert += (time.time() - t)
         t_opti = time.time() - t_opti
+        out = open(result_path + "/optiTimeAbsolu.csv", "a")
         out.write("{};{};{}\n".format(n, "Initialisation : APSP", t_APSP_init))
         out.write("{};{};{}\n".format(n, "Initialisation : métrique", t_metric_init-t_APSP_init))
         out.write("{};{};{}\n".format(n, "Modification : APSP", t_APSP_modif))
@@ -433,7 +458,9 @@ def optimization_time(names):
         out.write("{};{};{}\n".format(n, "Optimisation", t_opti))
         out.write("{};{};{}\n".format(n, "Meilleure valeur", best))
         out.write("{};{};{}\n".format(n, "Valeur initiale", init))
+        out.close()
 
+        out2 = open(result_path + "/optiTimeRelative.csv", "a")
         out2.write("{};{};{}\n".format(n, "Initialisation : APSP", t_APSP_init / t_opti))
         out2.write("{};{};{}\n".format(n, "Initialisation : métrique", t_metric_init / t_opti))
         out2.write("{};{};{}\n".format(n, "Modification : APSP", (t_APSP_modif + t_metric_init)/ t_opti))
@@ -441,6 +468,38 @@ def optimization_time(names):
         out2.write("{};{};{}\n".format(n, "Annulation : APSP", (t_APSP_revert + t_APSP_modif + t_metric_init)/ t_opti))
         out2.write("{};{};{}\n".format(n, "Annulation : métrique", (t_metric_revert + t_APSP_modif + t_metric_init) / t_opti))
         out2.write("{};{};{}\n".format(n, "Optimisation", 1))
+        out2.close()
+
+
+def optimization_values():
+    class modif_edge(NetworkModification):
+        """ template for modifications"""
+
+        def run(self, APSP: Dynamic_APSP):
+            """ execute the modification on the APSP given in argument"""
+            generate_realist_random_edge(APSP,True)
+
+    out = open(result_path + "/optiValues.csv", "w")
+    out.write("localisation;number_modif;value;time\n")
+    out.close()
+
+    c = 1
+    #for n in names:
+    n = 'Dixmude'
+    for i in range(3):
+        for number_modif in range(0,51,5):
+            print("number_modif = ",number_modif)
+            time.sleep(10)
+            t = time.time()
+            param = DataManager.load_data(data_path, n, "train_bus")
+            net = NetworkEfficiency(param, c, load_data=False, seed=round(345 * number_modif) +i)
+            modifications = [modif_edge() for _ in range(number_modif)]
+            _, best_value = find_best_modification(net, modifications)
+            t = time.time() - t
+            out = open(result_path + "/optiValues.csv", "a")
+            out.write("{};{};{};{}\n".format(n, number_modif, best_value,t))
+            out.close()
+
 
 if __name__ == '__main__':
     # TimeInterval()
@@ -454,16 +513,17 @@ if __name__ == '__main__':
              'Nivelles', 'Ostende', 'Philippeville', 'Roulers', 'Saint-Nicolas', 'Soignies', 'Termonde', 'Thuin',
              'Tielt', 'Tongres', 'Tournai', 'Turnhout', 'Verviers', 'Virton', 'Waremme', 'Ypres']
 
-    names2 = ['Dixmude','Ath']#]#'Dixmude','Ath','Tournai','Mons','Nivelles','Charleroi', 'Liège', 'Bruxelles-Capitale']
+    names2 = ['Dixmude','Ath','Tournai','Mons']#]#'Dixmude','Ath','Tournai','Mons','Nivelles','Charleroi', 'Liège', 'Bruxelles-Capitale']
     transports = ["train_bus"] #,"bus_only","train_bus"]
     #edge_node_by_arrondissement(names, transports)
 
     #time_static_dynamic(names2, transports)
-    #max_walking_time_effect(names2, ["train_bus"])
+    #max_walking_time_effect_APSP(names2, ["train_bus"])
     #time_metric_vs_APSP(names2)
     #MC_reducing_factor()
-    optimization_time(names2)
-
+    #optimization_time(names2)
+    optimization_values()
+    #max_walking_time_effect_network(names2)
 
 
 
