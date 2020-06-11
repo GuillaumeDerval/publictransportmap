@@ -306,8 +306,12 @@ class TravellersModelisation:
                         for i in range(len(travellers)):   # find all potentially affected stop
                             rsd_pt, work_pt, (old_org_stop, old_dest_stop), old_TC = travellers[i]
                             if (old_org_stop, old_dest_stop) == (None, None):
-                                old_unreach = 1
+
                                 old_time = distance_Eucli(rsd_pt, work_pt)/self.speed
+                                if old_time > (2 * self.max_walk_time):
+                                    old_unreach = 1
+                                else:
+                                    old_unreach = 0
                                 old_walk1 = old_time/2
                                 old_walk2 = old_time / 2
                                 old_TC = 0
@@ -326,14 +330,14 @@ class TravellersModelisation:
                                 new_walk2 = distance_Eucli(work_pt, dest_ch_pos) / self.speed  # walking time
                                 new_time = new_walk1 + new_TC + new_walk2
 
-                                if new_time < old_time and new_walk1 < self.max_walk_time and new_walk2 < self.max_walk_time:
+                                # old_unreach == 0, ignore travel if it was unreachable at the initialisation
+                                if old_unreach == 0 and new_time < old_time and new_walk1 < self.max_walk_time and new_walk2 < self.max_walk_time:
                                     #record old state
                                     if rsd_munty not in self.__change_log["all_results_save"]:
                                         self.__change_log["travellers"][i] = travellers[i]
                                         self.__change_log["all_results_save"][rsd_munty]= self.all_results[rsd_munty].__copy__()
                                     if "total_result" not in self.__change_log:
-                                        what = self.total_results
-                                        self.__change_log["total_result"] = what.__copy__()
+                                        self.__change_log["total_result"] = self.total_results.__copy__()
                                     travellers[i] = rsd_pt, work_pt, ((org_name_ch,org_ch_pos), (dest_name_ch,dest_ch_pos)),new_TC
                                     self.all_results[rsd_munty].remove(old_time, old_walk1, old_walk2, old_TC, unreachable=old_unreach)
                                     self.all_results[rsd_munty].add(new_time, new_walk1, new_walk2, new_TC, unreachable=0)
@@ -377,7 +381,7 @@ class Result:
         #self.work = 0  # nb workers  according to travel
 
     def __copy__(self):
-        new = Result
+        new = Result()
         new.tot_time = self.tot_time
         new.tot_time2 = self.tot_time2
         new.tot_walk1 = self.tot_walk1
