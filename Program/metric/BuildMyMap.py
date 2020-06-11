@@ -69,17 +69,27 @@ def country_shape_map(map, out_path):
         dump(out, w)
 
 def travel_time_shape_map(param:Parameters,metric):
+    import csv
     out_path = param.PATH.OUT_TIME_MAP
 
     all_results = metric.all_results
 
+    with open(param.PATH.MAP_POP, "r") as in_file:
+        conv_refnis_name = csv.DictReader(in_file, delimiter=';')
     feature_collection = []
     for refnis in param.MAP().get_all_munty_refnis():
-        name = refnis
+
+        name = "unknown"
+        for row in conv_refnis_name:
+            refn = str(row["\ufeffCD_REFNIS"])
+            if refn == refnis:
+                name = str(row["TX_DESCR_FR"])
+                break
+
         shape = param.MAP().get_shape_refnis(refnis)
         if refnis not in all_results.keys():
             dico = {'type': 'feature',
-                        'properties': {'name': name, "time": None , "var": None,
+                        'properties': {'name': name,'refnis': refnis, "time": None , "var": None,
                                     "walk1" : None, "walk2" : None,
                                     "walk" : None,"TC" : None,
                                     "distance": None, "prop_TC_users": None,
@@ -89,7 +99,7 @@ def travel_time_shape_map(param:Parameters,metric):
         else:
             result = all_results[refnis]
             dico = {'type': 'feature',
-                    'properties': {'name': name, "time": result.mean(), "var": result.var(),
+                    'properties': {'name': name,'refnis': refnis, "time": result.mean(), "var": result.var(),
                                     "walk1" : result.walk1(), "walk2" : result.walk2(),
                                     "walk" : result.walk1() + result.walk2(),"TC" : result.TC(),"TC_user_only": result.TC_user_only(),
                                    "distance": result.mean_dist_reachable(), "prop_TC_users" : result.prop_TC_users(),

@@ -34,7 +34,7 @@ from Program.Data_manager.path import Parameters
 # ################################# Monte Carlo #########################################################
 class TravellersModelisation:
 
-    def __init__(self, param: Parameters, distance_oracle, C: int, travel_path: str = None, my_seed=None):
+    def __init__(self, param: Parameters, distance_oracle, C: float, travel_path: str = None, my_seed=None):
 
         assert C > 0
         if travel_path is None:
@@ -332,9 +332,9 @@ class TravellersModelisation:
                                         self.__change_log["travellers"][i] = travellers[i]
                                         self.__change_log["all_results_save"][rsd_munty]= self.all_results[rsd_munty].__copy__()
                                     if "total_result" not in self.__change_log:
-                                        self.__change_log["total_result"] = self.total_results.__copy__()
+                                        what = self.total_results
+                                        self.__change_log["total_result"] = what.__copy__()
                                     travellers[i] = rsd_pt, work_pt, ((org_name_ch,org_ch_pos), (dest_name_ch,dest_ch_pos)),new_TC
-                                    if old_unreach == 1 : print("unreachable")
                                     self.all_results[rsd_munty].remove(old_time, old_walk1, old_walk2, old_TC, unreachable=old_unreach)
                                     self.all_results[rsd_munty].add(new_time, new_walk1, new_walk2, new_TC, unreachable=0)
                                     self.total_results.remove(old_time, old_walk1, old_walk2, old_TC, unreachable=old_unreach)

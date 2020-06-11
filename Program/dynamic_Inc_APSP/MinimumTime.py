@@ -133,14 +133,15 @@ class MinimumTime:
 
             for s, new_line in changes["line_change"].items():
                 s_name = self.idx_to_name[s // self.max_time]
-                for i in range(len(changes["idx_order"])):
+                for i in range(len(new_line)):
+                #for i in range(min(len(new_line),len(changes["idx_order"]))):
                     if new_line[i]:
                         d = changes["idx_order"][i]
                         d_name = self.idx_to_name[d // self.max_time]
                         time = d % self.max_time - s % self.max_time
-                        assert time >= 0
-                        self.single_update(s_name, d_name, time)
-
+                        # assert time >= 0
+                        if time >= 0:
+                            self.single_update(s_name, d_name, time)
 
     def single_update(self, s_name, d_name, new_time):
         self.__update_size()
@@ -165,7 +166,7 @@ class MinimumTime:
         # restore old distance value
         for s_name in self.__backup["change_distance"]:
             for d_name, old_value in self.__backup["change_distance"][s_name].items():
-                self.distance[s_name][d_name] = old_value
+                self.__set_dist(s_name, d_name,old_value)
 
         self.__backup = self.__backup_stack.pop()
         self.up_to_date = True

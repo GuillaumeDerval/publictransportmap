@@ -132,13 +132,14 @@ def graph_Node_by_Arrondi(tr):
 def perf_graph():
     data_path = "/Users/DimiS/Documents/Gotta_go_fast/Project/Program/Performance/Result"
 
-    with open(data_path + "/TimeStaticDynamic.csv", newline='') as csvfile:
+    with open(data_path + "/TimeStaticDynamic3.csv", newline='') as csvfile:
         file = csv.DictReader(csvfile, delimiter=';')
         print(file.fieldnames)
         # Make a fake dataset
         arrond = {"train_only":[], "bus_only":[], "train_bus": []}
         static_mean, static_std =  {"train_only":[], "bus_only":[], "train_bus": []}, {"train_only":[], "bus_only":[], "train_bus": []}
-        edge_mean, edge_std = {"train_only":[], "bus_only":[], "train_bus": []}, {"train_only":[], "bus_only":[], "train_bus": []}
+        new_edge_mean, edge_std = {"train_only":[], "bus_only":[], "train_bus": []}, {"train_only":[], "bus_only":[], "train_bus": []}
+        old_edge_mean = {"train_only": [], "bus_only": [], "train_bus": []}
         new_vertex_mean, new_vertex_std = {"train_only":[], "bus_only":[], "train_bus": []}, {"train_only":[], "bus_only":[], "train_bus": []}
         old_vertex_mean, old_vertex_std = {"train_only":[], "bus_only":[], "train_bus": []}, {"train_only":[], "bus_only":[], "train_bus": []}
         for row in file:
@@ -147,8 +148,10 @@ def perf_graph():
                 arrond[tr].append(row["localisation"])
                 static_mean[tr].append(float(row["mean"]))
                 static_std[tr].append(float(row["stderr"]))
-            elif row["type"] == "dynamic_edge":
-                edge_mean[tr].append(float(row["mean"]))
+            elif row["type"] == "dynamic_edge_old":
+                old_edge_mean[tr].append(float(row["mean"]))
+            elif row["type"] == "dynamic_edge_new":
+                new_edge_mean[tr].append(float(row["mean"]))
                 edge_std[tr].append(float(row["stderr"]))
             elif row["type"] == "dynamic_vertex_new":
                 new_vertex_mean[tr].append(float(row["mean"]))
@@ -182,16 +185,18 @@ def perf_graph():
         r5 = [x + 4 * barWidth for x in r1]
         r6 = [x + 5 * barWidth for x in r1]
 
-        # Create blue bars
-        plt.bar(r1, edge_mean[tr], width=barWidth, color='dodgerblue', edgecolor='white',
-                 label='Ajout d\'une arête')
+        plt.bar(r1, old_edge_mean[tr], width=barWidth, color='dodgerblue', edgecolor='white',
+                label='Ajout d\'une arête entre des noeuds préexistant')
 
-        # Create cyan bars
-        plt.bar(r2, new_vertex_mean[tr], width=barWidth, color='yellowgreen', edgecolor='white',
-                 label='Ajout d\'un noeud (nouvelle station)')
+        plt.bar(r2, new_edge_mean[tr], width=barWidth, color='darkblue', edgecolor='white',
+                label='Ajout d\'une arête entre de nouveaux noeuds')
 
         plt.bar(r3, old_vertex_mean[tr], width=barWidth, color='green', edgecolor='white',
-                  label='Ajout d\'un noeud (ancienne station)')
+                label='Ajout d\'un noeud (ancienne station)')
+        plt.bar(r4, new_vertex_mean[tr], width=barWidth, color='yellowgreen', edgecolor='white',
+                label='Ajout d\'un noeud (nouvelle station)')
+
+
 
         #plt.bar(r4, static_mean[tr], width=barWidth, color='red', edgecolor='black',
         #        yerr=static_std[tr], label='sorgho')
@@ -223,13 +228,14 @@ def perf_graph():
 def perf_graph2():
     data_path = "/Users/DimiS/Documents/Gotta_go_fast/Project/Program/Performance/Result"
 
-    with open(data_path + "/TimeStaticDynamic.csv", newline='') as csvfile:
+    with open(data_path + "/TimeStaticDynamic3.csv", newline='') as csvfile:
         file = csv.DictReader(csvfile, delimiter=';')
         print(file.fieldnames)
         # Make a fake dataset
         arrond = {"train_only":[], "bus_only":[], "train_bus": []}
-        static_mean, static_std =  {"train_only":[], "bus_only":[], "train_bus": []}, {"train_only":[], "bus_only":[], "train_bus": []}
-        edge_mean, edge_std = {"train_only":[], "bus_only":[], "train_bus": []}, {"train_only":[], "bus_only":[], "train_bus": []}
+        static_mean, static_std = {"train_only":[], "bus_only":[], "train_bus": []}, {"train_only":[], "bus_only":[], "train_bus": []}
+        new_edge_mean, new_edge_std = {"train_only":[], "bus_only":[], "train_bus": []}, {"train_only":[], "bus_only":[], "train_bus": []}
+        old_edge_mean = {"train_only": [], "bus_only": [], "train_bus": []}
         new_vertex_mean, new_vertex_std = {"train_only":[], "bus_only":[], "train_bus": []}, {"train_only":[], "bus_only":[], "train_bus": []}
         old_vertex_mean, old_vertex_std = {"train_only":[], "bus_only":[], "train_bus": []}, {"train_only":[], "bus_only":[], "train_bus": []}
         for row in file:
@@ -238,9 +244,12 @@ def perf_graph2():
                 arrond[tr].append(row["localisation"])
                 static_mean[tr].append(float(row["mean"]))
                 static_std[tr].append(float(row["stderr"]))
-            elif row["type"] == "dynamic_edge":
-                edge_mean[tr].append(float(row["mean"]))
-                edge_std[tr].append(float(row["stderr"]))
+            elif row["type"] == "dynamic_edge_new":
+                new_edge_mean[tr].append(float(row["mean"]))
+                new_edge_std[tr].append(float(row["stderr"]))
+            elif row["type"] == "dynamic_edge_old":
+                old_edge_mean[tr].append(float(row["mean"]))
+                #edge_std[tr].append(float(row["stderr"]))
             elif row["type"] == "dynamic_vertex_new":
                 new_vertex_mean[tr].append(float(row["mean"]))
                 new_vertex_std[tr].append(float(row["stderr"]))
@@ -274,13 +283,18 @@ def perf_graph2():
 
         plt.bar(r1, static_mean[tr], width=[e / barWidth for e in edges], color='darkorange', edgecolor='white',
                 label='Initialisation')
-        plt.bar(r2, edge_mean[tr], width=[e/barWidth for e in edges], color='dodgerblue', edgecolor='white',
-                 label='Ajout d\'une arête')
-        plt.bar(r3, new_vertex_mean[tr], width=[e/barWidth for e in edges], color='yellowgreen', edgecolor='white',
-                 label='Ajout d\'un noeud (nouvelle station)')
+        plt.bar(r2, old_edge_mean[tr], width=[e / barWidth for e in edges], color='dodgerblue', edgecolor='white',
+                label='Ajout arête entre des noeuds préexistant')
+        plt.bar(r3, new_edge_mean[tr], width=[e / barWidth for e in edges], color='darkblue', edgecolor='white',
+                label='Ajout arête entre de nouveaux noeuds')
 
-        plt.bar(r4, old_vertex_mean[tr], width=[e/barWidth for e in edges], color='green', edgecolor='white',
-                 label='Ajout d\'un noeud (ancienne station)')
+        plt.bar(r4, old_vertex_mean[tr], width=[e / barWidth for e in edges], color='green', edgecolor='white',
+                label='Ajout noeud (ancienne station)')
+        plt.bar(r5, new_vertex_mean[tr], width=[e/barWidth for e in edges], color='yellowgreen', edgecolor='white',
+                 label='Ajout noeud (nouvelle station)')
+
+
+
 
 
 
@@ -313,7 +327,6 @@ def perf_graph2():
     #plt.bar(starts, bus_nodes, color='#2d7f5e', edgecolor='white', width=barWidth)
     # plt.xticks(y_pos, bars)
     #plt.show()
-
 
 
 def time_effectInit():
@@ -374,52 +387,47 @@ def time_effectVertexRatio():
 
 def metricVsAPSP():
     data = pd.read_csv("./Result/metricVsAPSP.csv",delimiter=';')
-    sns.barplot("localisation", "value", data=data, hue="type",hue_order= ["métrique","APSP","carte"], dodge=False)
+    sns.barplot("localisation", "value", data=data, hue="type",hue_order= ["métrique","trajet dans le réseau de TC"], dodge=False)
     #plt.legend(loc='upper left')
     plt.ylabel("Temps [seconds]")
     plt.xlabel("Arrondissement")
 
-    #plt.savefig("./Result/metricVsAPSP.png")
+    plt.savefig("./Result/metricVsAPSP.png")
     plt.show()
     #fig = plt.scatter(data, x="max_time", y="value")
     #fig.show()
 
 
-def  MC_reducing_factor():
+def  MC_reducing_factor_init():
     data = pd.read_csv("./Result/MC_reducing_factor_init.csv", delimiter=';')
     # data.plot(kind='bar')
 
-    sns.lmplot("c", "time", data=data, hue='localisation', legend=False, ci=None)  # ci=None, fit_reg=False,  col_wrap=2
+    sns.lmplot("c", "time", data=data, ci=None)  # ci=None, fit_reg=False,  col_wrap=2
     plt.legend(loc='upper left')
     plt.ylabel("Temps [seconds]")
     plt.xlabel("C : Constante multiplicatrice de la taille de l'échantillon")
     #plt.xscale('log')
     #plt.yscale('log')
 
-    plt.savefig("./Images/MC_reducing_factor_time.png")
+    plt.savefig("./Images/MC_reducing_factor_time_init.png")
     plt.show()
 
     data = pd.read_csv("./Result/MC_reducing_factor_init.csv", delimiter=';')
     # data.plot(kind='bar')
 
-    sns.lmplot("c", "value", data=data, hue='localisation', legend=False, ci=None, fit_reg=False)  # ci=None, fit_reg=False,  col_wrap=2
+    sns.lmplot("c", "value", data=data, ci=None, fit_reg=False)  # ci=None, fit_reg=False,  col_wrap=2
     plt.legend(loc='upper left')
-    plt.ylabel("Valeur de a métrique")
+    plt.ylabel("Valeur de a métrique   [minutes]")
     plt.xlabel("C : Constante multiplicatrice de la taille de l'échantillon")
     plt.xscale('log')
 
-    plt.savefig("./Images/MC_reducing_factor_value.png")
+    plt.savefig("./Images/MC_reducing_factor_value_init.png")
     plt.show()
     # fig = plt.scatter(data, x="max_time", y="value")
     # fig.show()
 
 
-
-
-
-
-
-
+def MC_reducing_factor_modif():
     data = pd.read_csv("./Result/MC_reducing_factor_modif.csv", delimiter=';')
     # data.plot(kind='bar')
 
@@ -430,7 +438,7 @@ def  MC_reducing_factor():
     # plt.xscale('log')
     # plt.yscale('log')
 
-    plt.savefig("./Images/MC_reducing_factor_time.png")
+    plt.savefig("./Images/MC_reducing_factor_time_modif.png")
     plt.show()
 
     data = pd.read_csv("./Result/MC_reducing_factor_modif.csv", delimiter=';')
@@ -439,14 +447,50 @@ def  MC_reducing_factor():
     sns.lmplot("c", "value", data=data, hue='modification', legend=False, ci=None,
                fit_reg=False)  # ci=None, fit_reg=False,  col_wrap=2
     plt.legend(loc='upper left')
-    plt.ylabel("Valeur de a métrique")
+    plt.ylabel("Valeur de a métrique  [minutes]")
     plt.xlabel("C : Constante multiplicatrice de la taille de l'échantillon")
     plt.xscale('log')
 
-    plt.savefig("./Images/MC_reducing_factor_value.png")
+    plt.savefig("./Images/MC_reducing_factor_value_modif.png")
     plt.show()
     # fig = plt.scatter(data, x="max_time", y="value")
     # fig.show()
+
+def MC_reducing_factor_modif_delta():
+    data = pd.read_csv("./Result/MC_reducing_factor_modif_delta.csv", delimiter=';')
+    # data.plot(kind='bar')
+
+    sns.lmplot("c", "value", data=data, hue='modification', legend=False, ci=None,
+               fit_reg=False)  # ci=None, fit_reg=False,  col_wrap=2
+    plt.legend(loc='upper left')
+    plt.ylabel("Différence de valeur  [minutes]")
+    plt.xlabel("C : Constante multiplicatrice de la taille de l'échantillon")
+    plt.xscale('log')
+
+    plt.savefig("./Images/MC_reducing_factor_value_delta.png")
+    plt.show()
+    # fig = plt.scatter(data, x="max_time", y="value")
+    # fig.show()
+
+def optimization_time():
+    data = pd.read_csv("./Result/optiTimeRelative.csv", delimiter=';')
+    sns.barplot("localisation", "value", data=data, hue="type",
+                hue_order=["Optimisation",
+                           "Annulation : métrique","Annulation : APSP",
+                           "Modification : métrique", "Modification : APSP",
+                           "Initialisation : métrique","Initialisation : APSP"],
+
+                dodge=False,
+                palette =np.array(["black","yellowgreen","forestgreen","orange","orangered","lightskyblue","dodgerblue"]))
+    # plt.legend(loc='upper left')
+    plt.ylabel("Proportion de temps d'execution")
+    plt.xlabel("Arrondissement")
+
+    plt.savefig("./Result/optimization_time.png")
+    plt.show()
+    # fig = plt.scatter(data, x="max_time", y="value")
+    # fig.show()
+
 if __name__ == '__main__':
     #graph_TimeInterval()
     #graph_Node_by_Arrondi(tr="train_only")
@@ -458,4 +502,9 @@ if __name__ == '__main__':
     #time_effectInitRatio()
     #time_effectVertexRatio()
     #metricVsAPSP()
-    MC_reducing_factor()
+    #MC_reducing_factor_init()
+    #MC_reducing_factor_modif()
+    #MC_reducing_factor_modif_delta()
+    optimization_time()
+
+#

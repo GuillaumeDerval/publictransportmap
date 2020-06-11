@@ -90,7 +90,7 @@ def edge_node_by_arrondissement(names,transports):
 
 # ###################################################################################################################
 
-def generate_realist_random_edge(APSP, new_node):
+def generate_realist_random_edge(APSP, new_node = True):
     name1 = rdm.sample(APSP.idx_to_name, 1).pop()
     name2 = rdm.sample(APSP.idx_to_name, 1).pop()
     pos1 = APSP.map.stop_position_dico[name1]
@@ -123,7 +123,7 @@ def generate_realist_random_edge(APSP, new_node):
         else:
             return generate_realist_random_edge(APSP, new_node)
 
-    print("add edge {} time {} to {} time {}".format(name1, time1, name2, time2))
+    #print("add edge {} time {} to {} time {}".format(name1, time1, name2, time2))
     APSP.add_edge(name1, time1, name2, time2, u_position=None, v_position=None)
 
 
@@ -172,8 +172,9 @@ def time_static_dynamic(names, transports):
     walking_speed = 3.2
     MAX_TIME = 12 * 60
 
-    out = open(result_path + "/TimeStaticDynamic2.csv", "w")
+    out = open(result_path + "/TimeStaticDynamic4.csv", "w")
     out.write("transport;localisation;type;mean;stderr\n")
+    out.close()
 
     for tr in transports:
         print("transport : ", tr)
@@ -188,13 +189,17 @@ def time_static_dynamic(names, transports):
             start_time = time.time()
             APSP = Dynamic_APSP(param)
             times["static"].append(time.time() - start_time)
-            time.sleep(40)
+            time.sleep(30)
             for i in range(25):
+                time.sleep(10)
+                APSP.save()
                 start_time = time.time()
                 generate_realist_random_edge(APSP, new_node=False)
+                APSP.distance.update()
                 times["dynamic_edge_old"].append(time.time() - start_time)
+                APSP.restore()
             MyMap.belgium_map = None
-            print("{};{};{};{};{}\n".format(tr, n, "static", mean(times["static"]),-1))
+            #print("{};{};{};{};{}\n".format(tr, n, "static", mean(times["static"]),-1))
             print("{};{};{};{};{}\n".format(tr, n, "dynamic_edge_old", mean(times["dynamic_edge_old"]),
                                                 stdev(times["dynamic_edge_old"]) / 5))
 
@@ -204,11 +209,15 @@ def time_static_dynamic(names, transports):
             start_time = time.time()
             APSP = Dynamic_APSP(param)
             times["static"].append(time.time() - start_time)
-            time.sleep(40)
+            time.sleep(30)
             for i in range(25):
+                time.sleep(10)
+                APSP.save()
                 start_time = time.time()
                 generate_realist_random_edge(APSP, new_node=True)
+                APSP.distance.update()
                 times["dynamic_edge_new"].append(time.time() - start_time)
+                APSP.restore()
             MyMap.belgium_map = None
             print("{};{};{};{};{}\n".format(tr, n, "dynamic_edge_new", mean(times["dynamic_edge_new"]),
                                             stdev(times["dynamic_edge_new"]) / 5))
@@ -221,9 +230,12 @@ def time_static_dynamic(names, transports):
             times["static"].append(time.time() - start_time)
             time.sleep(40)
             for i in range(25):
+                APSP.save()
                 start_time = time.time()
                 generate_random_vertex_old_pos(APSP)
+                APSP.distance.update()
                 times["dynamic_vertex_old"].append(time.time() - start_time)
+                APSP.restore()
             MyMap.belgium_map = None
             print("{};{};{};{};{}\n".format(tr, n, "dynamic_vertex_old", mean(times["dynamic_vertex_old"]),
                                             stdev(times["dynamic_vertex_old"]) / 5))
@@ -237,9 +249,12 @@ def time_static_dynamic(names, transports):
             times["static"].append(time.time() - start_time)
             time.sleep(40)
             for i in range(25):
+                APSP.save()
                 start_time = time.time()
                 generate_random_vertex_new_pos(APSP)
+                APSP.distance.update()
                 times["dynamic_vertex_new"].append(time.time() - start_time)
+                APSP.restore()
             MyMap.belgium_map = None
             print("{};{};{};{};{}\n".format(tr, n, "dynamic_vertex_new", mean(times["dynamic_vertex_new"]),
                                                 stdev(times["dynamic_vertex_new"]) / 5))
@@ -247,12 +262,13 @@ def time_static_dynamic(names, transports):
             print("{};{};{};{};{}\n".format(tr, n, "static", mean(times["static"]),
                                             stdev(times["static"]) / math.sqrt(4)))
 
-
+            out = open(result_path + "/TimeStaticDynamic3.csv", "a")
             out.write("{};{};{};{};{}\n".format(tr, n, "static", mean(times["static"]), stdev(times["static"])/math.sqrt(4)))
             out.write("{};{};{};{};{}\n".format(tr, n, "dynamic_edge_new", mean(times["dynamic_edge_new"]), stdev(times["dynamic_edge_new"])/5))
             out.write("{};{};{};{};{}\n".format(tr, n, "dynamic_edge_old", mean(times["dynamic_edge_old"]), stdev(times["dynamic_edge_old"]) / 5))
             out.write("{};{};{};{};{}\n".format(tr, n, "dynamic_vertex_new", mean(times["dynamic_vertex_new"]), stdev(times["dynamic_vertex_new"])/5))
             out.write("{};{};{};{};{}\n".format(tr, n, "dynamic_vertex_old", mean(times["dynamic_vertex_old"]), stdev(times["dynamic_vertex_old"])/5))
+            out.close()
 
 
 def max_walking_time_effect(names, transports):
@@ -302,43 +318,129 @@ def time_metric_vs_APSP(names):
         t_metric = time.time() - t_metric
         APSP.hard_save()
         out.write("{};{};{}\n".format(n,"carte", t_map))
-        out.write("{};{};{}\n".format(n, "APSP", t_APSP+t_map))
+        out.write("{};{};{}\n".format(n, "trajet dans le réseau de TC", t_APSP+t_map))
         out.write("{};{};{}\n".format(n, "métrique", t_metric))
         out.write("{};{};{}\n".format(n, "valeur_métrique", metric.total_results.mean()))
 
 
 def MC_reducing_factor(name = 'Dixmude'):
-    c_values = [pow(10,(i/4)) for i in range(-2*4, 2*4+1)]
+    c_values = [pow(10,(i/4)) for i in range(-3*4, 1*4+1)]
     out1 = open(result_path + "/MC_reducing_factor_init.csv", "w")
     out1.write("localisation;c;time;value\n")
     out2 = open(result_path + "/MC_reducing_factor_modif.csv", "w")
     out2.write("localisation;modification;c;time;value\n")
+    out3 = open(result_path + "/MC_reducing_factor_modif_delta.csv", "w")
+    out3.write("localisation;modification;c;time;value\n")
 
     for c in c_values:
         print("c = ",c)
         for i in range(3):
+            time.sleep(10)
             param = DataManager.load_data(data_path, name, "train_bus")
             t = time.time()
-            net = NetworkEfficiency(param,c,load_data=True, seed = 40+i)
+            net = NetworkEfficiency(param,c,load_data=True, seed = round(34536*c)+i)
             t2 = time.time() - t
             out1.write("{};{};{};{}\n".format(name, c, t2, net.get_value()))
+            v = net.get_value()
             print("modif1")
             t = time.time()
             net.modify(AddConnexion("delijn42525", 438, "delijn90508", 440))
             t2 = time.time() - t
-            out2.write("{};{};{};{};{}\n".format(name,"modif1", c, t2, net.get_value()))
+            out2.write("{};{};{};{};{}\n".format(name, "modif1", c, t2, net.get_value()))
+            out3.write("{};{};{};{};{}\n".format(name,"modif1", c, t2, net.get_value()-v))
+            v = net.get_value()
             print("modif2")
             t = time.time()
             net.modify(AddConnexion("delijn42296", 526, "delijn41729", 530))
             t2 = time.time() - t
             out2.write("{};{};{};{};{}\n".format(name, "modif2", c, t2, net.get_value()))
+            out3.write("{};{};{};{};{}\n".format(name, "modif2", c, t2, net.get_value()-v))
+            v = net.get_value()
             print("modif3")
             t = time.time()
             net.modify(AddConnexion("delijn87605", 404, "delijn42537", 418))
             t2 = time.time() - t
             out2.write("{};{};{};{};{}\n".format(name, "modif3", c, t2, net.get_value()))
+            out3.write("{};{};{};{};{}\n".format(name, "modif3", c, t2, net.get_value()-v))
+
         #out2.write("{};{};{};{}\n".format(name, c, times, values))
 
+
+def optimization_time(names):
+    class modif_edge(NetworkModification):
+        """ template for modifications"""
+
+        def run(self, APSP: Dynamic_APSP):
+            """ execute the modification on the APSP given in argument"""
+            generate_realist_random_edge(APSP,True)
+
+
+    c = 0.1 #todo
+    out = open(result_path + "/optiTimeAbsolu.csv", "w")
+    out.write("localisation;type;value\n")
+    out2 = open(result_path + "/optiTimeRelative.csv", "w")
+    out2.write("localisation;type;value\n")
+
+    for n in names:
+        param = DataManager.load_data(data_path, n, "train_bus")
+        #initialisation
+        t_opti = time.time()
+        t_metric_init = time.time()
+        param.MAP()
+        t_APSP_init = time.time()
+        APSP: Dynamic_APSP = Dynamic_APSP(param, load=False)
+        t_APSP_init = time.time() - t_APSP_init
+        metric = TravellersModelisation(param, APSP, C=c)
+        t_metric_init = time.time() - t_metric_init
+        init = metric.total_results.mean()
+
+        modifications =[modif_edge() for _ in range(15)] #todo
+        best = None
+        min_value = math.inf
+        t_metric_modif = 0
+        t_APSP_modif = 0
+        t_metric_revert = 0
+        t_APSP_revert =0
+
+        for modif in modifications:
+            t = time.time()
+            APSP.save()
+            t_APSP_revert += (time.time() -t)
+            metric.save()
+            t_metric_revert += (time.time() - t)
+            t = time.time()
+            modif.run(APSP)
+            changes = APSP.get_changes()
+            t_APSP_modif += (time.time() - t)
+            metric.update(changes=changes)
+            t_metric_modif += (time.time() - t)
+            value = metric.total_results.mean()
+            if value < min_value:
+                best = modif
+                min_value = value
+            t = time.time()
+            APSP.restore()
+            t_APSP_revert += (time.time() - t)
+            metric.restore()
+            t_metric_revert += (time.time() - t)
+        t_opti = time.time() - t_opti
+        out.write("{};{};{}\n".format(n, "Initialisation : APSP", t_APSP_init))
+        out.write("{};{};{}\n".format(n, "Initialisation : métrique", t_metric_init-t_APSP_init))
+        out.write("{};{};{}\n".format(n, "Modification : APSP", t_APSP_modif))
+        out.write("{};{};{}\n".format(n, "Modification : métrique", t_metric_init-t_APSP_modif))
+        out.write("{};{};{}\n".format(n, "Annulation : APSP", t_APSP_modif))
+        out.write("{};{};{}\n".format(n, "Annulation : métrique", t_metric_init - t_APSP_modif))
+        out.write("{};{};{}\n".format(n, "Optimisation", t_opti))
+        out.write("{};{};{}\n".format(n, "Meilleure valeur", best))
+        out.write("{};{};{}\n".format(n, "Valeur initiale", init))
+
+        out2.write("{};{};{}\n".format(n, "Initialisation : APSP", t_APSP_init / t_opti))
+        out2.write("{};{};{}\n".format(n, "Initialisation : métrique", t_metric_init / t_opti))
+        out2.write("{};{};{}\n".format(n, "Modification : APSP", (t_APSP_modif + t_metric_init)/ t_opti))
+        out2.write("{};{};{}\n".format(n, "Modification : métrique", (t_metric_modif + t_metric_init)/ t_opti))
+        out2.write("{};{};{}\n".format(n, "Annulation : APSP", (t_APSP_revert + t_APSP_modif + t_metric_init)/ t_opti))
+        out2.write("{};{};{}\n".format(n, "Annulation : métrique", (t_metric_revert + t_APSP_modif + t_metric_init) / t_opti))
+        out2.write("{};{};{}\n".format(n, "Optimisation", 1))
 
 if __name__ == '__main__':
     # TimeInterval()
@@ -352,13 +454,16 @@ if __name__ == '__main__':
              'Nivelles', 'Ostende', 'Philippeville', 'Roulers', 'Saint-Nicolas', 'Soignies', 'Termonde', 'Thuin',
              'Tielt', 'Tongres', 'Tournai', 'Turnhout', 'Verviers', 'Virton', 'Waremme', 'Ypres']
 
-    names2 = ['Dixmude','Ath']#,'Tournai','Mons','Nivelles','Charleroi']#]#', 'Liège', 'Bruxelles-Capitale']
+    names2 = ['Dixmude','Ath']#]#'Dixmude','Ath','Tournai','Mons','Nivelles','Charleroi', 'Liège', 'Bruxelles-Capitale']
     transports = ["train_bus"] #,"bus_only","train_bus"]
     #edge_node_by_arrondissement(names, transports)
 
     #time_static_dynamic(names2, transports)
     #max_walking_time_effect(names2, ["train_bus"])
     #time_metric_vs_APSP(names2)
-    MC_reducing_factor()
+    #MC_reducing_factor()
+    optimization_time(names2)
+
+
 
 
