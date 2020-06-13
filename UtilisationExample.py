@@ -92,12 +92,12 @@ print("end")
 
 #Effectuer une modification
 # Ajouter une connexion entre 2 arrêts
-modif1 = AddConnexion("delijn42525", 438, "delijn90508", 440)
+modif1 = AddConnexion("delijn87605", 404, "delijn42537", 418)
 network_efficiency.modify(modif1)
 
 #Ajouter une ligne de TC
 # Ajouter une connexion entre 2 arrêts
-modif2 = AddLine([("delijn42525", 500, 500, None),("delijn42296",510,511,None),("delijn87605",525,525,None)])
+modif2 = AddLine([("delijn42525", 500, 500, None),("delijn42296",505,506,None),("delijn87605",512,512,None)])
 network_efficiency.modify(modif2)
 
 modif3 = AddRandomConnexion()
@@ -128,4 +128,4 @@ network = NetworkEfficiency(param=parameter, c=0.01, load_data=False)
 best, best_value = find_best_modification(network=network, modifications=[modif1, modif2, modif3])
 print(best, " with value : ", best_value)
 best, best_value = find_best_Duo_modification(network=network, modifications=[modif1, modif2, modif3])
-print(best, " with value : ", best_value)
+print("(",best[0],", ",best[1], " with value : ", best_value)

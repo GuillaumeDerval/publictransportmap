@@ -273,10 +273,11 @@ def time_static_dynamic(names, transports):
 
 
 def max_walking_time_effect_APSP(names, transports):
-    out1 = open(result_path + "/WalkingTimeEffectVertex.csv", "w")
-    out1.write("transport;localisation;max_time;mean;all\n")
+    #out1 = open(result_path + "/WalkingTimeEffectVertex.csv", "w")
+    #out1.write("transport;localisation;max_time;mean;all\n")
     out2 = open(result_path + "/WalkingTimeEffectInit.csv", "w")
     out2.write("transport;localisation;max_time;value\n")
+    out2.close()
     for n in names:
         for tr in transports:
             for max_walking_time in range(0, 61, 5):
@@ -284,27 +285,29 @@ def max_walking_time_effect_APSP(names, transports):
                 MAX_TIME = 12 * 60
                 print(n,"  ",max_walking_time)
 
-                param = DataManager.produce_data(data_path, n, tr, max_walking_time, walking_speed, MAX_TIME)
+                param = DataManager.produce_data(data_path, n, tr,  max_walking_time, walking_speed, MAX_TIME)
 
                 # Vertex old add
-                start_time = time.time()
+                t = time.time()
                 APSP = Dynamic_APSP(param)
-                t = time.time() - start_time
+                t = time.time() - t
+                out2 = open(result_path + "/WalkingTimeEffectInit.csv", "a")
                 out2.write("{};{};{};{}\n".format(tr, n, max_walking_time, t))
+                out2.close()
 
-                times = []
-                for i in range(50):
-                    start_time = time.time()
-                    generate_random_vertex_old_pos(APSP)
-                    times.append(time.time() - start_time)
-                out1.write("{};{};{};{};{}\n".format(tr, n, max_walking_time, sum(times) / 50, times))
+                #times = []
+                #for i in range(50):
+                #    start_time = time.time()
+                #    generate_random_vertex_old_pos(APSP)
+                #    times.append(time.time() - start_time)
+                #out1.write("{};{};{};{};{}\n".format(tr, n, max_walking_time, sum(times) / 50, times))
 
 def max_walking_time_effect_network(names):
-    out = open(result_path + "/WalkingTimeEffectInitNetwork.csv", "w")
-    out.write("localisation;max_time;time;value\n")
-    out.close()
+    #out = open(result_path + "/WalkingTimeEffectInitNetwork.csv", "w")
+    #out.write("localisation;max_time;time;value\n")
+    #out.close()
     for n in names:
-        for max_walking_time in range(0, 61, 5):
+        for max_walking_time in range(55, 60, 5):
             walking_speed = 3.2
             MAX_TIME = 12 * 60
             print(n,"  ",max_walking_time)
@@ -315,9 +318,9 @@ def max_walking_time_effect_network(names):
             t = time.time()
             net = NetworkEfficiency(param, c=1, load_data=False)
             t = time.time() - t
-            out = open(result_path + "/WalkingTimeEffectInitNetwork.csv", "a")
-            out.write("{};{};{};{}\n".format(n, max_walking_time, t, net.get_value()))
-            out.close()
+            #out = open(result_path + "/WalkingTimeEffectInitNetwork.csv", "a")
+            print("{};{};{};{}\n".format(n, max_walking_time, t, net.get_value()))
+            #out.close()
 
 
 
@@ -397,16 +400,17 @@ def optimization_time(names):
             generate_realist_random_edge(APSP,True)
 
 
-    c = 1 #todo
-    out = open(result_path + "/optiTimeAbsolu.csv", "w")
+    c = 1
+    out = open(result_path + "/optiTimeAbsolu.csv", "a")
     out.write("localisation;type;value\n")
     out.close()
-    out2 = open(result_path + "/optiTimeRelative.csv", "w")
+    out2 = open(result_path + "/optiTimeRelative.csv", "a")
     out2.write("localisation;type;value\n")
     out2.close()
 
     for n in names:
         param = DataManager.load_data(data_path, n, "train_bus")
+
         #initialisation
         t_opti = time.time()
         t_metric_init = time.time()
@@ -418,7 +422,7 @@ def optimization_time(names):
         t_metric_init = time.time() - t_metric_init
         init = metric.total_results.mean()
 
-        modifications =[modif_edge() for _ in range(15)] #todo
+        modifications =[modif_edge() for _ in range(15)]
         best = None
         min_value = math.inf
         t_metric_modif = 0
@@ -480,12 +484,13 @@ def optimization_values():
             generate_realist_random_edge(APSP,True)
 
     out = open(result_path + "/optiValues.csv", "w")
-    out.write("localisation;number_modif;value;time\n")
+    out.write("localisation;number_modif;value;;deltatime\n")
     out.close()
 
     c = 1
     #for n in names:
     n = 'Dixmude'
+    DataManager.produce_data(data_path, n, "train_bus")
     for i in range(3):
         for number_modif in range(0,51,5):
             print("number_modif = ",number_modif)
@@ -493,11 +498,12 @@ def optimization_values():
             t = time.time()
             param = DataManager.load_data(data_path, n, "train_bus")
             net = NetworkEfficiency(param, c, load_data=False, seed=round(345 * number_modif) +i)
+            init_value = net.get_value()
             modifications = [modif_edge() for _ in range(number_modif)]
             _, best_value = find_best_modification(net, modifications)
             t = time.time() - t
             out = open(result_path + "/optiValues.csv", "a")
-            out.write("{};{};{};{}\n".format(n, number_modif, best_value,t))
+            out.write("{};{};{};{};{}\n".format(n, number_modif, best_value,best_value-init_value,t))
             out.close()
 
 
@@ -513,7 +519,7 @@ if __name__ == '__main__':
              'Nivelles', 'Ostende', 'Philippeville', 'Roulers', 'Saint-Nicolas', 'Soignies', 'Termonde', 'Thuin',
              'Tielt', 'Tongres', 'Tournai', 'Turnhout', 'Verviers', 'Virton', 'Waremme', 'Ypres']
 
-    names2 = ['Dixmude','Ath','Tournai','Mons']#]#'Dixmude','Ath','Tournai','Mons','Nivelles','Charleroi', 'Liège', 'Bruxelles-Capitale']
+    names2 = ['Mons']#]#'Dixmude','Ath','Tournai','Mons','Nivelles','Charleroi', 'Liège', 'Bruxelles-Capitale']
     transports = ["train_bus"] #,"bus_only","train_bus"]
     #edge_node_by_arrondissement(names, transports)
 
@@ -522,8 +528,8 @@ if __name__ == '__main__':
     #time_metric_vs_APSP(names2)
     #MC_reducing_factor()
     #optimization_time(names2)
-    optimization_values()
-    #max_walking_time_effect_network(names2)
+    #optimization_values()
+    max_walking_time_effect_network(names2)
 
 
 

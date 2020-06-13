@@ -4,6 +4,7 @@ from Program.metric.monte_carlo_dynamic import TravellersModelisation
 from Program.Data_manager.main import time_str_to_int
 from Program.DistanceAndConversion import distance_Eucli
 import random as rdm
+import math
 
 
 
@@ -150,8 +151,7 @@ class AddRandomConnexion(NetworkModification):
         travel_time = dist / speed
 
         if self.new_node:
-            start, end = time_str_to_int("06:00:00") // 60, math.floor(
-                (time_str_to_int("10:30:00") // 60) - travel_time)
+            start, end = time_str_to_int("06:00:00") // 60, math.floor((time_str_to_int("10:30:00") // 60) - travel_time)
             if end >= start:
                 time1 = rdm.randint(start, end)
                 time2 = time1 + round(travel_time)

@@ -474,8 +474,8 @@ def MC_reducing_factor_modif_delta():
 
 def optimization_time():
     data = pd.read_csv("./Result/optiTimeRelative.csv", delimiter=';')
-    sns.barplot("localisation", "value", data=data, hue="type",
-                hue_order=["Optimisation",
+    sns.barplot("localisation", "value", data=data, hue="Légende",
+                hue_order=["Autres",
                            "Annulation : métrique","Annulation : APSP",
                            "Modification : métrique", "Modification : APSP",
                            "Initialisation : métrique","Initialisation : APSP"],
@@ -485,11 +485,91 @@ def optimization_time():
     # plt.legend(loc='upper left')
     plt.ylabel("Proportion de temps d'execution")
     plt.xlabel("Arrondissement")
+    plt.legend(loc='upper left')
 
-    plt.savefig("./Result/optimization_time.png")
+    plt.savefig("./Images/optimization_time.png")
     plt.show()
     # fig = plt.scatter(data, x="max_time", y="value")
     # fig.show()
+
+def  opti_value():
+    data = pd.read_csv("./Result/optiValues.csv", delimiter=';')
+    # data.plot(kind='bar')
+
+    sns.lmplot("number_modif", "time", data=data, ci=None)  # ci=None, fit_reg=False,  col_wrap=2
+    plt.legend(loc='upper left')
+    plt.ylabel("Temps [seconds]")
+    plt.xlabel("Nombre de modifications testées")
+    #plt.xscale('log')
+    #plt.yscale('log')
+
+    plt.savefig("./Images/opti_time_init.png")
+    plt.show()
+
+
+    sns.lmplot("number_modif", "delta", data=data, ci=None)  # ci=None, fit_reg=False,  col_wrap=2
+    plt.legend(loc='upper left')
+    plt.ylabel("Différence de valeur [minutes]")
+    plt.xlabel("Nombre de modifications testées")
+    # plt.xscale('log')
+    # plt.yscale('log')
+
+    plt.savefig("./Images/opti_delta_init.png")
+    plt.show()
+
+
+
+    sns.lmplot("number_modif", "value", data=data, ci=None)  # ci=None, fit_reg=False,  col_wrap=2
+    plt.legend(loc='upper left')
+    plt.ylabel("Valeur de la métrique   [minutes]")
+    plt.xlabel("Nombre de modifications testées")
+
+    plt.savefig("./Images/opti_value_init.png")
+    plt.show()
+    # fig = plt.scatter(data, x="max_time", y="value")
+    # fig.show()
+
+
+def time_effect_network_time():
+    data = pd.read_csv("./Result/WalkingTimeEffectInitNetwork.csv",delimiter=';')
+    #data.plot(kind='bar')
+
+    sns.lmplot("max_time", "time", data=data,hue='localisation',legend=False, ci=None) #, fit_reg=False,  col_wrap=2
+    plt.legend(loc='upper left')
+    plt.ylabel("Temps [seconds]")
+    plt.xlabel("Temps maximum de marche [minutes]")
+
+    plt.savefig("./Result/WalkingTimeNetwork.png")
+    plt.show()
+
+
+    data = pd.read_csv("./Result/WalkingTimeEffectInitNetwork.csv",delimiter=';')
+    #data.plot(kind='bar')
+    means = [sum(data["time"][i*12:i*12+12])/12 for i in range(4)]
+    data["ratio"] = [v/means[i] for i in range(4) for v in data["time"][i*12:i*12+12]]
+    sns.lmplot("max_time", "ratio", data=data,hue='localisation',legend=False,ci = None) #, fit_reg=False,  col_wrap=2
+    plt.legend(loc='upper left')
+    plt.ylabel("Ratio : temps/temps moyen")
+    plt.xlabel("Temps maximum de marche [minutes]")
+
+    plt.savefig("./Result/WalkingTimeNetworkRatio.png")
+    plt.show()
+
+
+
+def time_effect_network_value():
+    data = pd.read_csv("./Result/WalkingTimeEffectInitNetwork.csv",delimiter=';')
+    #data.plot(kind='bar')
+
+    sns.lmplot("max_time", "value", data=data,hue='localisation',legend=False, ci=None, fit_reg=False) #, fit_reg=False,  col_wrap=2
+    plt.legend(loc='upper left')
+    plt.ylabel("Temps [seconds]")
+    plt.xlabel("Temps maximum de marche [minutes]")
+
+    plt.savefig("./Result/WalkingTimeNetworkValue.png")
+    plt.show()
+
+
 
 if __name__ == '__main__':
     #graph_TimeInterval()
@@ -498,13 +578,15 @@ if __name__ == '__main__':
     #perf_graph()
     #perf_graph2()
     #time_effectInit()
-    #time_effectVertex()
     #time_effectInitRatio()
-    #time_effectVertexRatio()
+    time_effect_network_time()
+    time_effect_network_value()
     #metricVsAPSP()
     #MC_reducing_factor_init()
     #MC_reducing_factor_modif()
     #MC_reducing_factor_modif_delta()
-    optimization_time()
+    #optimization_time()
+    #opti_value()
+
 
 #
