@@ -34,11 +34,9 @@ def find_best_Duo_modification(network : NetworkEfficiency, modifications: list)
     for i in range(len(modifications)):
         network.save()
         value = network.modify(modifications[i])
-        print(value)
         for j in range(i+1, len(modifications)):
             network.save()
             value = network.modify(modifications[j])
-            print(value)
             if value < min_value:
                 best = (modifications[i], modifications[j])
                 min_value = value
