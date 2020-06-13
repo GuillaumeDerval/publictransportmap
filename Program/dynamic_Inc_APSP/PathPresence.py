@@ -6,7 +6,7 @@ class PathPresence:
 
     def __init__(self, graph, max_time,load_path=None):
         vertex = graph.vertex
-        self.pos_to_vertex = vertex.copy()
+        self.pos_to_vertex = list(vertex.copy())
         self.vertex_to_pos = {x: i for i, x in enumerate(self.pos_to_vertex)}
         self.size = len(vertex)
         self.is_reachable = np.zeros((self.size, self.size), dtype=np.bool, order="F")
@@ -196,6 +196,9 @@ class PathPresence:
         for u in self.__backup["single_change"]:
             for v in self.__backup["single_change"][u]:
                 self.is_reachable[self.vertex_to_pos[u]][self.vertex_to_pos[v]] = self.__backup["single_change"][u][v]
+
+        self.pos_to_vertex = self.pos_to_vertex[:self.size]
+        self.vertex_to_pos = {x: i for i, x in enumerate(self.pos_to_vertex)}
 
         self.__backup = self.__backup_stack.pop()
 

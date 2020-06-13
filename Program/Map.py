@@ -111,6 +111,7 @@ class MyMapStop(MyMap):
                 self.stop_position_dico[name] = tuple(lambert[name])
             else:
                 WGS84_to_Lambert((transp[name]["lon"], transp[name]["lat"]))
+                print("conversion of position")
         self.reachable_stop_from_munty = {munty: [] for munty in
                                           self.get_all_munty_refnis()}  # contient tout les stop atteignable depuis une commune
         self.reachable_munty_from_stop = {stop_name: set() for stop_name in
@@ -139,7 +140,7 @@ class MyMapStop(MyMap):
                     self.reachable_stop_from_munty[munty].append(stop)  # stop in the municipality
                     self.reachable_munty_from_stop[stop[0]].add(munty)
 
-                elif isinstance(munty_shape,MultiPolygon):  # stop not in the municipality and municipality in several part
+                elif isinstance(munty_shape, MultiPolygon):  # stop not in the municipality and municipality in several part
                     for poly in munty_shape:
                         dist = poly.exterior.distance(pos_point)
                         if dist < self.MAX_WALKING_TIME * self.SPEED:
@@ -208,7 +209,6 @@ class MyMapStop(MyMap):
         :param stop_name:
         :param pos: en lambert
         """
-
         stop_name_pos = stop_name, pos
 
         self.stop_position_dico[stop_name] = pos
@@ -218,12 +218,14 @@ class MyMapStop(MyMap):
         self.__change_log.append(stop_name_pos)
 
     def remove_stop(self, stop_name):
+
         if not isinstance(stop_name, list):
             stop_name = [stop_name]
         for st,pos in stop_name:
+            self.stop_position_dico.pop(st)
             affected_munty = self.reachable_munty_from_stop.pop(st)
             for munty in affected_munty:
-                self.reachable_stop_from_munty[munty].remove((st, pos))
+                self.reachable_stop_from_munty[munty].remove((str(st), pos))
 
     def save(self):
         self.__stack_log.append(self.__change_log)

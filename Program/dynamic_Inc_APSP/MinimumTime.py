@@ -168,6 +168,9 @@ class MinimumTime:
             for d_name, old_value in self.__backup["change_distance"][s_name].items():
                 self.__set_dist(s_name, d_name,old_value)
 
+        self.idx_to_name = self.idx_to_name[:self.size]
+        self.name_to_idx= {x: i for i, x in enumerate(self.idx_to_name)}
+
         self.__backup = self.__backup_stack.pop()
         self.up_to_date = True
 

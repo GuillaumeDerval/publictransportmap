@@ -26,11 +26,7 @@ def map_stop(in_path, out_path):
             stop_pos = {}
             print(i)
             time.sleep(20)
-
-    #stop_Lamb = json.load(open("output/stop_lambert_pos.json", "r"))
-
-    #for s in stop_Lamb:
-    #    stop_pos[s[0]] = s[1]
+    """
 
     stop_pos = json.load(open(out_path, "r"))
     print("len ", len(stop_pos))
@@ -67,6 +63,5 @@ def map_stop(in_path, out_path):
     with open(out_path, 'w') as w:
         json.dump(out, w)
 
-
-map_stop("../../Data/intermediate/bus_only.json","../../Data/intermediate/stop_lambert_bus_only.json",
-         map_path ="/Users/DimiS/Documents/Gotta_go_fast/Project/Data/produced/maps/bus_lines.geojson")
+    """
+map_stop("../../Data/intermediate/bus_only.json","../../Data/intermediate/stop_lambert_bus_only.json")
