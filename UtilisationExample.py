@@ -124,7 +124,7 @@ network_efficiency.restore()
 
 
 # 4) Utiliser le fonction d'optimisation conçue
-network = NetworkEfficiency(param=parameter, c=0.01, load_data=False)
+network = NetworkEfficiency(param=parameter, c=0.1, load_data=False, seed=42)
 best, best_value = find_best_modification(network=network, modifications=[modif1, modif2, modif3])
 print(best, " with value : ", best_value)
 best, best_value = find_best_Duo_modification(network=network, modifications=[modif1, modif2, modif3])
