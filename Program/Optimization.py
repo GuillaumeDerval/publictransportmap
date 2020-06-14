@@ -15,7 +15,7 @@ def find_best_modification(network : NetworkEfficiency, modifications: list):
         print(network.get_value())
         network.save()
         value = network.modify(modif)
-        print("modif value", value)
+        print("\n\n\nmodif value", value)
         if value < min_value:
             best = modif
             min_value = value

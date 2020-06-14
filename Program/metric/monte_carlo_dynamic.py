@@ -332,10 +332,14 @@ class TravellersModelisation:
 
                                 # old_unreach == 0, ignore travel if it was unreachable at the initialisation
                                 if old_unreach == 0 and new_time < old_time and new_walk1 < self.max_walk_time and new_walk2 < self.max_walk_time:
+
                                     #record old state
+                                    if (rsd_munty, work_munty) not in self.__change_log["travellers"]:
+                                            self.__change_log["travellers"][(rsd_munty,work_munty)] = {}
+                                    if i not in self.__change_log["travellers"][(rsd_munty,work_munty)]:
+                                        self.__change_log["travellers"][(rsd_munty, work_munty)][i] = travellers[i]  # [item for item in travellers[i]]todo travellers[i]
                                     if rsd_munty not in self.__change_log["all_results_save"]:
-                                        self.__change_log["travellers"][i] = travellers[i]
-                                        self.__change_log["all_results_save"][rsd_munty]= self.all_results[rsd_munty].__copy__()
+                                        self.__change_log["all_results_save"][rsd_munty] = self.all_results[rsd_munty].__copy__()
                                     if "total_result" not in self.__change_log:
                                         self.__change_log["total_result"] = self.total_results.__copy__()
                                     travellers[i] = rsd_pt, work_pt, ((org_name_ch,org_ch_pos), (dest_name_ch,dest_ch_pos)),new_TC
@@ -351,8 +355,12 @@ class TravellersModelisation:
 
     def restore(self):
         changes = self.__change_log
-        for i in changes["travellers"].keys():
-            self.traveller_locations[i]= changes["travellers"][i]
+        for trav in changes["travellers"].keys():
+            dico = changes["travellers"][trav]
+            for i in dico.keys():
+                self.traveller_locations[trav][i] = dico[i]
+
+
 
         for munty in changes["all_results_save"].keys():
             self.all_results[munty]= changes["all_results_save"][munty]

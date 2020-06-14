@@ -22,6 +22,7 @@ class Graph:
         self.__stack_log = []
 
     def add_vertex(self, v):
+
         if v not in self.vertex:
             self.adj_list[v] = []
             self.reversed_adj_list[v] = []
@@ -32,6 +33,7 @@ class Graph:
             self.__change_log.append(("add_vertex", v))
 
     def add_edge(self, u, v):
+
         assert u in self.vertex
         assert v in self.vertex
 
@@ -57,6 +59,7 @@ class Graph:
         self.__change_log.append(("rm_vertex", z))
 
     def remove_edge(self, u, v):
+
         assert u in self.vertex
         assert v in self.vertex
         assert v in self.adj_list[u]

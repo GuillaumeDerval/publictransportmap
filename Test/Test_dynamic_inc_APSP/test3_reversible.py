@@ -42,6 +42,8 @@ class TestInitialisationAPSP(TestCase):
                                graph_compu="data_test/graph_compu.json",
                                path_comp="data_test/path_computed/", dist_comp="data_test/dist_computed/")
 
+
+
     def test_one_level_one_edge2(self):
         APSP = Dynamic_APSP(self.param_medium)
         rdm.seed(1212)
