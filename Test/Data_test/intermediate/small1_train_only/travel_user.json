@@ -1,0 +1,6 @@
+{ "cities": [["AAA","A"], ["BBB","B"],["CCC","C"], ["DDD","D"]],
+  "travel": [ {"residence" : ["AAA","A"], "work" : ["BBB","B"], "n" : 4},
+              {"residence" : ["CCC","C"], "work" : ["AAA","A"], "n" : 3},
+              {"residence" : ["BBB","B"], "work" : ["BBB","B"], "n" : 10},
+              {"residence" : ["DDD","D"], "work" : ["CCC","C"], "n" : 1},
+              {"residence" : ["AAA","A"], "work" : ["DDD","D"], "n" : 5}]}
