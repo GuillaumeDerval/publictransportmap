@@ -12,15 +12,12 @@ def find_best_modification(network : NetworkEfficiency, modifications: list):
     best = None
     min_value = math.inf
     for modif in modifications:
-        print(network.get_value())
         network.save()
         value = network.modify(modif)
-        print("\n\n\nmodif value", value)
         if value < min_value:
             best = modif
             min_value = value
         network.restore()
-        print(network.get_value())
     return best, min_value
 
 
@@ -35,19 +32,14 @@ def find_best_Duo_modification(network : NetworkEfficiency, modifications: list)
     best = None
     min_value = math.inf
     for i in range(len(modifications)):
-        print(network.get_value())
         network.save()
-        value = network.modify(modifications[i])
-        print("modif1 value", value)
+        network.modify(modifications[i])
         for j in range(i+1, len(modifications)):
             network.save()
             value = network.modify(modifications[j])
-            print("modif2 value", value)
             if value < min_value:
                 best = (modifications[i], modifications[j])
                 min_value = value
             network.restore()
-            print("modif1 value", value)
         network.restore()
-        print(network.get_value())
     return best, min_value
