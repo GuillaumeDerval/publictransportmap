@@ -72,7 +72,7 @@ parameter = DataManager.produce_data("./Data", "Example", "train_bus", 30, 3.6)
 
 
 # 2b) OU charger des données déjà produites
-parameter =DataManager.load_data("./Data", "Dixmude", "train_bus")
+parameter =DataManager.load_data("./Data", "Example", "train_bus")
 
 
 
