@@ -31,8 +31,12 @@ DataManager.make_data_structure("./Data")
 #  ainsi obtenu dans "./Data/initial"
 
 
-#TODO LAMBERT
-#raise (Exception, "commenter cette ligne apres avoir telecharger le données ")
+# Deplacer le fichier stop_lambert_train_bus.json dans le dossier "./Data/intermediate"
+# Si la position de certaines position d'arrêts sont manquantes,
+# vous devez les calculer en vous inspirant BuildBelgiumMap.py
+
+
+raise (Exception, "commenter cette ligne apres avoir telecharger le données ")
 
 # Transformer regrouper et changer le format des données GTFS
 # 0) Créer les donner pour la belgique et choisir la tranche horaire
